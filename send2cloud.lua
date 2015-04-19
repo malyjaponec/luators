@@ -3,6 +3,7 @@ PIN = 4 --  data pin, GPIO2
 function getTemp()
   Humidity = 0
   Temperature = 0
+  Light = 0
 
   dht22 = require("dht22")
   dht22.read(PIN)
@@ -15,9 +16,11 @@ function getTemp()
   
   Temperature = Temperature / 10
   Humidity = Humidity / 10
+  Light = adc.read(0)
 
   print ("Temperature: "..Temperature)
   print ("Humidity: "..Humidity)
+  print ("Light: "..Light)
   return 1
 end
 
@@ -31,7 +34,7 @@ function sendData()
             
             -- api.thingspeak.com 184.106.153.149
             conn:connect(80,'184.106.153.149') 
-            conn:send("GET /update?key=6XJ1AWU739JA0J9G&field1="..Temperature.."&field2="..Humidity.." HTTP/1.1\r\n") 
+            conn:send("GET /update?key=6XJ1AWU739JA0J9G&field1="..Temperature.."&field2="..Humidity.."&field3="..Light.." HTTP/1.1\r\n") 
             conn:send("Host: api.thingspeak.com\r\n") 
             conn:send("Accept: */*\r\n") 
             conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
@@ -46,7 +49,7 @@ function sendData()
             break
         else
             print("Chyba cteni dat, opakovani "..q..".")
-            tmr.delay(1000000)
+            tmr.delay(1500000)
         end
     end
 end
