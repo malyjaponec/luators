@@ -9,6 +9,7 @@ function getTemp()
   dht22.read(PIN)
   Temperature = dht22.getTemperature()
   Humidity = dht22.getHumidity()
+  dht22 = nil
 
   if Humidity == nil then
     return 0 -- vracim chybu cteni dat
