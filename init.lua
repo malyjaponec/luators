@@ -1,7 +1,7 @@
-function init_part2()
+local function init_part2()
     print("Vyhledani AP...")
     -- nahrazuje wifi.sta.config(ssid,password)
-        aptools = require("aptools")
+        local aptools = require("aptools")
         wifi.sta.getap(aptools.select_ap)
         if aptools.found() == 0 then -- nebylo nalezeno
             -- opakuji to po 5 s
@@ -16,7 +16,7 @@ function init_part2()
 end
 
 
-function init_part3()
+local function init_part3()
     if wifi.sta.getip()== nil then 
         print("IP unavaiable, Waiting...") 
         tmr.alarm(1, 1000, 0, function() init_part3() end);
@@ -26,7 +26,7 @@ function init_part3()
     end
 end
 
-function init_partX()
+local function init_partX()
     print("Rovnam piny pro kit...")
     -- Pozhasinani ledek
     -- cervena 
@@ -46,9 +46,10 @@ function init_partX()
     gpio.write(1, gpio.HIGH)
 end
 
---init.lua
+-- init.lua
+tmr.alarm(3, 1000, 1, function() print(node.heap()) end)
 print("Nastavuji station...")
 wifi.sta.config("myssid","mypassword") -- aby se to nikem neprihlasilo
 wifi.setmode(wifi.STATION)
 init_partX()
-tmr.alarm(1, 1000, 0, function() init_part2() end)
+-- tmr.alarm(1, 1000, 0, function() init_part2() end)
