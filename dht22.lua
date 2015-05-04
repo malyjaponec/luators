@@ -10,16 +10,13 @@
 local moduleName = ...
 local M = {}
 _G[moduleName] = M
-
-local humidity
-local temperature
+    local humidity = 0
+    local temperature = 0
 
 function M.read(pin)
-  local checksum
+  local checksum = 0
   local checksumTest
-  humidity = 0
-  temperature = 0
-  checksum = 0
+
 
   -- Use Markus Gritsch trick to speed up read/write on GPIO
   local gpio_read = gpio.read
@@ -60,6 +57,8 @@ function M.read(pin)
     while (gpio_read(pin) == 0) do end
   end
 
+  gpio_read = nil
+
   --DHT data acquired, process.
   for i = 1, 16, 1 do
     if (bitStream[i] > 4) then
@@ -77,8 +76,15 @@ function M.read(pin)
     end
   end
 
+  -- Uklid dat, nevim zda je potreba, zkousim co nevic uvolnit heapu
+  for j = 1, 40, 1 do
+    bitStream[j] = nil
+  end
+  bitStram = nil
+
   checksumTest = (bit.band(humidity, 0xFF) + bit.rshift(humidity, 8) + bit.band(temperature, 0xFF) + bit.rshift(temperature, 8))
   checksumTest = bit.band(checksumTest, 0xFF)
+
 
   if temperature > 0x8000 then
     -- convert to negative format
@@ -87,7 +93,9 @@ function M.read(pin)
 
   -- conditions compatible con float point and integer
   if (checksumTest - checksum >= 1) or (checksum - checksumTest >= 1) then
-    humidity = nil
+    return 0
+  else
+    return 1
   end
 end
 
@@ -97,6 +105,15 @@ end
 
 function M.getHumidity()
   return humidity
+end
+
+-- Vystup v desetine forme pro systemu bez floating point matematiky
+function M.getTemperatureString()
+  return (temperature / 10).."."..(temperature % 10)
+end
+
+function M.getHumidityString()
+  return (humidity / 10).."."..(humidity % 10)
 end
 
 return M
