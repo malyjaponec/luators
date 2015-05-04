@@ -1,37 +1,20 @@
-function select_ap(t)
-    nalezeno = 0
-    if (t == nil) then
-        print ("Nepredan seznam AP")
-        return
-    end
-    print ("Hledam heslo pro nalezene AP...")
-    for ssid,v in pairs(t) do
-        authmode, rssi, bssid, channel = string.match(v, "(%d),(-?%d+),(%x%x:%x%x:%x%x:%x%x:%x%x:%x%x),(%d+)")
-        --print(ssid,authmode,rssi,bssid,channel)
-        print ("Kontrola AP:"..ssid)
-        result = file.open("passwd.ini", "r")
-        if result == nil then -- soubor neexistuje
-            print ("E: nemam seznam hesel")
-        else
-            repeat
-                line = file.readline();
-                if line ~= nil then
-                    cfg_ssid, cfg_pass = string.match(line, '(%w+) (%w+)')           
-                    if ssid == cfg_ssid then
-                        nalezeno = 1
-                        break
-                    end
-                end
-            until line == nil
-            file.close()
-        end
-        if (nalezeno == 1) then
-            print ("Heslo nalezeno!")
-            break
-        else
-            print ("... neznamy AP")
-        end
-    end
-end
 
-wifi.sta.getap(select_ap)
+print (node.heap())
+PIN = 4
+print (node.heap())
+local dht22 = require("dht22")
+print (node.heap())
+dht22.read(PIN)
+print (node.heap())
+Temperature = dht22.getTemperatureString()
+print (node.heap())
+Humidity = dht22.getHumidityString()
+print (node.heap())
+Light = adc.read(0)
+print (node.heap())
+print ("Temperature: "..Temperature)
+print (node.heap())
+print ("Humidity: "..Humidity)
+print (node.heap())
+print ("Light: "..Light)
+print (node.heap())
