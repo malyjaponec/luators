@@ -1,7 +1,6 @@
 local Humidity = -1
 local Temperature = -1
 local Battery = -1
-CloudInterval = 60 -- sekund
 
 local function measure_data()
 
@@ -32,11 +31,8 @@ function sendData()
     local q
     for q = 1, 10 do -- cist data se pokusim 10x po sobe
         if 1 == measure_data() then
-            -- prepare reboot
-                local time = (CloudInterval * 1000) - (tmr.now()/1000)
-                if time < 15000 then time = 15000 end
-                tmr.alarm(0, time, 0, function() node.restart() end)
-                print("Restart scheduled in "..(time/1000).." s") 
+            -- nacasuji restart
+            dofile(sleep.lc)
             -- make conection to thingspeak.com
             --print((tmr.now()/1000).." Connecting to thingspeak.com...")
             print("Connecting to thingspeak.com...")
