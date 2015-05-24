@@ -32,13 +32,12 @@ function sendData()
     local q
     for q = 1, 10 do -- cist data se pokusim 10x po sobe
         if 1 == measure_data() then
-            -- prepare reboot
+            -- time new start
                 local time = (CloudInterval * 1000) - (tmr.now()/1000)
                 if time < 15000 then time = 15000 end
-                tmr.alarm(0, time, 0, function() node.restart() end)
-                print("Restart scheduled in "..(time/1000).." s") 
+                tmr.alarm(0, time, 0, function() dofile("start.lc") end)
+                print("New measurement in "..(time/1000).." s") 
             -- make conection to thingspeak.com
-            --print((tmr.now()/1000).." Connecting to thingspeak.com...")
             print("Connecting to thingspeak.com...")
             local conn=net.createConnection(net.TCP, 0) 
 
@@ -54,7 +53,6 @@ function sendData()
             conn:on("disconnection", function(conn) 
                 --print((tmr.now()/1000).." Got disconnection.") 
                 print("Got disconnection.") 
-                wifi.sta.disconnect() 
                 conn = nil
             end)
             conn:on("connection", function(conn)
