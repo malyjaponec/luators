@@ -1,19 +1,8 @@
-local ip_timeout = 0
-
 local function init_part4()
     aptools = mil
     if nil == wifi.sta.getip() then 
-        ip_timeout = ip_timeout + 1
-        print("IP unavaiable, waiting..."..(ip_timeout)) 
-        if ip_timeout < 10 then
-            tmr.alarm(0, 2000, 0, function() init_part4() end)
-        else
-            -- prepare reboot
-            local time = (60 * 1000) - (tmr.now()/1000)
-            if time < 15000 then time = 15000 end
-            tmr.alarm(0, time, 0, function() node.restart() end)
-            print("Restart scheduled in "..(time/1000).." s") 
-        end    
+        print("IP unavaiable, waiting...") 
+        tmr.alarm(0, 2000, 0, function() init_part4() end)
     else 
         print("Config done, IP is "..wifi.sta.getip())
         dofile("send2cloud.lc")
@@ -32,7 +21,6 @@ local function init_part2()
     else
         print("Connecting AP...")
         wifi.sta.connect()
-        ip_timeout = 0
         tmr.alarm(0, 5000, 0, function() init_part4() end)
     end
 end
