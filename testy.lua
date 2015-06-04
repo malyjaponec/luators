@@ -18,3 +18,5 @@ print ("Humidity: "..Humidity)
 print (node.heap())
 print ("Light: "..Light)
 print (node.heap())
+dht22 = nil
+print (node.heap())
