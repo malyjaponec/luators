@@ -89,7 +89,6 @@ local function reset_apn()
         --print("Connecting to "..apt.ssid())
         --print("Connecting to "..ap_selected_ssid)
         --wifi.sta.config(apt.ssid(),apt.pass())
-        wifi.sta.disconnect()
         wifi.sta.config(ap_selected_ssid,ap_selected_pass)
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
@@ -98,10 +97,11 @@ local function reset_apn()
     else 
         print("Waiting between scans...")
         if (counter > 0) then
-            tmr.alarm(0, 4000, 0, function() reset_apn() end)   
+            tmr.alarm(0, 3000, 0, function() reset_apn() end)   
             -- musi cekat 3 sekundy jinak to nikdy neprojde a vzdycky to neprochazi na poprve 
         else
             print("PANIC, not wifi coverage, end")
+            wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
             dofile("sleep.lc")
         end 
     end
@@ -111,7 +111,6 @@ end
 local function change_apn()
     --print("HEAP change_apn "..node.heap())
     
-    wifi.setmode(wifi.STATION) -- pro jistotu
     counter = 10
     reset_apn()
 end

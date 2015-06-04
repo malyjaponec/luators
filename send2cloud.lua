@@ -2,6 +2,8 @@ local Humidity = -1
 local Temperature = -1
 local Battery = -1
 local counter = 0
+local api_key = "***REMOVED***" -- smradoch tours garage
+--local api_key = "6XJ1AWU739JA0J9G" -- testovaci kanal
 
 local function send_data()
     --print("HEAP send_data "..node.heap())
@@ -26,12 +28,12 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        dofile("sleep.lc")
+        dofile("longsleep.lc")
     end)
     
     conn:on("connection", function(conn)
         print("Connected, sending data...")
-        conn:send("GET /update?key=6XJ1AWU739JA0J9G&field1="..Temperature.."&field2="..Humidity.."&field3="..Battery.." HTTP/1.1\r\n") 
+        conn:send("GET /update?key="..api_key.."&field1="..Temperature.."&field2="..Humidity.."&field3="..Battery.." HTTP/1.1\r\n") 
         conn:send("Host: api.thingspeak.com\r\n") 
         conn:send("Accept: */*\r\n") 
         conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
@@ -68,8 +70,8 @@ local function measure_data()
   dht22 = nil
 
   -- Battery
-  local analog_value = 46 * adc.read(0)
-  Battery = (analog_value / 10000).."."..(analog_value % 10000)
+  local analog_value = 468 * adc.read(0)
+  Battery = (analog_value / 100000).."."..string.sub(string.format("%05d",(analog_value % 100000)),1,2)
   analog_value = nil
 
   print ("Temperature: "..Temperature)
