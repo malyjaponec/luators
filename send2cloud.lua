@@ -52,9 +52,9 @@ local function measure_data()
   print("Measuring...")
     
   -- Temperature and Humidity
-  local dht22 = require("dht22")
-  if 0 == dht22.read(2) then -- pin 4=GPIO2, 2=GPIO5 
-    dht22 = nil
+  local dht = require("dht22")
+  if 0 == dht.read(2) then -- pin 4=GPIO2, 2=GPIO5 
+    dht = nil
     counter = counter - 1
     if (counter > 0) then
       tmr.alarm(0, 500, 0, function() measure_data() end)
@@ -62,12 +62,20 @@ local function measure_data()
       print("PANIC, data not aquired, end")
       dofile("sleep.lc") 
     end
+    -- uklid
+    dht = nil
+    dht22 = nil
+    package.loaded["dht22"] = nil
     return
   end
 
-  Temperature = dht22.getTemperatureString()
-  Humidity = dht22.getHumidityString()
+  Temperature = dht.getTemperatureString()
+  Humidity = dht.getHumidityString()
+
+  -- uklid
+  dht = nil
   dht22 = nil
+  package.loaded["dht22"] = nil
 
   -- Battery
   local analog_value = 468 * adc.read(0)
