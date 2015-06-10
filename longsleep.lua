@@ -1,4 +1,7 @@
-ReportInterval = 300
+ReportInterval = 1800
+
+-- Vypnuti proudu do 18b20 sestavy, napaji GPIO 12
+gpio.write(6, gpio.LOW)
 
 local time = (ReportInterval * 1000*1000) - tmr.now() - 100000
 if time < 5000000 then time = 5000000 end
