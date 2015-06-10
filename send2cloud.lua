@@ -1,10 +1,11 @@
-local Temperature = -1
-local Humidity = -1
+local Temperature = 0
+local Humidity = 0
 local TempList = {}
-local Battery = -1
+local Battery = 0
 local counter = 0
---local api_key = "***REMOVED***" -- smradoch tours garage
-local api_key = "6XJ1AWU739JA0J9G" -- testovaci kanal
+--local api_key = "***REMOVED***" -- sklenik
+local api_key = "***REMOVED***" -- solarni system
+--local api_key = "***REMOVED***" -- testovaci kanal
 
 local function send_data()
     --print("HEAP send_data "..node.heap())
@@ -36,14 +37,17 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        --dofile("longsleep.lc")
-        dofile("sleep.lc")
+        if (Battery < 3300) then
+            dofile("longsleep.lc")
+        else
+            dofile("sleep.lc")
+        end
     end)
     
     conn:on("connection", function(conn)
         print("Connected, sending data...")
 --        conn:send("GET /update?key="..api_key.."&field1="..Temperature.."&field2="..Humidity.."&field3="..Battery.." HTTP/1.1\r\n") 
-        conn:send("GET /update?key="..api_key..Fields.." HTTP/1.1\r\n") 
+        conn:send("GET /update?api_key="..api_key..Fields.." HTTP/1.1\r\n") 
         conn:send("Host: api.thingspeak.com\r\n") 
         conn:send("Accept: */*\r\n") 
         conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
@@ -98,9 +102,11 @@ local function measure_data()
         local value = -1
         local textvalue = ""
         for a,b in pairs(addrs) do
-            value = t.read(b) -- zde probiha mereni vycitani dat
-            if (value == 850000) then value = t.read(b) end
-            if (value == 850000) then value = t.read(b) end
+            value = t.measure(b)
+        end
+        tmr.delay(750000)
+        for a,b in pairs(addrs) do
+             value = t.read(b)
             textvalue = (value / 10000).."."..string.sub(string.format("%04d",(value % 10000)),1,4)
             print("Temperature "..a.." = "..textvalue)
             TempList[a] = textvalue
@@ -114,14 +120,13 @@ local function measure_data()
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
 
-
     -- Battery
     local analog_value = 468 * adc.read(0)
-    Battery = (analog_value / 100000).."."..string.sub(string.format("%05d",(analog_value % 100000)),1,2)
+    Battery = analog_value / 100
     analog_value = nil
 
     print ("Battery: "..Battery)
- 
+     
     send_data()
 end
 

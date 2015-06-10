@@ -59,23 +59,11 @@ function addrs()
   return tbl
 end
 
-function readNumber(addr, unit)
-  result = nil
+function startMeasure(addr)
+  if(addr == nil) then
+    return
+  end
   setup(pin)
-  flag = false
-  if(addr == nil) then
-    ow.reset_search(pin)
-    count = 0
-    repeat
-      count = count + 1
-      addr = ow.search(pin)
-      tmr.wdclr()
-    until((addr ~= nil) or (count > 100))
-    ow.reset_search(pin)
-  end
-  if(addr == nil) then
-    return result
-  end
   crc = ow.crc8(string.sub(addr,1,7))
   if (crc == addr:byte(8)) then
     if ((addr:byte(1) == 0x10) or (addr:byte(1) == 0x28)) then
@@ -83,8 +71,21 @@ function readNumber(addr, unit)
       ow.reset(pin)
       ow.select(pin, addr)
       ow.write(pin, 0x44, 1)
-      -- tmr.delay(1000000)
-        tmr.delay(100000)
+    end
+  end
+end
+
+function readNumber(addr, unit)
+  result = nil
+  setup(pin)
+  flag = false
+  if(addr == nil) then
+    return result
+  end
+  crc = ow.crc8(string.sub(addr,1,7))
+  if (crc == addr:byte(8)) then
+    if ((addr:byte(1) == 0x10) or (addr:byte(1) == 0x28)) then
+      -- print("Device is a DS18S20 family device.")
       present = ow.reset(pin)
       ow.select(pin, addr)
       ow.write(pin,0xBE,1)
@@ -102,18 +103,8 @@ function readNumber(addr, unit)
         if (t > 32767) then
           t = t - 65536
         end
-        if(unit == nil or unit == C) then
-          t = t * 625
-        elseif(unit == F) then
-          t = t * 1125 + 320000
-        elseif(unit == K) then
-          t = t * 625 + 2731500
-        else
-          return nil
-        end
-        -- t = t / 10000
-        -- print("Temperature="..t1.."."..t2.." Centigrade")
-        -- result = t1.."."..t2
+        -- prepocet jen vzdy na stupne celsia
+        t = t * 625
         return t
       end
       tmr.wdclr()
@@ -126,13 +117,17 @@ function readNumber(addr, unit)
   return result
 end
 
-function read(addr, unit)
-  t = readNumber(addr, unit)
+function read(addr)
+  t = readNumber(addr)
   if (t == nil) then
     return nil
   else
     return t
   end
+end
+
+function measure(addr)
+  startMeasure(addr)
 end
 
 -- Return module table
