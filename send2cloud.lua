@@ -3,6 +3,7 @@ local Humidity = 0
 local TempList = {}
 local Battery = 0
 local counter = 0
+
 --local api_key = "DXF1QV45IV9PKGJU" -- sklenik
 local api_key = "JD83443A1SBDLGUG" -- solarni system
 --local api_key = "S4TJMXTW8AJY6L1P" -- testovaci kanal
@@ -14,12 +15,21 @@ local function send_data()
     -- prepare reboot if something bad, timeout 15 s
     tmr.alarm(0, 15000, 0, function() dofile("sleep.lc") end)
 
+    -- prepocet pole teplot na URL retezec
     local Fields = ""
-    for q,temp in pairs(TempList) do
-        Fields = Fields.."&field"..q.."="..temp
+    for q,v in pairs(TempList) do
+        Fields = Fields.."&field"..q.."="..v
+        TempList[q]=nil -- mazu po sobe prvky pole
     end
+    TempList = nil -- zrusim praznde pole
+
+    -- pridam velikost heapu
+    Fields = Fields.."&field7="..node.heap()
+    
+    -- pridam napeti baterie
     Fields = Fields.."&field8="..Battery
-    print(Fields)
+    
+    print(Fields) -- debug
     
     -- make conection to thingspeak.com
     print("Connecting to thingspeak.com...")
@@ -65,72 +75,74 @@ local function measure_data()
     tmr.stop(0)
     print("Measuring...")
     
-    -- Temperatures
-    if nil ~= use_dht22 then
-        require("dht22")
-        if 0 == dht22.read(2) then -- pin 2=GPIO5 
-            dht22 = nil
-            counter = counter - 1
-            if (counter > 0) then
-                tmr.alarm(0, 500, 0, function() measure_data() end)
-            else
-                print("PANIC, data not aquired, end")
-                dofile("sleep.lc") 
-            end
-            return
-        end
+    -- Temperature and humidity DHT2
+--    require("dht22")
+--    if 0 == dht22.read(2) then -- pin 2=GPIO5 
+--        dht22 = nil
+--        counter = counter - 1
+--        if (counter > 0) then
+--            tmr.alarm(0, 500, 0, function() measure_data() end)
+--        else
+--            print("PANIC, data not aquired, end")
+--            dofile("sleep.lc") 
+--        end
+--        return
+--    end
+--    
+--    Temperature = dht22.getTemperatureString()
+--    Humidity = dht22.getHumidityString()
+--    
+--    dht22 = nil
+--    package.loaded["dht22"]=nil
+--    
+--    print ("Temperature: "..Temperature)
+--    print ("Humidity: "..Humidity)
 
-        Temperature = dht22.getTemperatureString()
-        Humidity = dht22.getHumidityString()
-
-        dht22 = nil
-        package.loaded["dht22"]=nil
-    
-        print ("Temperature: "..Temperature)
-        print ("Humidity: "..Humidity)
-     end
-
-    -- Mereni pomoci 18b20
+    -- Tepolot z ds18b20
     t = require("ds18b20")
 
-    t.setup(7) -- gpio 13
-    addrs = t.addrs()
+    t.setup(7) -- sbernice na gpio 13 (vedlejsi pin vedle VCC)
+    local addrs = t.addrs() -- nacte adresy do lokalniho pole
+    local textvalue = ""
     if (addrs ~= nil) then
-        print("Total DS18B20 sensors: "..table.getn(addrs))
-  
-    -- Just read temperature
-        local value = -1
-        local textvalue = ""
-        for a,b in pairs(addrs) do
-            value = t.measure(b)
-        end
-        tmr.delay(750000)
-        for a,b in pairs(addrs) do
-             value = t.read(b)
-            textvalue = (value / 10000).."."..string.sub(string.format("%04d",(value % 10000)),1,4)
-            print("Temperature "..a.." = "..textvalue)
-            TempList[a] = textvalue
-        end
-        value = nil
-        textvalue = nil
-    end
+        print("Total DS18B20 sensors: "..table.getn(addrs)) -- pocet senzoru 
 
-    -- Don't forget to release it after use
+        -- Start measure for all sensors
+        for q,v in pairs(addrs) do
+            t.measure(v)
+        end
+        -- Wait until first measure is done
+        tmr.delay(750000)
+        -- Read temperatures
+        local value = 0
+        local textvalue = ""
+        for q,v in pairs(addrs) do
+            value = t.read(v)
+            textvalue = (value / 10000).."."..string.sub(string.format("%04d",(value % 10000)),1,4)
+            TempList[q] = textvalue
+            print("Temperature "..q.." = "..textvalue)
+            addrs[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
+        end
+    end
+    addrs = nil -- rusim pole adres
+    textvalue = nil 
+    value = nil
+
+    -- Don't forget to release library it after use
     t = nil
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
 
     -- Battery
-    local analog_value = 468 * adc.read(0)
-    Battery = analog_value / 100
-    analog_value = nil
-
+    Battery = (468 * adc.read(0)) / 100
     print ("Battery: "..Battery)
-     
-    send_data()
+
 end
 
 --print("HEAP send2cloud.lua "..node.heap())
 tmr.stop(0)
-counter = 10
+--counter = 5 -- pouziva se pouze s dht, pro ds18b20 neni napsana podpora opakovani mereni
 measure_data()
+-- nevolam ze send data, protoze se nic neopakuje a tak je lepsi aby lokalni promenne 
+-- send data zhynuli, realne to ma efekt asi 300 bajtu na heapu, takze nic moc
+send_data() 

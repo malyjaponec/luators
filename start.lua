@@ -121,7 +121,7 @@ local function check_ip()
     tmr.stop(0)
     if nil ~= wifi.sta.getip() then 
         print("Autoconnected, IP is "..wifi.sta.getip())
-        dofile("send2cloud.lc")
+        tmr.alarm(0, 200, 0, function() dofile("send2cloud.lc") end)
     else
         print("Connecting...") 
         counter = counter - 1
