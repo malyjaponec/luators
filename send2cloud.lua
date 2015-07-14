@@ -17,18 +17,21 @@ local function send_data()
 
     -- prepocet pole teplot na URL retezec
     local Fields = ""
+    local field_count = 6 -- zaciname na polozce 6, protoze predchozi se posilaji z jineho zdroje
     for q,v in pairs(TempList) do
-        Fields = Fields.."&field"..q.."="..v
+-- napad posilat zapornou hodnotu pri nizke baterii zatim nechavam nepouzity
+-- pouze se snizi perioda odesilani    
+--        if (Battery >= 3700) then
+            Fields = Fields.."&field"..field_count.."="..v
+--        else
+--            Fields = Fields.."&field"..field_count.."=-"..v
+--        end
         TempList[q]=nil -- mazu po sobe prvky pole
+        field_count = field_count + 1
     end
     TempList = nil -- zrusim praznde pole
+    field_count = nil -- zrusim citac
 
-    -- pridam velikost heapu
-    Fields = Fields.."&field7="..node.heap()
-    
-    -- pridam napeti baterie
-    Fields = Fields.."&field8="..Battery
-    
     print(Fields) -- debug
     
     -- make conection to thingspeak.com
@@ -47,7 +50,7 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        if (Battery < 3300) then
+        if (Battery < 3700) then
             dofile("longsleep.lc")
         else
             dofile("sleep.lc")
@@ -134,7 +137,7 @@ local function measure_data()
     package.loaded["ds18b20"]=nil
 
     -- Battery
-    Battery = (468 * adc.read(0)) / 100
+    Battery = (480 * adc.read(0)) / 100
     print ("Battery: "..Battery)
 
 end
@@ -143,6 +146,8 @@ end
 tmr.stop(0)
 --counter = 5 -- pouziva se pouze s dht, pro ds18b20 neni napsana podpora opakovani mereni
 measure_data()
+collectgarbage()
 -- nevolam ze send data, protoze se nic neopakuje a tak je lepsi aby lokalni promenne 
 -- send data zhynuli, realne to ma efekt asi 300 bajtu na heapu, takze nic moc
 send_data() 
+collectgarbage()

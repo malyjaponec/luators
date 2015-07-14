@@ -63,7 +63,7 @@ local function check_new_ip()
         print("Waiting for IP...") 
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(0, 2000, 0, function() check_new_ip() end)
+            tmr.alarm(0, 4000, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
@@ -92,7 +92,7 @@ local function reset_apn()
         wifi.sta.config(ap_selected_ssid,ap_selected_pass)
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
-        counter = 10
+        counter = 6
         tmr.alarm(0, 5000, 0, function() check_new_ip() end)
     else 
         print("Waiting between scans...")
@@ -126,9 +126,10 @@ local function check_ip()
         print("Connecting...") 
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 2000, 0, function() check_ip() end)
+            tmr.alarm(0, 4000, 0, function() check_ip() end)
         else
             print(wifi.sta.status())
+            wifi.setmode(wifi.STATION) -- nove moduly jsou v stavu softap a dalsi operace by neprosli a nikdy by se to nerozjelo
             change_apn()
         end
     end
@@ -139,5 +140,5 @@ end
 
 tmr.stop(1)
 tmr.stop(0)
-counter = 10
+counter = 6
 check_ip()
