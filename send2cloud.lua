@@ -3,6 +3,7 @@ local Humidity = 0
 local TempList = {}
 local Battery = 0
 local counter = 0
+local SentOK = 0
 
 --local api_key = "DXF1QV45IV9PKGJU" -- sklenik
 local api_key = "JD83443A1SBDLGUG" -- solarni system
@@ -13,9 +14,10 @@ local function send_data()
     
     tmr.stop(0)
     -- prepare reboot if something bad, timeout 15 s
-    tmr.alarm(0, 15000, 0, function() dofile("sleep.lc") end)
+    tmr.alarm(0, 15000, 0, function() dofile("reboot.lc") end)
 
     -- prepocet pole teplot na URL retezec
+    collectgarbage()
     local Fields = ""
     for q,v in pairs(TempList) do
         Fields = Fields.."&field"..q.."="..v
@@ -24,14 +26,16 @@ local function send_data()
     TempList = nil -- zrusim praznde pole
 
     -- pridam velikost heapu
-    Fields = Fields.."&field7="..node.heap()
+    --Fields = Fields.."&field7="..Battery
     
     -- pridam napeti baterie
-    Fields = Fields.."&field8="..Battery
+    Fields = Fields.."&field8="..node.heap()
     
     print(Fields) -- debug
-    
+    collectgarbage()
+        
     -- make conection to thingspeak.com
+    SentOK = 0
     print("Connecting to thingspeak.com...")
     local conn=net.createConnection(net.TCP, 0) 
 
@@ -47,14 +51,16 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        if (Battery < 3300) then
-            dofile("longsleep.lc")
+        if (SentOK == 1) then
+            SentOK = nil
+            dofile("wait.lc")
         else
-            dofile("sleep.lc")
+            dofile("reboot.lc")
         end
     end)
     
     conn:on("connection", function(conn)
+        SentOK = 1
         print("Connected, sending data...")
 --        conn:send("GET /update?key="..api_key.."&field1="..Temperature.."&field2="..Humidity.."&field3="..Battery.." HTTP/1.1\r\n") 
         conn:send("GET /update?api_key="..api_key..Fields.." HTTP/1.1\r\n") 
@@ -84,7 +90,7 @@ local function measure_data()
 --            tmr.alarm(0, 500, 0, function() measure_data() end)
 --        else
 --            print("PANIC, data not aquired, end")
---            dofile("sleep.lc") 
+--            dofile("reboot.lc")
 --        end
 --        return
 --    end
@@ -112,7 +118,9 @@ local function measure_data()
             t.measure(v)
         end
         -- Wait until first measure is done
+        tmr.wdclr()
         tmr.delay(750000)
+        tmr.wdclr()
         -- Read temperatures
         local value = 0
         local textvalue = ""
@@ -143,6 +151,9 @@ end
 tmr.stop(0)
 --counter = 5 -- pouziva se pouze s dht, pro ds18b20 neni napsana podpora opakovani mereni
 measure_data()
+collectgarbage()
 -- nevolam ze send data, protoze se nic neopakuje a tak je lepsi aby lokalni promenne 
 -- send data zhynuli, realne to ma efekt asi 300 bajtu na heapu, takze nic moc
 send_data() 
+collectgarbage()
+
