@@ -27,6 +27,7 @@ local function send_data()
 
     -- pridam velikost heapu
     --Fields = Fields.."&field7="..Battery
+    Fields = Fields.."&field5="..math.random(100)
     
     -- pridam napeti baterie
     Fields = Fields.."&field8="..node.heap()
