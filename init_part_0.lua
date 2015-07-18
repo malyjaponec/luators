@@ -3,9 +3,9 @@
     gpio.mode(8, gpio.OUTPUT)
     gpio.write(8, gpio.LOW)
 -- zelena
-    -- Zapnuti proudu do 18b20 sestavy, napaji GPIO 12
+    -- Nezapnuti proudu do 18b20 sestavy, napaji GPIO 12
     gpio.mode(6, gpio.OUTPUT)
-    gpio.write(6, gpio.HIGH)
+    gpio.write(6, gpio.LOW)
 -- modra
     gpio.mode(7, gpio.OUTPUT)
     gpio.write(7, gpio.LOW)

@@ -80,6 +80,7 @@ local function measure_data()
     --print("HEAP measure_data "..node.heap())
     
     tmr.stop(0)
+    gpio.write(6, gpio.HIGH) -- zapnuti napajeni
     print("Measuring...")
     
     -- Temperature and humidity DHT2
@@ -141,6 +142,9 @@ local function measure_data()
     t = nil
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
+
+    gpio.write(6, gpio.LOW) 
+    gpio.write(7, gpio.LOW) -- vypnuti i datoveho pinu, zustava jinak svitit modra led na kitu, na finalu to zbytecne zere, funce ow.depower nefunguje
 
     -- Battery
     Battery = (468 * adc.read(0)) / 100
