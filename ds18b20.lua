@@ -75,7 +75,7 @@ function startMeasure(addr)
   end
 end
 
-function readNumber(addr, unit)
+function readNumber(addr)
   result = nil
   setup(pin)
   flag = false
@@ -107,7 +107,7 @@ function readNumber(addr, unit)
         t = t * 625
         return t
       end
-      tmr.wdclr()
+--      tmr.wdclr() zpusobovalo nahodne problemy s otevrenim TCP, bez toho se zdalo ze to funguje
     else
     -- print("Device family is not recognized.")
     end
@@ -115,19 +115,6 @@ function readNumber(addr, unit)
    -- print("CRC is not valid!")
   end
   return result
-end
-
-function read(addr)
-  t = readNumber(addr)
-  if (t == nil) then
-    return nil
-  else
-    return t
-  end
-end
-
-function measure(addr)
-  startMeasure(addr)
 end
 
 -- Return module table
