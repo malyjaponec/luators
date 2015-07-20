@@ -35,11 +35,11 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
---        if (SentOK == 1) then
+        if (SentOK == 1) then
             dofile("wait.lc")
---        else
---            dofile("reboot.lc")
---        end
+        else
+            dofile("reboot.lc")
+        end
     end)
     
     conn:on("connection", function(conn)
