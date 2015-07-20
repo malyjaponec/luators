@@ -1,4 +1,4 @@
-ReportInterval = 60
+ReportInterval = 1800
 
 local time = (ReportInterval * 1000*1000) - tmr.now() - 100000
 if time < 5000000 then time = 5000000 end

@@ -6,6 +6,7 @@ print("Sleeping for "..(time/1000000).." s")
 --tmr.alarm(0, 100, 0, function() node.dsleep(time, 2) end)
 tmr.wdclr()
 tmr.stop(0)
+print(node.heap())
 node.dsleep(time, 1)
 -- 2 bez kalibrace RF
 -- 1 s kalibraci RF

@@ -1,6 +1,7 @@
 local Humidity = -1
 local Temperature = -1
 local Battery = -1
+local analog_value = 4000
 local counter = 0
 local api_key = "DXF1QV45IV9PKGJU" -- smradoch tours garage
 --local api_key = "6XJ1AWU739JA0J9G" -- testovaci kanal
@@ -28,7 +29,11 @@ local function send_data()
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        dofile("longsleep.lc")
+        if analog_value > 3800 then 
+            dofile("longsleep.lc")
+        else
+            dofile("extrasleep.lc")
+        end
     end)
     
     conn:on("connection", function(conn)
@@ -49,28 +54,28 @@ local function measure_data()
   --print("HEAP measure_data "..node.heap())
     
   tmr.stop(0)
-  print("Measuring...")
     
   -- Temperature and Humidity
   local dht = require("dht22")
-  if 0 == dht.read(2) then -- pin 4=GPIO2, 2=GPIO5 
-    dht = nil
-    counter = counter - 1
-    if (counter > 0) then
-      tmr.alarm(0, 500, 0, function() measure_data() end)
-    else
-      print("PANIC, data not aquired, end")
-      dofile("sleep.lc") 
-    end
-    -- uklid
-    dht = nil
-    dht22 = nil
-    package.loaded["dht22"] = nil
-    return
+  local result
+  counter = 10
+  while (counter > 0) do
+        print("Measuring...")
+        result = dht.read(2) -- pin 4=GPIO2, 2=GPIO5 
+        if (result == 1) then
+            break
+        end
+        print(result)
+        counter = counter - 1
   end
 
-  Temperature = dht.getTemperatureString()
-  Humidity = dht.getHumidityString()
+  if (1 == result) then
+        Temperature = dht.getTemperatureString()
+        Humidity = dht.getHumidityString()
+
+        print ("Temperature: "..Temperature)
+        print ("Humidity: "..Humidity)
+  end
 
   -- uklid
   dht = nil
@@ -78,18 +83,24 @@ local function measure_data()
   package.loaded["dht22"] = nil
 
   -- Battery
-  local analog_value = 468 * adc.read(0)
-  Battery = (analog_value / 100000).."."..string.sub(string.format("%05d",(analog_value % 100000)),1,2)
-  analog_value = nil
+  analog_value = 468 * adc.read(0) / 100
+  Battery = (analog_value / 1000).."."..string.sub(string.format("%03d",(analog_value % 1000)),1,2)
 
-  print ("Temperature: "..Temperature)
-  print ("Humidity: "..Humidity)
   print ("Battery: "..Battery)
- 
-  send_data()
+  return result
 end
 
 --print("HEAP send2cloud.lua "..node.heap())
-tmr.stop(0)
-counter = 10
-measure_data()
+
+local result = 0
+result = measure_data()
+collectgarbage()
+
+if (result == 1) then
+   tmr.alarm(0, 200, 0, function() send_data() end)
+else 
+    print("PANIC, data not aquired, end")
+    dofile("sleep.lc") 
+end
+
+
