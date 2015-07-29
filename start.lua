@@ -71,7 +71,8 @@ local function check_new_ip()
         end
     else 
         print("Config done, IP is "..wifi.sta.getip())
-        dofile("send2cloud.lc")
+        collectgarbage()
+        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)
     end
 end
 
@@ -121,7 +122,8 @@ local function check_ip()
     tmr.stop(0)
     if nil ~= wifi.sta.getip() then 
         print("Autoconnected, IP is "..wifi.sta.getip())
-        tmr.alarm(0, 200, 0, function() dofile("send2cloud.lc") end)
+        collectgarbage()
+        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)
     else
         print("Connecting...") 
         counter = counter - 1
@@ -134,9 +136,7 @@ local function check_ip()
     end
 end
 
--- start.lua
 --print("HEAP start.lua "..node.heap())
-
 tmr.stop(1)
 tmr.stop(0)
 StartTime = tmr.now()
