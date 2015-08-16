@@ -67,11 +67,12 @@ local function check_new_ip()
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
-            dofile("sleep.lc")
+            dofile("reset.lc")
         end
     else 
         print("Config done, IP is "..wifi.sta.getip())
-        dofile("send2cloud.lc")
+        collectgarbage()
+        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)  
     end
 end
 
@@ -102,7 +103,7 @@ local function reset_apn()
         else
             print("PANIC, not wifi coverage, end")
             wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
-            dofile("sleep.lc")
+            dofile("reset.lc")
         end 
     end
     --apt = nil
@@ -121,7 +122,8 @@ local function check_ip()
     tmr.stop(0)
     if nil ~= wifi.sta.getip() then 
         print("Autoconnected, IP is "..wifi.sta.getip())
-        dofile("send2cloud.lc")
+        collectgarbage()
+        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)
     else
         print("Connecting...") 
         counter = counter - 1
@@ -139,5 +141,6 @@ end
 
 tmr.stop(1)
 tmr.stop(0)
-counter = 10
+counter = 5
+wifi.setmode(wifi.STATION) -- nove moduly jsou prepnute do softap a nerozjede se to, jiz pouzitemu je to jedno
 check_ip()

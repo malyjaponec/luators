@@ -1,4 +1,5 @@
 -- init.lua
+StartTime = tmr.now()
 dofile("init_part_0.lc")
 uart.setup(0,115200,0,1,1)
 
