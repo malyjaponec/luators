@@ -9,15 +9,19 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
     local SentOK = 0
 
     -- prepare reboot if something bad, timeout 15 s
-    tmr.alarm(0, 15000, 0, function() node.reset() end)
+    tmr.alarm(0, 15000, 0, function() node.restart() end)
 
     -- pridam velikost heapu
     Fields = Fields.."&field8="..node.heap()
     
+    -- pridam runcounter
+    RunCounter = RunCounter + 1
+    Fields = Fields.."&field7="..RunCounter
+    
     print(Fields) -- debug
         
     -- make conection to thingspeak.com
-    print("Connecting to thingspeak.com...")
+    print("Connecting to gate.jiffaco.cz...")
     local conn=net.createConnection(net.TCP, 0) 
 
     conn:on("receive", function(conn, payload)
@@ -37,7 +41,7 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
             tmr.alarm(0, 200, 0, function() dofile("wait.lc") end)
         else
             collectgarbage()
-            tmr.alarm(0, 200, 0, function() node.restart() end)
+            tmr.alarm(0, 200, 0, function() dofile("reset.lc") end)
             -- alternativne podle baterije jeste jde exstrasl;ee[
         end
     end)
@@ -55,7 +59,7 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
 
     -- api.thingspeak.com 184.106.153.149
     -- jiffaco localne 192.168.129.3
-    conn:connect(3000,'192.168.129.3')
+    conn:connect(3000,'77.104.219.2')
 
 
 
