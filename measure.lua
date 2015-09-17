@@ -2,7 +2,7 @@
     print("HEAP measure_data "..node.heap())
    
     Fields = ""
-
+        
     -- Temperature and Humidity
     local result,Tint,Hint,Tfrac,Hfrac
     counter = 10
@@ -20,7 +20,7 @@
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
         
-        Fields = Fields.."&field1="..Tint.."."..Tfrac.."&field2="..Hint.."."..Hfrac
+        Fields = "teplota:"..Tint.."."..Tfrac..",vlhkost:"..Hint.."."..Hfrac
     end
 
     -- uklid
@@ -32,7 +32,8 @@
     -- analog prevodnik   
     local analog_value = adc.read(0)
     print ("Anal: "..analog_value)
-    Fields = Fields.."&field3="..analog_value
+    if (Fields ~= "") then Fields = Fields.."," end
+    Fields = Fields.."tma:"..analog_value
     analog_value = nil
 
     collectgarbage()

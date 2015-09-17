@@ -1,7 +1,9 @@
 --local api_key = "***REMOVED***" -- sklenik
 --local api_key = "***REMOVED***" -- solarni system
 --local api_key = "***REMOVED***" -- testovaci kanal
-local api_key = "***REMOVED***" -- jiffaco/testovaci
+--local api_key = "***REMOVED***" -- jiffaco/testovaci
+local api_key = "***REMOVED***" -- jiffaco/emon
+local node_id = "node=1" -- zatim nevim co to presne znamena
 
     tmr.stop(0)
     print("HEAP send_data "..node.heap())
@@ -12,11 +14,11 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
     tmr.alarm(0, 15000, 0, function() node.restart() end)
 
     -- pridam velikost heapu
-    Fields = Fields.."&field8="..node.heap()
+    Fields = Fields..",heap:"..node.heap()
     
     -- pridam runcounter
     RunCounter = RunCounter + 1
-    Fields = Fields.."&field7="..RunCounter
+    Fields = Fields..",run_count:"..RunCounter
     
     print(Fields) -- debug
         
@@ -30,11 +32,13 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
 
     conn:on("sent", function(conn) 
         print("Closing connection...") 
-        conn:close() 
+        tmr.alarm(1, 2000, 0, function() conn:close() end)
+        --conn:close() 
     end)
     
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
+        tmr.stop(0)
         conn = nil
        if (SentOK == 1) then
             collectgarbage()
@@ -49,8 +53,9 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
     conn:on("connection", function(conn)
         SentOK = 1
         print("Connected, sending data...")
-        conn:send("GET /update?api_key="..api_key..Fields.." HTTP/1.1\r\n") 
-        conn:send("Host: gate.jiffaco.cz\r\n") 
+        conn:send("GET /emoncms/input/post.json?"..node_id.."&json={"..Fields.."}&apikey="..api_key.." HTTP/1.1\r\n") 
+        print("GET /emoncms/input/post.json?"..node_id.."&json={"..Fields.."}&apikey="..api_key.." HTTP/1.1\r\n")
+        conn:send("Host: emon.jiffaco.cz\r\n") 
         conn:send("Accept: */*\r\n") 
         conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
         conn:send("\r\n")
@@ -59,7 +64,8 @@ local api_key = "***REMOVED***" -- jiffaco/testovaci
 
     -- api.thingspeak.com 184.106.153.149
     -- jiffaco localne 192.168.129.3
-    conn:connect(3000,'77.104.219.2')
+    -- jiffaco externe 77.104.219.2
+    conn:connect(80,'77.104.219.2')
 
 
 
