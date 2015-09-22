@@ -63,16 +63,16 @@ local function check_new_ip()
         print("Waiting for IP...") 
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(0, 4000, 0, function() check_new_ip() end)
+            tmr.alarm(0, 2000, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
-            dofile("reboot.lc")
+            dofile("reset.lc")
         end
     else 
         print("Config done, IP is "..wifi.sta.getip())
         collectgarbage()
-        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)
+        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)  
     end
 end
 
@@ -93,7 +93,7 @@ local function reset_apn()
         wifi.sta.config(ap_selected_ssid,ap_selected_pass)
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
-        counter = 6
+        counter = 10
         tmr.alarm(0, 5000, 0, function() check_new_ip() end)
     else 
         print("Waiting between scans...")
@@ -103,7 +103,7 @@ local function reset_apn()
         else
             print("PANIC, not wifi coverage, end")
             wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
-            dofile("reboot.lc")
+            dofile("reset.lc")
         end 
     end
     --apt = nil
@@ -128,7 +128,7 @@ local function check_ip()
         print("Connecting...") 
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 4000, 0, function() check_ip() end)
+            tmr.alarm(0, 2000, 0, function() check_ip() end)
         else
             print(wifi.sta.status())
             change_apn()
@@ -136,10 +136,11 @@ local function check_ip()
     end
 end
 
+-- start.lua
 --print("HEAP start.lua "..node.heap())
+
 tmr.stop(1)
 tmr.stop(0)
-StartTime = tmr.now()
 counter = 5
 wifi.setmode(wifi.STATION) -- nove moduly jsou prepnute do softap a nerozjede se to, jiz pouzitemu je to jedno
 check_ip()
