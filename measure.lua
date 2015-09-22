@@ -33,10 +33,23 @@
             textvalue = (value / 10000).."."..string.sub(string.format("%04d",(value % 10000)),1,4)
             print("Temperature "..q.." = "..textvalue)
             addrs[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
-            Fields = Fields.."&field"..q.."="..textvalue
+            if (Fields ~= "") then Fields = Fields.."," end
+            Fields = Fields.."temp"..q..":"..textvalue
             tmr.wdclr()
         end
---        Fields = Fields.."&field1=1.0001&field2=2.0002&field3=3.0003&field4=4.0004&field5=5.0005"
+
+-- nefunguje teplomer, simuluju to
+        if (Fields ~= "") then Fields = Fields.."," end
+        Fields = Fields.."temp1:"..math.random(10,85)..
+                         ",temp2:"..math.random(10,85)..
+                         ",temp3:"..math.random(10,85)..
+                         ",temp4:"..math.random(10,85)..
+                         ",temp5:"..math.random(10,85)..
+                         ",temp6:"..math.random(10,85)..
+                         ",pump1:"..math.random(0,1)..
+                         ",pump2:"..math.random(0,1)..
+                         ",exch:"..math.random(1,2)
+
     end
     addrs = nil -- rusim pole adres
     textvalue = nil 
@@ -53,7 +66,6 @@
 
     -- Battery
     -- Battery = (468 * adc.read(0)) / 100
-
 
     collectgarbage()
     tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
