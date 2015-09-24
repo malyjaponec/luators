@@ -1,7 +1,7 @@
     tmr.stop(0)
     print("HEAP measure_data "..node.heap())
    
-    Fields = ""
+     Fields = {}   
 
     -- Temperature and Humidity
     local result,Tint,Hint,Tfrac,Hfrac
@@ -20,7 +20,8 @@
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
         
-        Fields = Fields.."&field1="..Tint.."."..Tfrac.."&field2="..Hint.."."..Hfrac
+        Fields["sklenik_teplota"] = Tint.."."..Tfrac
+        Fields["sklenik_vlhkost"] = Hint.."."..Hfrac
     end
 
     -- uklid
@@ -33,7 +34,7 @@
     analog_value = 468 * adc.read(0) / 100
     print ("Anal: "..analog_value)
     local Battery = (analog_value / 1000).."."..string.sub(string.format("%03d",(analog_value % 1000)),1,2)
-    Fields = Fields.."&field3="..Battery
+    Fields["sklenik_baterie"] = Battery
     Battery = nil
 
     collectgarbage()
