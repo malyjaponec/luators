@@ -18,7 +18,7 @@ local node_id = "node=3" -- identifikace nodu
     tmr.alarm(0, 15000, 0, function() node.restart() end)
 
     -- pridam velikost heapu
-    Fields["sklenik_heap"] = node.heap()
+    Fields["foliak_heap"] = node.heap()
     
     print(Fields) -- debug
         
@@ -38,15 +38,7 @@ local node_id = "node=3" -- identifikace nodu
     conn:on("disconnection", function(conn) 
         print("Got disconnection.") 
         conn = nil
-        if analog_value > 3900 then 
-            ReportInterval = 300
-        else
-            if analog_value > 3800 then
-                ReportInterval = 600
-            else
-                ReportInterval = 1800
-            end
-        end
+        ReportInterval = 300
         dofile("sleep.lc")
     end)
 

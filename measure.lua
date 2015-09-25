@@ -4,6 +4,9 @@
      Fields = {}   
 
     -- Temperature and Humidity
+    gpio.mode(1, gpio.OUTPUT) -- GPIO5 napaji DHT22
+    gpio.write(1, gpio.HIGH)
+
     local result,Tint,Hint,Tfrac,Hfrac
     counter = 10
     while (counter > 0) do
@@ -15,13 +18,14 @@
         print(result)
         counter = counter - 1
     end
-
+    gpio.write(1, gpio.LOW)
+    
     if (0 == result) then
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
         
-        Fields["sklenik_teplota"] = Tint.."."..Tfrac
-        Fields["sklenik_vlhkost"] = Hint.."."..Hfrac
+        Fields["foliak_teplota"] = Tint.."."..Tfrac
+        Fields["foliak_vlhkost"] = Hint.."."..Hfrac
     end
 
     -- uklid
@@ -31,10 +35,9 @@
     collectgarbage()
 
     -- analog prevodnik   
-    analog_value = 468 * adc.read(0) / 100
+    analog_value = (1024 - adc.read(0))
     print ("Anal: "..analog_value)
-    local Battery = (analog_value / 1000).."."..string.sub(string.format("%03d",(analog_value % 1000)),1,2)
-    Fields["sklenik_baterie"] = Battery
+    Fields["foliak_svetlo"] = analog_value
     Battery = nil
 
     collectgarbage()
