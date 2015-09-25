@@ -1,25 +1,19 @@
 -- init.lua
 StartTime = tmr.now()
 RunCounter = 0
+ReportInterval = 5
 uart.setup(0,115200,0,1,1)
 
--- Pozhasinani ledek
-	-- cervena 
-		gpio.mode(8, gpio.OUTPUT)
-		gpio.write(8, gpio.LOW)
-	-- zelena
-    -- Nezapnuti proudu do 18b20 sestavy, napaji GPIO 12
-		gpio.mode(6, gpio.OUTPUT)
-		gpio.write(6, gpio.LOW)
-	-- modra
-		gpio.mode(7, gpio.OUTPUT)
-		gpio.write(7, gpio.LOW)
-	-- mala cervena zhruba uprostred prosvecovala
-		gpio.mode(2, gpio.OUTPUT)
-		gpio.write(2, gpio.HIGH)
-	-- a vedle dalsi
-		gpio.mode(1, gpio.OUTPUT)
-		gpio.write(1, gpio.HIGH)
+-- Nastaveni sbernice s teplomery (vypnuto)
+   gpio.mode(6, gpio.OUTPUT) -- 12
+   gpio.write(6, gpio.LOW)
+   gpio.mode(7, gpio.OUTPUT) -- 14
+   gpio.write(7, gpio.LOW)
+-- Nastaveni vsutpnich pinu   
+   gpio.mode(5, gpio.INPUT, gpio.FLOAT) -- 14
+   gpio.mode(0, gpio.INPUT, gpio.FLOAT) -- 16
+   gpio.mode(2, gpio.INPUT, gpio.FLOAT) -- 4
+   gpio.mode(1, gpio.INPUT, gpio.FLOAT) -- 5
 
 -- toto cekani je pro pripad nutnosti to zastavit ale taky
 -- protoze modul se sam prihlasi na wifi kdyz se necha chvili byt
