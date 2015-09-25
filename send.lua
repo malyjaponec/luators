@@ -1,7 +1,3 @@
---local api_key = "***REMOVED***" -- sklenik
---local api_key = "***REMOVED***" -- solarni system
---local api_key = "***REMOVED***" -- testovaci kanal
---local api_key = "***REMOVED***" -- jiffaco/testovaci
 local api_key = "***REMOVED***" -- jiffaco/emon
 local node_id = "node=2" -- identifikace nodu
 
@@ -13,13 +9,13 @@ local node_id = "node=2" -- identifikace nodu
     -- prepare reboot if something bad, timeout 15 s
     tmr.alarm(0, 15000, 0, function() node.restart() end)
 
+ -- pridam velikost heapu
+    Fields["heap"] = node.heap()
+    
     -- pridam velikost heapu a counter
     RunCounter = RunCounter + 1
-    if (Fields ~= "") then Fields = Fields.."," end
-    Fields = Fields.."heap:"..node.heap()..",run_count:"..RunCounter
+    Fields["run_count"] = RunCounter
     
-    print(Fields) -- debug
-        
     -- make conection to thingspeak.com
     print("Connecting to gate.jiffaco.cz...")
     local conn=net.createConnection(net.TCP, 0) 
@@ -38,7 +34,7 @@ local node_id = "node=2" -- identifikace nodu
         print("Got disconnection.") 
         tmr.stop(1)
         conn = nil
-       if (SentOK == 1) then
+        if (SentOK == 1) then
             collectgarbage()
             tmr.alarm(0, 200, 0, function() dofile("wait.lc") end)
         else
@@ -51,7 +47,7 @@ local node_id = "node=2" -- identifikace nodu
     conn:on("connection", function(conn)
         SentOK = 1
         print("Connected, sending data...")
-        conn:send("GET /emoncms/input/post.json?"..node_id.."&json={"..Fields.."}&apikey="..api_key.." HTTP/1.1\r\n") 
+        conn:send("GET /emoncms/input/post.json?" .. node_id .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. api_key .. " HTTP/1.1\r\n")
         conn:send("Host: emon.jiffaco.cz\r\n") 
         conn:send("Accept: */*\r\n") 
         conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
