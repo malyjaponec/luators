@@ -14,7 +14,7 @@ local node_id = "node=3" -- identifikace nodu
     local SentOK = 0
 
     -- prepare reboot if something bad, timeout 15 s
-    ReportInterval = 60
+    ReportInterval = 300
     tmr.alarm(0, 15000, 0, function() node.restart() end)
 
     -- pridam velikost heapu
