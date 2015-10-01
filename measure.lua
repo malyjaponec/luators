@@ -8,7 +8,7 @@
     counter = 10
     while (counter > 0) do
         print("Measuring...")
-        result, Tint, Hint, Tfrac, Hfrac = dht.read(2) -- pin 4=GPIO2, 2=GPIO5 
+        result, Tint, Hint, Tfrac, Hfrac = dht.read(gpionum[2])
         if (result == 0) then
             break
         end
@@ -19,9 +19,10 @@
     if (0 == result) then
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
-        
-        Fields["sklenik_teplota"] = Tint.."."..Tfrac
-        Fields["sklenik_vlhkost"] = Hint.."."..Hfrac
+
+        -- frac hodnoty se pouziji jen pro integer preklad, tohle pouziva float a je to primo v prvni promenne
+        Fields[ReportFieldPrefix.."teplota"] = Tint
+        Fields[ReportFieldPrefix.."vlhkost"] = Hint
     end
 
     -- uklid
@@ -31,11 +32,10 @@
     collectgarbage()
 
     -- analog prevodnik   
-    analog_value = 468 * adc.read(0) / 100
+    analog_value = adc.read(0)
     print ("Anal: "..analog_value)
-    local Battery = (analog_value / 1000).."."..string.sub(string.format("%03d",(analog_value % 1000)),1,2)
-    Fields["sklenik_baterie"] = Battery
-    Battery = nil
+    Fields[ReportFieldPrefix.."baterie"] = analog_value
+    analog_value = nil
 
     collectgarbage()
     

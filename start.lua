@@ -67,7 +67,6 @@ local function check_new_ip()
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
-            ReportInterval = 60
             dofile("sleep.lc")
         end
     else 
@@ -104,7 +103,6 @@ local function reset_apn()
         else
             print("PANIC, not wifi coverage, end")
             wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
-            ReportInterval = 60
             dofile("sleep.lc")
         end 
     end
