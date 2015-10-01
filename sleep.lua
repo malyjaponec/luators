@@ -1,14 +1,8 @@
 tmr.stop(0)
-
-local time = (ReportInterval * 1000*1000) - tmr.now() - 100000
-if time < 5000000 then time = 5000000 end
-print("Sleeping for "..(time/1000000).." s")
-
 tmr.wdclr()
 print(node.heap())
-node.dsleep(time, 1)
--- 2 bez kalibrace RF
--- 1 s kalibraci RF
--- 0 zalezi na bajtu 108, nevim co to znamena
--- 4 RF po startu vypnute
-
+print("Switching power off...")
+gpio.write(gpionum[13],gpio.LOW) -- timto se vypnu
+tmr.delay(500000) -- cekam 0,5s
+print("Power gone, still running???, setting up emergency reboot in 60s...")
+tmr.alarm(0, 60000, 1, function() node.restart() end)
