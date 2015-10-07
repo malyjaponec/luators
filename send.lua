@@ -1,22 +1,21 @@
-local api_key = "***REMOVED***" -- jiffaco/emon
-local node_id = "node=2" -- identifikace nodu
+-- send.lua
 
     tmr.stop(0)
     print("HEAP send_data "..node.heap())
     
     local SentOK = 0
 
-    -- prepare reboot if something bad, timeout 15 s
-    tmr.alarm(0, 15000, 0, function() node.restart() end)
+-- prepare reboot if something bad, timeout 15 s
+    tmr.alarm(1, 10000, 0, function() node.restart() end)
 
- -- pridam velikost heapu
-    Fields["heap"] = node.heap()
+-- pridam velikost heapu
+    Fields[ReportFieldPrefix.."heap"] = node.heap()
     
-    -- pridam velikost heapu a counter
+-- pridam velikost counter
     RunCounter = RunCounter + 1
-    Fields["run_count"] = RunCounter
+    Fields[ReportFieldPrefix.."run_count"] = RunCounter
     
-    -- make conection to thingspeak.com
+-- make conection to cloud
     print("Connecting to gate.jiffaco.cz...")
     local conn=net.createConnection(net.TCP, 0) 
 
@@ -25,9 +24,8 @@ local node_id = "node=2" -- identifikace nodu
     end)
 
     conn:on("sent", function(conn) 
-        print("Closing connection...") 
-        tmr.alarm(1, 1000, 0, function() conn:close() end)
-        --conn:close() 
+        print("Sent...") 
+        tmr.alarm(0, 1000, 0, function() conn:close() end)
     end)
     
     conn:on("disconnection", function(conn) 
@@ -36,28 +34,30 @@ local node_id = "node=2" -- identifikace nodu
         conn = nil
         if (SentOK == 1) then
             collectgarbage()
-            tmr.alarm(0, 200, 0, function() dofile("wait.lc") end)
+            tmr.stop(1) -- zastavim nouzovy casovac
+            tmr.alarm(0, 100, 0, function() dofile("wait.lc") end)
         else
-            collectgarbage()
-            tmr.alarm(0, 200, 0, function() dofile("reset.lc") end)
-            -- alternativne podle baterije jeste jde exstrasl;ee[
+            tmr.alarm(0, 100, 0, function() dofile("reset.lc") end)
         end
     end)
     
     conn:on("connection", function(conn)
         SentOK = 1
         print("Connected, sending data...")
-        conn:send("GET /emoncms/input/post.json?" .. node_id .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. api_key .. " HTTP/1.1\r\n")
+        -- debug print
+          print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
+        --
+        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
         conn:send("Host: emon.jiffaco.cz\r\n") 
-        conn:send("Accept: */*\r\n") 
-        conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n")
+        -- zbytek neni potreba, pro minimalni uspokojeni protokolu 1.1 staci GET a host
+        --conn:send("Accept: */*\r\n") 
+        --conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; no OS)\r\n")
         conn:send("\r\n")
         conn:send("\r\n")
     end)
 
-    -- api.thingspeak.com 184.106.153.149
     -- jiffaco localne 192.168.129.3
-    -- jiffaco externe 77.104.219.2
+    -- jiffaco externe i lokalne 77.104.219.2
     conn:connect(80,'77.104.219.2')
 
 

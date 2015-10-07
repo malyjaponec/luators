@@ -1,12 +1,15 @@
-tmr.stop(0)
-print("HEAP measure_data "..node.heap())
+-- measure.lua
 
-Fields = {}
+    tmr.stop(0)
+    print("HEAP measure_data "..node.heap())
 
--- Tepolot z ds18b20
+    gpio.write(gpionum[12], gpio.HIGH) -- napajeni
+    print("Measuring...")
+ 
     t = require("ds18b20")
-    
-    t.setup(7) -- sbernice na gpio 13 (vedlejsi pin vedle VCC)
+
+-- Tepoloty z ds18b20 - lokalni senzory
+    t.setup(gpionum[13]) -- sbernice na gpio 13 (vedlejsi pin vedle VCC)
     local addrs = t.addrs() -- nacte adresy do lokalniho pole
     if (addrs ~= nil) then
         print("Total DS18B20 sensors: "..table.getn(addrs)) -- pocet senzoru 
@@ -23,8 +26,8 @@ Fields = {}
         local value = ""
         for q,v in pairs(addrs) do
             value = t.readNumber(v)
-            Fields["temp"..addrs[q]] = value
-            print("temp"..addrs[q].." = "..value)
+            Fields[ReportFieldPrefix.."t"..addrs[q]] = value
+            print("t"..addrs[q].." = "..value)
             addrs[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             tmr.wdclr()
         end
@@ -32,9 +35,9 @@ Fields = {}
     
     -- nefunguje teplomer, simuluju to
         if (table.getn(addrs) == 0) then
-            Fields["temp111"] = math.random(10,85)
-            Fields["temp222"] = math.random(10,85)
-            Fields["temp333"] = math.random(10,85)
+            Fields[ReportFieldPrefix.."t1"] = math.random(10,85)
+            Fields[ReportFieldPrefix.."t2"] = math.random(10,85)
+            Fields[ReportFieldPrefix.."t3"] = math.random(10,85)
         end
     
     end
@@ -45,20 +48,25 @@ Fields = {}
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
 
--- Battery
+    -- vypnuti napajeni teplomeru
+    gpio.write(gpionum[12], gpio.LOW) -- tento pin slouzi k napajeni 
+    gpio.write(gpionum[13], gpio.LOW) -- vypnuti i datoveho pinu, zustava jinak svitit modra led na kitu, na finalu to zbytecne zere, funce ow.depower nefunguje
+
+-- Analogovy vstup, nic na nem neni zapojeno
     analog_value = (adc.read(0))
-    Fields["analog"] = analog_value
+    Fields[ReportFieldPrefix.."analog"] = analog_value
 
 -- Pins
-   local ReadScan = {[5] = "collector_pump", [0] = "transfer_pump", [2] = "exchanger", [1] = "NC"}
+   local ReadScan = {[14] = "collector_pump", [16] = "transfer_pump", [5] = "exchanger", [4] = "NC"}
    local value = ""
    for q,v in pairs(ReadScan) do
-        value = gpio.read(q)
-        Fields[v] = value
+        value = gpio.read(gpionum[q])
+        Fields[ReportFieldPrefix..v] = value
    end
    value = nil
    ReadScan = nil  
 
-collectgarbage()
-tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
-print("Sending initiated...")
+-- uklid
+  collectgarbage()
+  tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
+  print("Sending initiated...")
