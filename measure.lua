@@ -33,8 +33,10 @@
 
     -- analog prevodnik   
     analog_value = adc.read(0)
-    print ("Anal: "..analog_value)
-    Fields[ReportFieldPrefix.."baterie"] = analog_value
+    baterie_voltage = analog_value * 0.003436
+    print ("Anal: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie"] = baterie_voltage
+    baterie_voltage = nil
     analog_value = nil
 
     collectgarbage()
