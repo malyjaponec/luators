@@ -60,7 +60,7 @@ end
     
 
 ClockInit() -- init
-ClockReadAll() -- debug
+--ClockReadAll() -- debug
 ClockAlarm(ReportInterval) -- vypnout na 3 minuty
 
 -- na odeslani dat mam 30s pak se stejne vypnu

@@ -4,7 +4,7 @@
     local SentOK = 0
 
     -- pridam velikost heapu
-    Fields["sklenik_heap"] = node.heap()
+    Fields[ReportFieldPrefix.."heap"] = node.heap()
     
     print(Fields) -- debug
         
@@ -30,9 +30,10 @@
     conn:on("connection", function(conn)
         SentOK = 1
         print("Connected, sending data...")
-        print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
+        --print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
         conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
         conn:send("Host: emon.jiffaco.cz\r\n") 
+        -- zbytek neni potreba, pro minimalni uspokojeni protokolu 1.1 staci GET a host
         --conn:send("Accept: */*\r\n") 
         --conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; no OS)\r\n")
         conn:send("\r\n")
