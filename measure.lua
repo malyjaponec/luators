@@ -34,7 +34,12 @@
         end
         value = nil
         textaddr = nil
-    
+
+        if (0 == table.getn(addrs)) then -- Zadny detekovany teplomer
+            Fields[ReportFieldPrefix.."t0-0-0-0-0-0-0-1"] = math.random(0,100)
+            Fields[ReportFieldPrefix.."t0-0-0-0-0-0-0-2"] = math.random(20,60)
+            Fields[ReportFieldPrefix.."t0-0-0-0-0-0-0-3"] = math.random(-20,30)
+        end
     end
     addrs = nil -- rusim pole adres
     

@@ -3,8 +3,8 @@
 -- konstanty pro reportovani
     RunCounter = 0
     ReportInterval = 5 -- sekund
-    ReportNode = "2"
-    ReportFieldPrefix = "solar_"
+    ReportNode = "1"
+    ReportFieldPrefix = "tester1_"
     ReportApiKey = "***REMOVED***" -- jiffaco/emon
     Fields = {}
     
