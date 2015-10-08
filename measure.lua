@@ -4,7 +4,6 @@
     print("HEAP measure_data "..node.heap())
 
     gpio.write(gpionum[12], gpio.HIGH) -- napajeni
-    print("Measuring...")
  
     t = require("ds18b20")
 
@@ -24,21 +23,17 @@
     --        tmr.wdclr()
         -- Read temperatures
         local value = ""
+        local textaddr = ""
         for q,v in pairs(addrs) do
-            value = t.readNumber(v)
-            Fields[ReportFieldPrefix.."t"..addrs[q]] = value
-            print("t"..addrs[q].." = "..value)
+            value = t.readNumber(v)/10000
+            textaddr = v:byte(1).."-"..v:byte(2).."-"..v:byte(3).."-"..v:byte(4).."-"..v:byte(5).."-"..v:byte(6).."-"..v:byte(7).."-"..v:byte(8)
+            Fields[ReportFieldPrefix.."t"..textaddr] = value
+            print("t"..textaddr.." = "..value)
             addrs[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             tmr.wdclr()
         end
         value = nil
-    
-    -- nefunguje teplomer, simuluju to
-        if (table.getn(addrs) == 0) then
-            Fields[ReportFieldPrefix.."t1"] = math.random(10,85)
-            Fields[ReportFieldPrefix.."t2"] = math.random(10,85)
-            Fields[ReportFieldPrefix.."t3"] = math.random(10,85)
-        end
+        textaddr = nil
     
     end
     addrs = nil -- rusim pole adres

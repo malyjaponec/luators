@@ -25,7 +25,7 @@
 
     conn:on("sent", function(conn) 
         print("Sent...") 
-        tmr.alarm(0, 1000, 0, function() conn:close() end)
+        tmr.alarm(0, 500, 0, function() conn:close() end)
     end)
     
     conn:on("disconnection", function(conn) 
@@ -35,9 +35,9 @@
         if (SentOK == 1) then
             collectgarbage()
             tmr.stop(1) -- zastavim nouzovy casovac
-            tmr.alarm(0, 100, 0, function() dofile("wait.lc") end)
+            tmr.alarm(0, 50, 0, function() dofile("wait.lc") end)
         else
-            tmr.alarm(0, 100, 0, function() dofile("reset.lc") end)
+            tmr.alarm(0, 50, 0, function() dofile("reset.lc") end)
         end
     end)
     
