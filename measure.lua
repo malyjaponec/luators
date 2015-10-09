@@ -52,9 +52,9 @@
     gpio.write(gpionum[12], gpio.LOW) -- tento pin slouzi k napajeni 
     gpio.write(gpionum[13], gpio.LOW) -- vypnuti i datoveho pinu, zustava jinak svitit modra led na kitu, na finalu to zbytecne zere, funce ow.depower nefunguje
 
--- Analogovy vstup, nic na nem neni zapojeno
-    analog_value = (adc.read(0))
-    Fields[ReportFieldPrefix.."analog"] = analog_value
+-- Analogovy vstup, testovaci HW tam ma fotoodpor
+    Fields[ReportFieldPrefix.."analog_max"] = AnalogMaximum
+    Fields[ReportFieldPrefix.."analog_min"] = AnalogMinimum
 
 -- Pins
    local ReadScan = {[14] = "collector_pump", [16] = "transfer_pump", [5] = "exchanger", [4] = "NC"}
