@@ -8,7 +8,7 @@
     ReportApiKey = "3e6176fb0367dfc59d914940f95c1007" -- jiffaco/emon
 
 -- nastaveni hodin
-function ClockInit()
+local function ClockInit()
     i2c.setup(0,gpionum[12],gpionum[14],i2c.SLOW)
     i2c.start(0)
     i2c.address(0, 0x6F ,i2c.TRANSMITTER) -- zapis ridiciho slova / write
@@ -20,7 +20,7 @@ function ClockInit()
     i2c.stop(0)
 end
 
-function ClockAlarm(Doba)
+local function ClockAlarm(Doba)
     i2c.start(0)
     i2c.address(0, 0x6F ,i2c.TRANSMITTER) -- zapis ridiciho slova / write
     i2c.write(0, 0x0A) -- zapis adresy registr casu buzeni sekundy
@@ -41,7 +41,7 @@ function ClockAlarm(Doba)
     i2c.stop(0)
 end    
 
-function ClockReadAll()
+local function ClockReadAll()
     i2c.start(0)
     i2c.address(0, 0x6F ,i2c.TRANSMITTER) -- zapis ridiciho slova / write
     i2c.write(0, 00) -- zapis adresy 
@@ -58,12 +58,38 @@ function ClockReadAll()
     print(" ")
 end
     
+local function InitDelay()
+    local AnalogValue = adc.read(0)
+    if (AnalogValue > AnalogMaximum) then 
+        AnalogMaximum = AnalogValue
+    end
+    if (AnalogValue < AnalogMinimum) then 
+        AnalogMinimum = AnalogValue
+    end
+    InitDelayTime = InitDelayTime - InitDelayStep
+    if (InitDelayTime > InitDelayStep) then
+        tmr.alarm(0, InitDelayStep+math.random(-1,1), 0,  function() InitDelay() end)
+    else
+        InitDelayTime = nil
+        InitDelayStep = nil
+        ClockInit() -- init
+        --ClockReadAll() -- debug
+        ClockAlarm(ReportInterval) -- vypnout na 3 minuty
+        -- na odeslani dat mam 30s pak se stejne vypnu
+        tmr.alarm(1, (SecurityOffInterval*1000), 0, function() gpio.write(gpionum[13],gpio.LOW) end) 
+        -- a spoustim hlavni proces vyhledani AP
+        tmr.alarm(0, 100, 0,  function() dofile("start.lc") end)
+    end
+end
 
-ClockInit() -- init
---ClockReadAll() -- debug
-ClockAlarm(ReportInterval) -- vypnout na 3 minuty
-
--- na odeslani dat mam 30s pak se stejne vypnu
-tmr.alarm(1, (SecurityOffInterval*1000), 0, function() gpio.write(gpionum[13],gpio.LOW) end) 
--- a ted spustim bezne odesilani
-tmr.alarm(0, 100, 1, function() dofile("start.lc") end)
+local function InitDelayStart()
+    InitDelayTime = 3000
+    print("AnalogMeasuring for "..(InitDelayTime/1000).." s")
+    InitDelayStep = 20
+    AnalogMinimum = 1024
+    AnalogMaximum = 0
+    InitDelay()
+end
+    
+-- Jako prvni merim napeti baterie
+InitDelayStart()

@@ -31,13 +31,14 @@
 
     collectgarbage()
 
-    -- analog prevodnik   
-    analog_value = adc.read(0)
-    baterie_voltage = analog_value * 0.003436
-    print ("Anal: "..baterie_voltage)
-    Fields[ReportFieldPrefix.."baterie"] = baterie_voltage
+    -- analog prevodnik, pouze zpracovani dat, mereni se provadi pri startu
+    baterie_voltage = AnalogMinimum * 0.003436
+    print ("Batt min: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_min"] = baterie_voltage
+    baterie_voltage = AnalogMaximum * 0.003436
+    print ("Batt max: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
     baterie_voltage = nil
-    analog_value = nil
 
     collectgarbage()
     
