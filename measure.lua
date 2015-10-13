@@ -1,9 +1,9 @@
-    tmr.stop(0)
-    print("HEAP measure_data "..node.heap())
-   
-     Fields = {}   
+-- measure.lua
 
-    -- Temperature and Humidity
+    tmr.stop(0)
+   
+-- Temperature and Humidity
+
     local result,Tint,Hint,Tfrac,Hfrac
     counter = 10
     while (counter > 0) do
@@ -20,8 +20,12 @@
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
         
-        Fields["sklenik_teplota"] = Tint.."."..Tfrac
-        Fields["sklenik_vlhkost"] = Hint.."."..Hfrac
+        Fields[ReportFieldPrefix.."teplota"] = Tint
+        Fields[ReportFieldPrefix.."vlhkost"] = Hint
+
+        Fields[ReportFieldPrefix.."sensor_failed"] = 0
+    else
+        Fields[ReportFieldPrefix.."sensor_failed"] = 1
     end
 
     -- uklid
@@ -30,14 +34,21 @@
 
     collectgarbage()
 
-    -- analog prevodnik   
-    analog_value = 468 * adc.read(0) / 100
-    print ("Anal: "..analog_value)
-    local Battery = (analog_value / 1000).."."..string.sub(string.format("%03d",(analog_value % 1000)),1,2)
-    Fields["sklenik_baterie"] = Battery
-    Battery = nil
+-- analog prevodnik, pouze zpracovani dat, mereni se provadi pri startu
 
+    baterie_voltage = 468 * AnalogMinimum / 100000
+    print ("Batt min: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_min"] = baterie_voltage
+    
+    baterie_voltage = 468 * AnalogMaximum / 100000
+    print ("Batt max: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
+
+    baterie_voltage = nil
+
+-- konec a spusteni odesilani
+    
     collectgarbage()
     
-    tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
+    tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
     print("Sending initiated...")

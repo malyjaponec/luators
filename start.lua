@@ -23,7 +23,7 @@ function ap_select(t)
         file.open("passwd.ini", "r")
         if nil == file.open("passwd.ini", "r") then
             print ("PANIC: file passwd.ini missing")
-            break
+            dofile("sleep.lc")
             -- fatal, tak se na vse vykaslu a koncim
         else
             repeat
@@ -67,13 +67,12 @@ local function check_new_ip()
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
-            ReportInterval = 60
             dofile("sleep.lc")
         end
     else 
         print("Config done, IP is "..wifi.sta.getip())
         collectgarbage()
-        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)  
+        tmr.alarm(0, 100, 0, function() dofile("measure.lc") end)  
     end
 end
 
@@ -104,7 +103,6 @@ local function reset_apn()
         else
             print("PANIC, not wifi coverage, end")
             wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
-            ReportInterval = 60
             dofile("sleep.lc")
         end 
     end
