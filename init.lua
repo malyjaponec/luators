@@ -1,29 +1,12 @@
 -- init.lua
-StartTime = tmr.now()
-RunCounter = 0
-ReportInterval = 60
-uart.setup(0,115200,0,1,1)
-
--- Pozhasinani ledek
-    -- cervena 
-        gpio.mode(8, gpio.OUTPUT)
-        gpio.write(8, gpio.LOW)
-    -- zelena
-    -- Nezapnuti proudu do 18b20 sestavy, napaji GPIO 12
-        gpio.mode(6, gpio.OUTPUT)
-        gpio.write(6, gpio.LOW)
-    -- modra
-        gpio.mode(7, gpio.OUTPUT)
-        gpio.write(7, gpio.LOW)
-    -- mala cervena zhruba uprostred prosvecovala
-        gpio.mode(2, gpio.OUTPUT)
-        gpio.write(2, gpio.HIGH)
-    -- a vedle dalsi
-        gpio.mode(1, gpio.OUTPUT)
-        gpio.write(1, gpio.HIGH)
+    StartTime = tmr.now()
+    uart.setup(0,115200,0,1,1)
+    
+-- konstanty pro GPIO operace
+    gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 
 -- toto cekani je pro pripad nutnosti to zastavit ale taky
 -- protoze modul se sam prihlasi na wifi kdyz se necha chvili byt
-tmr.alarm(0, 3000, 0,  function() dofile("start.lc") end)
 print(" . ")
 print(" . ")
+tmr.alarm(0, 50, 0,  function() dofile("setup.lc") end)
