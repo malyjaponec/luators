@@ -1,10 +1,8 @@
-    tmr.stop(0)
-    print("HEAP measure_data "..node.heap())
-   
-     Fields = {}   
+-- measure.lua
 
-    -- Temperature and Humidity
-    gpio.mode(1, gpio.OUTPUT) -- GPIO5 napaji DHT22
+    tmr.stop(0)
+   
+-- Temperature and Humidity
     gpio.write(1, gpio.HIGH)
 
     local result,Tint,Hint,Tfrac,Hfrac
@@ -24,8 +22,12 @@
         print ("Temp: "..Tint..","..Tfrac)
         print ("Humi: "..Hint..","..Hfrac)
         
-        Fields["foliak_teplota"] = Tint.."."..Tfrac
-        Fields["foliak_vlhkost"] = Hint.."."..Hfrac
+        Fields[ReportFieldPrefix.."teplota"] = Tint
+        Fields[ReportFieldPrefix.."vlhkost"] = Hint
+
+        Fields[ReportFieldPrefix.."sensor_failed"] = 0
+    else
+        Fields[ReportFieldPrefix.."sensor_failed"] = 1
     end
 
     -- uklid
@@ -34,13 +36,21 @@
 
     collectgarbage()
 
-    -- analog prevodnik   
-    analog_value = (1024 - adc.read(0))
-    print ("Anal: "..analog_value)
-    Fields["foliak_svetlo"] = analog_value
-    Battery = nil
+-- analog prevodnik, pouze zpracovani dat, mereni se provadi pri startu
 
+    baterie_voltage = 468 * AnalogMinimum / 100000
+    print ("Batt min: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_min"] = baterie_voltage
+    
+    baterie_voltage = 468 * AnalogMaximum / 100000
+    print ("Batt max: "..baterie_voltage)
+    Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
+
+    baterie_voltage = nil
+
+-- konec a spusteni odesilani
+    
     collectgarbage()
     
-    tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
+    tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
     print("Sending initiated...")
