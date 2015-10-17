@@ -1,7 +1,7 @@
 --setup.lua
 
 -- konstanty pro reportovani
-    local ReportInterval = 15 -- minut
+    local ReportInterval = 0x15 -- minut, v BCD!!!
     local SecurityOffInterval = 33 -- sekund
     ReportNode = "3"
     ReportFieldPrefix = "venku_"
