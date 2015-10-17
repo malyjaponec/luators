@@ -3,7 +3,7 @@
 -- konstanty pro reportovani
     ReportInterval = 15 -- minut
     ReportNode = "3"
-    ReportFieldPrefix = "sklenik_"
+    ReportFieldPrefix = "foliak_"
     ReportApiKey = "3e6176fb0367dfc59d914940f95c1007" -- jiffaco/emon
     Fields = {}
     
@@ -30,12 +30,14 @@ local function InitDelay()
 end
 
 local function InitDelayStart()
+    gpio.mode(gpionum[14],gpio.OUTPUT)
+    gpio.write(gpionum[14],gpio.HIGH) -- prijim fotoodpor na + (je to pres diodu)
+    adc.read(0) -- nekdy prvni prevod vrati nesmysl
     InitDelayTime = 3000
     print("AnalogMeasuring for "..(InitDelayTime/1000).." s")
     InitDelayStep = 20
     AnalogMinimum = 1024
     AnalogMaximum = 0
-    adc.read(0) -- nekdy to cte maxiumu jako 1024 coz nejspis je ze prvni prevod se nepovede, tohle to resi
     InitDelay()
 end
     

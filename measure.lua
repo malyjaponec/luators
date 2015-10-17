@@ -3,7 +3,6 @@
     tmr.stop(0)
    
 -- Temperature and Humidity
-    gpio.write(1, gpio.HIGH)
 
     local result,Tint,Hint,Tfrac,Hfrac
     counter = 10
@@ -16,7 +15,6 @@
         print(result)
         counter = counter - 1
     end
-    gpio.write(1, gpio.LOW)
     
     if (0 == result) then
         print ("Temp: "..Tint..","..Tfrac)
@@ -36,7 +34,10 @@
 
     collectgarbage()
 
--- analog prevodnik, pouze zpracovani dat, mereni se provadi pri startu
+-- analog prevodnik, nejdrive priprava na mereni svetla a zpracovani dat z uvodniho cekani
+
+    gpio.mode(gpionum[14],gpio.OUTPUT)
+    gpio.write(gpionum[14],gpio.LOW) -- prijim fotoodpor na zem
 
     baterie_voltage = 468 * AnalogMinimum / 100000
     print ("Batt min: "..baterie_voltage)
@@ -47,6 +48,12 @@
     Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
 
     baterie_voltage = nil
+    
+-- analog prevodni, mereni svetla, posilam co zmerim bez prepoctu, jen otocim logiku
+
+    local AnalogValue = adc.read(0)
+    Fields[ReportFieldPrefix.."light"] = 1024-AnalogValue
+    AnalogValue = nil
 
 -- konec a spusteni odesilani
     
