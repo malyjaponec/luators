@@ -1,7 +1,5 @@
 -- send.lua
-
     tmr.stop(0)
-    print("HEAP send_data "..node.heap())
     
     local SentOK = 0
 
@@ -10,7 +8,8 @@
 
 -- pridam velikost heapu
     Fields[ReportFieldPrefix.."heap"] = node.heap()
-    
+    Fields[ReportFieldPrefix.."chipID"] = node.chipid()
+
 -- pridam velikost counter
     RunCounter = RunCounter + 1
     Fields[ReportFieldPrefix.."run_count"] = RunCounter
@@ -49,9 +48,6 @@
         --
         conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
         conn:send("Host: emon.jiffaco.cz\r\n") 
-        -- zbytek neni potreba, pro minimalni uspokojeni protokolu 1.1 staci GET a host
-        --conn:send("Accept: */*\r\n") 
-        --conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; no OS)\r\n")
         conn:send("\r\n")
         conn:send("\r\n")
     end)
