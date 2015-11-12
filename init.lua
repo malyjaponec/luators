@@ -6,9 +6,6 @@
     gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
     
 
--- Nastaveni sbernice s teplomery (vstup pro kolektor tvrda 1)
-   gpio.mode(gpionum[13],  gpio.OUTPUT) 
-   gpio.write(gpionum[13], gpio.HIGH)
 
 -- Nastaveni vsutpnich pinu   
    gpio.mode(gpionum[14], gpio.INPUT, gpio.FLOAT) -- 14
@@ -18,6 +15,6 @@
 
 -- toto cekani je pro pripad nutnosti to zastavit ale taky
 -- protoze modul se sam prihlasi na wifi kdyz se necha chvili byt
+    print(" . ")
+    print(" . ")
     tmr.alarm(0, 2000, 0,  function() dofile("setup.lc") end)
-    print(" . ")
-    print(" . ")
