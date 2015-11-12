@@ -8,7 +8,6 @@
     local sbernice1 = 12 -- 12
     local sbernice2 = 2 -- 2
     local sbernice3 = 13-- 13
-    local presnost = 3
     local presnost_phantom = 2
     local delay = {[0] = 93750, [1] = 187500, [2] = 375000, [3] = 750000}
 
@@ -24,7 +23,6 @@
     gpio.mode(gpionum[sbernice3], gpio.INPUT, gpioFLOAT) 
     gpio.mode(gpionum[sbernice3], gpio.OUTPUT) 
     gpio.write(gpionum[sbernice3], gpio.HIGH)
-
    
 -- Funkce na prevod cisla na hex
 function DEC_HEX(IN,COUNT)
@@ -54,6 +52,7 @@ end
             end
         end
     end
+    collectgarbage()
 
 -- Teploty z ds18b20 - sbernice 2
     t.setup(gpionum[sbernice2],presnost)
@@ -69,8 +68,10 @@ end
             end
         end
     end
+    collectgarbage()
 
     local totaldelay = delay[3]
+    tmr.wdclr()
     
 -- Teploty z ds18b20 - zbrenice 3
     t.setup(gpionum[sbernice3],presnost_phantom)
@@ -85,22 +86,26 @@ end
                 t.startMeasure(v)
                 tmr.wdclr()
                 tmr.delay(delay[presnost_phantom])
-                tmr.wdclr()
+                --tmr.wdclr()
                 totaldelay = totaldelay - delay[presnost_phantom]
             end
         end
     end
+    collectgarbage()
+    print(node.heap())
 
 -- Wait until any measure is done
-    if (totaldelay > 0) then
+    if (totaldelay >1000) then
         tmr.wdclr()
         tmr.delay(totaldelay)
         tmr.wdclr()
     end
+    totaldelay = nil
+    print(node.heap())
 
 -- Vycitani hodnot - sbernice 1
     if (senzorcount1 > 0) then -- vycitam jen jestli tam neco je
-        t.setup(gpionum[sbernice1],presnost)
+        t.setup(gpionum[sbernice1],3)
         -- Read temperatures
         local value = ""
         local textaddr = ""
@@ -109,6 +114,7 @@ end
             textaddr = ""
             local w
             for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+            w = nil
             if (value ~= nil) then
                 value = value/10000
                 Fields[ReportFieldPrefix.."t"..textaddr] = value
@@ -124,10 +130,11 @@ end
     end
     addrs1 = nil -- rusim pole adres
     senzorcount1 = nil
+    collectgarbage()
 
 -- Vycitani hodnot - sbernice 2
     if (senzorcount2 > 0) then 
-        t.setup(gpionum[sbernice2],presnost)
+        t.setup(gpionum[sbernice2],3)
         -- Read temperatures
         local value = ""
         local textaddr = ""
@@ -136,6 +143,7 @@ end
             textaddr = ""
             local w
             for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+            w = nil
             if (value ~= nil) then
                 value = value/10000
                 Fields[ReportFieldPrefix.."t"..textaddr] = value
@@ -151,6 +159,7 @@ end
     end
     addrs2 = nil -- rusim pole adres
     senzorcount2 = nil
+    collectgarbage()
     
 -- Vycitani hodnot - sbernice 3
     if (senzorcount3 > 0) then -- vycitam jen jestli tam neco je
@@ -163,6 +172,7 @@ end
             textaddr = ""
             local w
             for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+            w = nil
             if (value ~= nil) then
                 value = value/10000
                 Fields[ReportFieldPrefix.."t"..textaddr] = value
@@ -178,6 +188,7 @@ end
     end
     addrs3 = nil -- rusim pole adres
     senzorcount3 = nil
+    collectgarbage()
     
 -- Don't forget to release library it after use
     t = nil
