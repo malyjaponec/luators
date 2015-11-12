@@ -7,12 +7,12 @@
     tmr.alarm(1, 10000, 0, function() node.restart() end)
 
 -- pridam velikost heapu
-    Fields[ReportFieldPrefix.."heap"] = node.heap()
-    Fields[ReportFieldPrefix.."chipID"] = node.chipid()
+    Fields[ReportFieldPrefix.."hp"] = node.heap()
+    Fields[ReportFieldPrefix.."ID"] = node.chipid()
 
 -- pridam velikost counter
     RunCounter = RunCounter + 1
-    Fields[ReportFieldPrefix.."run_count"] = RunCounter
+    Fields[ReportFieldPrefix.."cnt"] = RunCounter
     
 -- make conection to cloud
     print("Connecting to gate.jiffaco.cz...")
