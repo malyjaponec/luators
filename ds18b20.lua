@@ -117,7 +117,7 @@ function readNumber(addr)
 
         -- Kontrola zda je nastavena pozadovana presnost na snimaci
           if ( ((res*32)+0x1F) ~= data:byte(5) ) then 
-            -- print ("Reseting to 12bit resolution for next mesurement.")
+            -- print ("Reseting to x-bit resolution for next mesurement.")
             data = string.char(0x4E,0x00,0x00,((res*32)+0x1F)) -- store new configuration into scratchpad
             ow.reset(pin)
             ow.select(pin, addr)
