@@ -5,19 +5,15 @@
     -- sbernice 1 - napajene paralelni mereni
     -- sbernice 2 - napajene paralelni mereni
     -- sbernice 3 - phantom sekvencni mereni cidlo po cidle s nizsi presnosti
-    local sbernice1 = 0 -- 12
+    local sbernice1 = 12 -- 12
     local sbernice2 = 2 -- 2
-    local sbernice3 = 5 -- 13
+    local sbernice3 = 13-- 13
     local presnost = 3
     local presnost_phantom = 2
     local delay = {[0] = 93750, [1] = 187500, [2] = 375000, [3] = 750000}
 
 -- Nastavedi digital IO
-    local ReadScan = {[14] = "d14", [16] = "d16"}
-
-    -- pomocne napajeni
-    gpio.mode(gpionum[4], gpio.OUTPUT) 
-    gpio.write(gpionum[4], gpio.HIGH)
+    local ReadScan = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
 
     gpio.mode(gpionum[sbernice1], gpio.INPUT, gpioFLOAT) 
     gpio.mode(gpionum[sbernice1], gpio.OUTPUT) 
@@ -190,8 +186,8 @@ end
 
 
 -- Analogovy vstup, testovaci HW tam ma fotoodpor
-    Fields[ReportFieldPrefix.."analog_max"] = AnalogMaximum
-    Fields[ReportFieldPrefix.."analog_min"] = AnalogMinimum
+    Fields[ReportFieldPrefix.."ax"] = AnalogMaximum
+    Fields[ReportFieldPrefix.."an"] = AnalogMinimum
 
 
 -- Pins
