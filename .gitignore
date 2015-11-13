@@ -1,4 +1,5 @@
-
 # own cloud stuff
 .csync_journal.*
 .owncloudsync.*
+# hesla
+passwd.ini
