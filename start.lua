@@ -70,9 +70,9 @@ local function check_new_ip()
             dofile("reset.lc")
         end
     else 
-        print("Config done, IP is "..wifi.sta.getip())
+        print("Config done, IP "..wifi.sta.getip())
         collectgarbage()
-        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)  
+        tmr.alarm(0, 100, 0, function() dofile("measure.lc") end)  
     end
 end
 
@@ -121,7 +121,7 @@ local function check_ip()
 
     tmr.stop(0)
     if nil ~= wifi.sta.getip() then 
-        print("Autoconnected, IP is "..wifi.sta.getip())
+        print("IP "..wifi.sta.getip())
         collectgarbage()
         tmr.alarm(0, 100, 0, function() dofile("measure.lc") end)
     else

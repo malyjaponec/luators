@@ -3,3 +3,4 @@
 .owncloudsync.*
 # hesla
 passwd.ini
+apikey.ini

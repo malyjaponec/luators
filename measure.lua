@@ -1,125 +1,79 @@
 -- measure.lua
     tmr.stop(0)
-
--- Nastaveni dalas
-    -- sbernice 1 - napajene paralelni mereni
-    -- sbernice 2 - napajene paralelni mereni
-    -- sbernice 3 - phantom sekvencni mereni cidlo po cidle s nizsi presnosti
-    local sbernice1 = 12 -- 12
-    local sbernice2 = 2 -- 2
-    local sbernice3 = 13-- 13
-    local presnost_phantom = 2
-    local delay_phantom = 400000
-    
-    gpio.mode(gpionum[sbernice1], gpio.INPUT, gpioFLOAT) 
-    gpio.mode(gpionum[sbernice1], gpio.OUTPUT) 
-    gpio.write(gpionum[sbernice1], gpio.HIGH)
-    gpio.mode(gpionum[sbernice2], gpio.INPUT, gpioFLOAT) 
-    gpio.mode(gpionum[sbernice2], gpio.OUTPUT) 
-    gpio.write(gpionum[sbernice2], gpio.HIGH)
-    gpio.mode(gpionum[sbernice3], gpio.INPUT, gpioFLOAT) 
-    gpio.mode(gpionum[sbernice3], gpio.OUTPUT) 
-    gpio.write(gpionum[sbernice3], gpio.HIGH)
-   
--- Funkce na prevod cisla na hex
-function DEC_HEX(IN,COUNT)
-    local B,K,OUT,D=16,"0123456789ABCDEF","",0
-    while COUNT>0 do
-        COUNT=COUNT-1
-        IN,D=math.floor(IN/B),(IN % B)+1
-        OUT=string.sub(K,D,D)..OUT
-    end
-    return OUT
-end
-
+      
 -- Knihovna na cteni z dalasu
     t = require("ds18b20")
     local q,v
 
 -- Teploty z ds18b20 - zbrenice 1
-    t.setup(gpionum[sbernice1],3)
-    local addrs1 = t.addrs() -- nacte adresy do lokalniho pole
-    local senzorcount1 = 0
-    if (addrs1 ~= nil) then
-        senzorcount1 = table.getn(addrs1)
-        print("Sbernice 1 sensors: "..senzorcount1) -- pocet senzoru 
-        if (senzorcount1 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
+    t.setup(Sb1,3)
+    local a1 = t.addrs() -- nacte adresy do lokalniho pole
+    local sc1 = 0
+    if (a1 ~= nil) then
+        sc1 = table.getn(a1)
+        print("S1: "..sc1) -- pocet senzoru 
+        if (sc1 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
             -- Start measure for all sensors
-            for q,v in pairs(addrs1) do
+            for q,v in pairs(a1) do
                 t.startMeasure(v)
             end
         end
     end
-    collectgarbage()
 
 -- Teploty z ds18b20 - sbernice 2
-    t.setup(gpionum[sbernice2],3)
-    local addrs2 = t.addrs() -- nacte adresy do lokalniho pole
-    local senzorcount2 = 0
-    if (addrs2 ~= nil) then
-        senzorcount2 = table.getn(addrs2)
-        print("Sbernice 2 sensors: "..senzorcount2) -- pocet senzoru 
-        if (senzorcount2 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
+    t.setup(Sb2,3)
+    local a2 = t.addrs() -- nacte adresy do lokalniho pole
+    local sc2 = 0
+    if (a2 ~= nil) then
+        sc2 = table.getn(a2)
+        print("S2: "..sc2) -- pocet senzoru 
+        if (sc2 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
             -- Start measure for all sensors
-            for q,v in pairs(addrs2) do
+            for q,v in pairs(a2) do
                 t.startMeasure(v)
             end
         end
     end
-    collectgarbage()
 
-    local totaldelay = 750000
-    tmr.wdclr()
+    local tdelay = 750000
     
 -- Teploty z ds18b20 - zbrenice 3 mereni i vycitani
-    t.setup(gpionum[sbernice3],presnost_phantom)
-    local addrs3 = t.addrs() -- nacte adresy do lokalniho pole
-    local senzorcount3 = 0
-    if (addrs3 ~= nil) then
-        senzorcount3 = table.getn(addrs3)
-        print("Sbernice 3 sensors: "..senzorcount3) -- pocet senzoru 
-        if (senzorcount3 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
+    t.setup(Sb3,Sb3p)
+    local a3 = t.addrs() -- nacte adresy do lokalniho pole
+    local sc3 = 0
+    if (a3 ~= nil) then
+        sc3 = table.getn(a3)
+        print("S3: "..sc3) -- pocet senzoru 
+        if (sc3 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
             -- Start measure for all sensors
-            for q,v in pairs(addrs3) do
+            for q,v in pairs(a3) do
                 t.startMeasure(v)
-                tmr.wdclr()
-                tmr.delay(delay_phantom)
-                totaldelay = totaldelay - delay_phantom
+                tmr.delay(Sb3d)
+                tdelay = tdelay - Sb3d
             end
         end
     end
-    delay_phantom = nil
-    collectgarbage()
 
 -- Wait until any measure is done
-    if (totaldelay >1000) then
-        tmr.wdclr()
-        tmr.delay(totaldelay)
-        tmr.wdclr()
+    if (tdelay >1000) then
+        tmr.delay(tdelay)
     end
     totaldelay = nil
-    collectgarbage()
-    print(node.heap())
 
 -- Vycitani hodnot - sbernice 3
-    if (senzorcount3 > 0) then -- vycitam jen jestli tam neco je
-        -- bez setupu stale zustava od prikazu k mereni
-        t.setup(gpionum[sbernice3],presnost_phantom)
+    if (sc3 > 0) then -- vycitam jen jestli tam neco je
+        t.setup(Sb3,Sb3p) --stale zustava od mereni ale nefunguje to musi se volat znova
         -- Read temperatures
         local value = ""
         local textaddr = ""
-        for q,v in pairs(addrs3) do
+        for q,v in pairs(a3) do
             value = t.readNumber(v)
-            textaddr = ""
-            local w
-            for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
-            w = nil
+            textaddr = AddressInHex(v)
             if (value ~= nil) then
                 value = value/10000
-                Fields[ReportFieldPrefix.."t"..textaddr] = value
+                Rdat[Rpref.."t"..textaddr] = value
                 if (Debug == 1) then print("s3 t"..textaddr.." = "..value) end
-                addrs3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
-                tmr.wdclr()
+                a3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             else
                 print("ERROR, "..textaddr.." returned nil")
             end
@@ -127,28 +81,23 @@ end
         value = nil
         textaddr = nil
     end
-    addrs3 = nil -- rusim pole adres
-    senzorcount3 = nil
-    collectgarbage()
+    a3 = nil -- rusim pole adres
+    sc3 = nil
 
 -- Vycitani hodnot - sbernice 1
-    if (senzorcount1 > 0) then -- vycitam jen jestli tam neco je
-        t.setup(gpionum[sbernice1],3)
+    if (sc1 > 0) then -- vycitam jen jestli tam neco je
+        t.setup(Sb1,3)
         -- Read temperatures
         local value = ""
         local textaddr = ""
-        for q,v in pairs(addrs1) do
+        for q,v in pairs(a1) do
             value = t.readNumber(v)
-            textaddr = ""
-            local w
-            for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
-            w = nil
+            textaddr = AddressInHex(v)
             if (value ~= nil) then
                 value = value/10000
-                Fields[ReportFieldPrefix.."t"..textaddr] = value
+                Rdat[Rpref.."t"..textaddr] = value
                 if (Debug == 1) then print("s1 t"..textaddr.." = "..value) end
-                addrs1[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
-                tmr.wdclr()
+                a1[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             else
                 print("ERROR, "..textaddr.." returned nil")
             end
@@ -156,28 +105,24 @@ end
         value = nil
         textaddr = nil
     end
-    addrs1 = nil -- rusim pole adres
-    senzorcount1 = nil
-    collectgarbage()
+    a1 = nil -- rusim pole adres
+    sc1 = nil
 
 -- Vycitani hodnot - sbernice 2
-    if (senzorcount2 > 0) then 
-        t.setup(gpionum[sbernice2],3)
+    if (sc2 > 0) then 
+        t.setup(Sb2,3)
         -- Read temperatures
         local value = ""
         local textaddr = ""
-        for q,v in pairs(addrs2) do
+        for q,v in pairs(a2) do
             value = t.readNumber(v)
-            textaddr = ""
-            local w
-            for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+            textaddr = AddressInHex(v)
             w = nil
             if (value ~= nil) then
                 value = value/10000
-                Fields[ReportFieldPrefix.."t"..textaddr] = value
+                Rdat[Rpref.."t"..textaddr] = value
                 if (Debug == 1) then print("s2 t"..textaddr.." = "..value) end
-                addrs2[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
-                tmr.wdclr()
+                a2[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             else
                 print("ERROR, "..textaddr.." returned nil")
             end
@@ -185,9 +130,8 @@ end
         value = nil
         textaddr = nil
     end
-    addrs2 = nil -- rusim pole adres
-    senzorcount2 = nil
-    collectgarbage()
+    a2 = nil -- rusim pole adres
+    sc2 = nil
     
 -- Don't forget to release library it after use
     t = nil
@@ -196,26 +140,20 @@ end
     q,v = nil,nil
 
 
--- Analogovy vstup, testovaci HW tam ma fotoodpor
-    Fields[ReportFieldPrefix.."ax"] = AnalogMaximum
-    Fields[ReportFieldPrefix.."an"] = AnalogMinimum
+-- Analogovy vstup, neni zapojen
+    Rdat[Rpref.."an"] = adc.read(0)
 
 
 -- Pins
-    local ReadScan = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
-
-   local value = ""
-   for q,v in pairs(ReadScan) do
-        gpio.mode(gpionum[q], gpio.INPUT, gpio.FLOAT) 
-        value = gpio.read(gpionum[q])
-        Fields[ReportFieldPrefix..v] = value
+    local value = ""
+    for q,v in pairs(Digi) do
+        value = gpio.read(GP[q])
+        Rdat[Rpref..v] = value
         if (Debug == 1) then print (v.."="..value) end
-   end
-   value = nil
-   ReadScan = nil  
+    end
+    value = nil
 
 
 -- uklid
-  collectgarbage()
-  tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
-  print("Sending initiated...")
+  if (Debug == 1) then print("Sending initiated...") end
+  tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
