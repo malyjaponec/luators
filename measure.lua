@@ -11,9 +11,6 @@
     local presnost_phantom = 2
     local delay_phantom = 400000
     
--- Nastavedi digital IO
-    local ReadScan = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
-
     gpio.mode(gpionum[sbernice1], gpio.INPUT, gpioFLOAT) 
     gpio.mode(gpionum[sbernice1], gpio.OUTPUT) 
     gpio.write(gpionum[sbernice1], gpio.HIGH)
@@ -91,8 +88,6 @@ end
             end
         end
     end
-    addrs3 = nil -- rusim pole adres
-    senzorcount3 = nil
     delay_phantom = nil
     collectgarbage()
 
@@ -103,12 +98,13 @@ end
         tmr.wdclr()
     end
     totaldelay = nil
+    collectgarbage()
     print(node.heap())
 
 -- Vycitani hodnot - sbernice 3
     if (senzorcount3 > 0) then -- vycitam jen jestli tam neco je
         -- bez setupu stale zustava od prikazu k mereni
-        -- t.setup(gpionum[sbernice3],presnost_phantom)
+        t.setup(gpionum[sbernice3],presnost_phantom)
         -- Read temperatures
         local value = ""
         local textaddr = ""
@@ -206,6 +202,8 @@ end
 
 
 -- Pins
+    local ReadScan = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
+
    local value = ""
    for q,v in pairs(ReadScan) do
         gpio.mode(gpionum[q], gpio.INPUT, gpio.FLOAT) 

@@ -7,7 +7,7 @@
     local time = (ReportInterval * 1000) - ((tmr.now() - StartTime) / 1000)
 
 -- kontrola na to jestli to dava smysl
-    if time < 500 then time = 500 end -- vzdycky si na da pauzu
+    if time < 200 then time = 200 end -- vzdycky si na da pauzu
     if time > (ReportInterval*1000) then time = (ReportInterval*500) end -- kdyz se cela dele nez je report interval je to chyba v aritmetice
 
 -- nastavim cekani
