@@ -37,6 +37,7 @@ end
 
 -- Knihovna na cteni z dalasu
     t = require("ds18b20")
+    local q,v
 
 -- Teploty z ds18b20 - zbrenice 1
     t.setup(gpionum[sbernice1],3)
@@ -82,30 +83,12 @@ end
         print("Sbernice 3 sensors: "..senzorcount3) -- pocet senzoru 
         if (senzorcount3 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
             -- Start measure for all sensors
-            local value = ""
-            local textaddr = ""
             for q,v in pairs(addrs3) do
                 t.startMeasure(v)
                 tmr.wdclr()
                 tmr.delay(delay_phantom)
                 totaldelay = totaldelay - delay_phantom
-                value = t.readNumber(v)
-                textaddr = ""
-                local w
-                for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
-                w = nil
-                if (value ~= nil) then
-                    value = value/10000
-                    Fields[ReportFieldPrefix.."t"..textaddr] = value
-                    if (Debug == 1) then print("s3 t"..textaddr.." = "..value) end
-                    tmr.wdclr()
-                else
-                    print("ERROR, "..textaddr.." returned nil")
-                end
-                addrs3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             end
-            value = nil
-            textaddr = nil
         end
     end
     addrs3 = nil -- rusim pole adres
@@ -121,6 +104,36 @@ end
     end
     totaldelay = nil
     print(node.heap())
+
+-- Vycitani hodnot - sbernice 3
+    if (senzorcount3 > 0) then -- vycitam jen jestli tam neco je
+        -- bez setupu stale zustava od prikazu k mereni
+        -- t.setup(gpionum[sbernice3],presnost_phantom)
+        -- Read temperatures
+        local value = ""
+        local textaddr = ""
+        for q,v in pairs(addrs3) do
+            value = t.readNumber(v)
+            textaddr = ""
+            local w
+            for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+            w = nil
+            if (value ~= nil) then
+                value = value/10000
+                Fields[ReportFieldPrefix.."t"..textaddr] = value
+                if (Debug == 1) then print("s3 t"..textaddr.." = "..value) end
+                addrs3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
+                tmr.wdclr()
+            else
+                print("ERROR, "..textaddr.." returned nil")
+            end
+        end
+        value = nil
+        textaddr = nil
+    end
+    addrs3 = nil -- rusim pole adres
+    senzorcount3 = nil
+    collectgarbage()
 
 -- Vycitani hodnot - sbernice 1
     if (senzorcount1 > 0) then -- vycitam jen jestli tam neco je
@@ -184,6 +197,7 @@ end
     t = nil
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
+    q,v = nil,nil
 
 
 -- Analogovy vstup, testovaci HW tam ma fotoodpor
