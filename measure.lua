@@ -9,8 +9,8 @@
     local sbernice2 = 2 -- 2
     local sbernice3 = 13-- 13
     local presnost_phantom = 2
-    local delay = {[0] = 93750, [1] = 187500, [2] = 375000, [3] = 750000}
-
+    local delay_phantom = 400000
+    
 -- Nastavedi digital IO
     local ReadScan = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
 
@@ -39,7 +39,7 @@ end
     t = require("ds18b20")
 
 -- Teploty z ds18b20 - zbrenice 1
-    t.setup(gpionum[sbernice1],presnost)
+    t.setup(gpionum[sbernice1],3)
     local addrs1 = t.addrs() -- nacte adresy do lokalniho pole
     local senzorcount1 = 0
     if (addrs1 ~= nil) then
@@ -55,7 +55,7 @@ end
     collectgarbage()
 
 -- Teploty z ds18b20 - sbernice 2
-    t.setup(gpionum[sbernice2],presnost)
+    t.setup(gpionum[sbernice2],3)
     local addrs2 = t.addrs() -- nacte adresy do lokalniho pole
     local senzorcount2 = 0
     if (addrs2 ~= nil) then
@@ -70,10 +70,10 @@ end
     end
     collectgarbage()
 
-    local totaldelay = delay[3]
+    local totaldelay = 750000
     tmr.wdclr()
     
--- Teploty z ds18b20 - zbrenice 3
+-- Teploty z ds18b20 - zbrenice 3 mereni i vycitani
     t.setup(gpionum[sbernice3],presnost_phantom)
     local addrs3 = t.addrs() -- nacte adresy do lokalniho pole
     local senzorcount3 = 0
@@ -82,17 +82,36 @@ end
         print("Sbernice 3 sensors: "..senzorcount3) -- pocet senzoru 
         if (senzorcount3 > 0) then -- merit ma smysl jen pokud tam nejake senzory jsou
             -- Start measure for all sensors
+            local value = ""
+            local textaddr = ""
             for q,v in pairs(addrs3) do
                 t.startMeasure(v)
                 tmr.wdclr()
-                tmr.delay(delay[presnost_phantom])
-                --tmr.wdclr()
-                totaldelay = totaldelay - delay[presnost_phantom]
+                tmr.delay(delay_phantom)
+                totaldelay = totaldelay - delay_phantom
+                value = t.readNumber(v)
+                textaddr = ""
+                local w
+                for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
+                w = nil
+                if (value ~= nil) then
+                    value = value/10000
+                    Fields[ReportFieldPrefix.."t"..textaddr] = value
+                    if (Debug == 1) then print("s3 t"..textaddr.." = "..value) end
+                    tmr.wdclr()
+                else
+                    print("ERROR, "..textaddr.." returned nil")
+                end
+                addrs3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
             end
+            value = nil
+            textaddr = nil
         end
     end
+    addrs3 = nil -- rusim pole adres
+    senzorcount3 = nil
+    delay_phantom = nil
     collectgarbage()
-    print(node.heap())
 
 -- Wait until any measure is done
     if (totaldelay >1000) then
@@ -161,35 +180,6 @@ end
     senzorcount2 = nil
     collectgarbage()
     
--- Vycitani hodnot - sbernice 3
-    if (senzorcount3 > 0) then -- vycitam jen jestli tam neco je
-        t.setup(gpionum[sbernice3],presnost_phantom)
-        -- Read temperatures
-        local value = ""
-        local textaddr = ""
-        for q,v in pairs(addrs3) do
-            value = t.readNumber(v)
-            textaddr = ""
-            local w
-            for w = 1,8 do textaddr = textaddr..DEC_HEX(v:byte(w),2) end
-            w = nil
-            if (value ~= nil) then
-                value = value/10000
-                Fields[ReportFieldPrefix.."t"..textaddr] = value
-                if (Debug == 1) then print("s3 t"..textaddr.." = "..value) end
-                addrs3[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
-                tmr.wdclr()
-            else
-                print("ERROR, "..textaddr.." returned nil")
-            end
-        end
-        value = nil
-        textaddr = nil
-    end
-    addrs3 = nil -- rusim pole adres
-    senzorcount3 = nil
-    collectgarbage()
-    
 -- Don't forget to release library it after use
     t = nil
     ds18b20 = nil
@@ -211,6 +201,7 @@ end
    end
    value = nil
    ReadScan = nil  
+
 
 -- uklid
   collectgarbage()

@@ -123,7 +123,7 @@ local function check_ip()
     if nil ~= wifi.sta.getip() then 
         print("Autoconnected, IP is "..wifi.sta.getip())
         collectgarbage()
-        tmr.alarm(0, 200, 0, function() dofile("measure.lc") end)
+        tmr.alarm(0, 100, 0, function() dofile("measure.lc") end)
     else
         print("Connecting...") 
         counter = counter - 1

@@ -125,6 +125,7 @@ function readNumber(addr)
             ow.reset(pin)
             ow.select(pin, addr)
             ow.write(pin, 0x48, 1)
+            t = -1
           end
         
         return t
