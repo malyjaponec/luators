@@ -14,24 +14,25 @@
     file.close()
     Rdat = {}
 
--- konstanty a jednorazova priprava pro mereni, zavisi na measure.lua
+-- konstanty a jednorazova priprava pro snimani opentherm
     -- teploty
-    Sb1 = GP[12] -- normalni 3 dratove dalasy
-    Sb2 = GP[2]  -- normalni 3 dratove dalasy
-    Sb3 = GP[13] -- zapojeni 2 dratove phantom napajeni
-    Sb3p = 2 -- volba presnosti pro phantom
-    Sb3d = 375000 -- odpovidajici cekaci doby
+    Din = GP[13] --
+    Dout = GP[12] -- 
     
-    gpio.mode(Sb1, gpio.INPUT, gpioFLOAT) 
-    gpio.mode(Sb1, gpio.OUTPUT) 
-    gpio.write(Sb1, gpio.HIGH)
-    gpio.mode(Sb2, gpio.INPUT, gpioFLOAT) 
-    gpio.mode(Sb2, gpio.OUTPUT) 
-    gpio.write(Sb2, gpio.HIGH)
-    gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
-    gpio.mode(Sb3, gpio.OUTPUT) 
-    gpio.write(Sb3, gpio.HIGH)
+    gpio.mode(Din, gpio.INPUT, gpioFLOAT) 
+    gpio.mode(Dout, gpio.INPUT, gpioFLOAT) 
 
+    -- binarni vstupy
+    --Digi = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
+    Digi = {}
+    
+    for q,v in pairs(Digi) do
+        gpio.mode(GP[q], gpio.INPUT, gpio.FLOAT) 
+    end
+
+
+-- pomocne funkce globalni
+    -- prevede adresu DS18B20 do hexadecimalniho tvaru (8 bajtu)
     function AddressInHex(IN)
         local hexkody,out,high,low,w="0123456789ABCDEF",""
         for w = 1,8 do 
@@ -42,12 +43,20 @@
         return out
     end
 
-    -- binarni vstupy
-    Digi = {[14] = "d14", [16] = "d16", [5] = "d5", [4] = "d4"}
-    
-    for q,v in pairs(Digi) do
-        gpio.mode(GP[q], gpio.INPUT, gpio.FLOAT) 
+    -- prevede ID luatoru do 36-kove soustavy
+    function IDIn36(IN)
+        local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
+        while (IN>0) do 
+            IN,znak=math.floor(IN/36),(IN % 36)+1
+            out = string.sub(kody,znak,znak)..out
+        end
+        return out
     end
 
 -- a ted spustim bezne odesilani
-    tmr.alarm(0, 100, 1, function() dofile("start.lc") end)
+    --tmr.alarm(0, 100, 1, function() dofile("start.lc") end)
+    if (file.open("scan.lua", "r") ~= nil) then 
+        tmr.alarm(0, 100, 1, function() dofile("scan.lc") end)
+    else
+        print("scan.lc missing")
+    end
