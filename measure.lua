@@ -5,20 +5,22 @@
 -- Temperature and Humidity
 
     local result,Tint,Hint,Tfrac,Hfrac
-    counter = 10
+    counter = 20
     while (counter > 0) do
-        print("Measuring...")
-        result, Tint, Hint, Tfrac, Hfrac = dht.read(2) -- pin 4=GPIO2, 2=GPIO5 
+        if Debug == 1 then print("Measuring...") end
+        result, Tint, Hint, Tfrac, Hfrac = dht.read(DHT22pin)
         if (result == 0) then
             break
         end
-        print(result)
+        if Debug == 1 then print(result) end
         counter = counter - 1
+        tmr.delay(115000) -- cekani 115ms, nevim muze to treba pomoci
     end
     
     if (0 == result) then
-        print ("Temp: "..Tint..","..Tfrac)
-        print ("Humi: "..Hint..","..Hfrac)
+        -- tohle tisknu vzdy
+        print ("Temp: "..Tint.." / "..Tfrac)
+        print ("Humi: "..Hint.." / "..Hfrac)
         
         Fields[ReportFieldPrefix.."teplota"] = Tint
         Fields[ReportFieldPrefix.."vlhkost"] = Hint
@@ -31,33 +33,21 @@
     -- uklid
     result = nil
     Tint, Hint, Tfrac, Hfrac = nil
-
     collectgarbage()
 
--- analog prevodnik, nejdrive priprava na mereni svetla a zpracovani dat z uvodniho cekani
+-- analog prevodnik, mereni alternativni hodnoty s pripojenim gpio14 na zem (fotoodpor)
 
-    gpio.mode(gpionum[14],gpio.OUTPUT)
-    gpio.write(gpionum[14],gpio.LOW) -- prijim fotoodpor na zem
-
-    baterie_voltage = 468 * AnalogMinimum / 100000
-    print ("Batt min: "..baterie_voltage)
-    Fields[ReportFieldPrefix.."baterie_min"] = baterie_voltage
-    
-    baterie_voltage = 468 * AnalogMaximum / 100000
-    print ("Batt max: "..baterie_voltage)
-    Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
-
-    baterie_voltage = nil
-    
--- analog prevodni, mereni svetla, posilam co zmerim bez prepoctu, jen otocim logiku
+    gpio.write(gpionum[14],gpio.LOW) -- prijim fotoodpor na zem, cimz se pripravim na mereni svetla misto baterie
 
     local AnalogValue = adc.read(0)
-    Fields[ReportFieldPrefix.."light"] = 1024-AnalogValue
+    Fields[ReportFieldPrefix.."light"] = 1024-AnalogValue -- otoceni logiky hodnot
     AnalogValue = nil
+
+    gpio.write(gpionum[14],gpio.HIGH) -- fotoodpor na 1, tedy nepotece skrz nej nic
 
 -- konec a spusteni odesilani
     
     collectgarbage()
     
     tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
-    print("Sending initiated...")
+    if Debug == 1 then print("Sending initiated...") end
