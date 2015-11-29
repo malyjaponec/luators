@@ -9,7 +9,6 @@
 
 -- pridam velikost heapu
     Rdat[Rpref.."hp"] = node.heap()
-    Rdat[Rpref.."ID"] = node.chipid()
 
 -- pridam velikost counter
     Rcnt = Rcnt + 1
