@@ -1,5 +1,13 @@
 --setup.lua
 
+local AnalogMinimum
+local AnalogMaximum
+local AnalogCount
+
+local InitDelayTime
+local InitStartTime
+
+
     -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
         local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
@@ -18,31 +26,28 @@
         if (AnalogValue < AnalogMinimum) then 
             AnalogMinimum = AnalogValue
         end
-        InitDelayTime = InitDelayTime - InitDelayStep
-        if (InitDelayTime > 0) then
-            tmr.alarm(0, InitDelayStep+math.random(-5,5), 0,  function() InitDelay() end)
+        
+        if (tmr.now() < (InitStartTime+InitDelayTime)) then
+            AnalogCount = AnalogCount + 1
+            tmr.alarm(0, math.random(10,50), 0,  function() InitDelay() end)
         else
             Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
             Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
+            Fields[ReportFieldPrefix.."bat_cnt"] = AnalogCount
 
-            if Debug == 1 then print ("Batt max/min: "..AnalogMaximum.."/"..AnalogMinimum) end
-
-            AnalogMinimum = nil
-            AnalogMaximum = nil
-            InitDelayTime = nil
-            InitDelayStep = nil
             -- a spoustim hlavni proces vyhledani AP
             tmr.alarm(0, 10, 0,  function() dofile("start.lc") end)
         end
     end
 
     local function InitDelayStart()
-        print("Measuring battery.") 
         adc.read(0) -- nekdy prvni prevod vrati nesmysl
-        InitDelayTime = 3000
-        InitDelayStep = 100
+        InitStartTime = tmr.now()
+        InitDelayTime = 3000000 -- X sekundy limit, pak se s merenim skonci
+        math.randomseed(tmr.now())
         AnalogMinimum = 1024
         AnalogMaximum = 0
+        AnalogCount = 1
         InitDelay()
     end
 
@@ -65,4 +70,5 @@
     -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
     
     InitDelayStart()
-    -- Spustim uvodni X sekundove mereni baterie
+    print("Measuring battery.") 
+        -- Spustim uvodni X sekundove mereni baterie

@@ -116,7 +116,10 @@ local function check_ip()
         if Debug == 1 then print("Connecting AP...") end
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 2000, 0, function() check_ip() end)
+            tmr.alarm(0, 2000, 0, function() check_ip() end) 
+            -- zkousel jsem mensi cas a vysledkem je ze kdyz nema IP hned nedostane ji
+            -- a dojde k reselekci AP, takze 2s tu byt bohuzel musi i za cenu ze kdyz
+            -- nema IP hned, ze minimalni zdrzeni jsou 2s
         else
             if Debug == 1 then print(wifi.sta.status()) end
             change_apn()

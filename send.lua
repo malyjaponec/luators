@@ -14,18 +14,18 @@
     local conn=net.createConnection(net.TCP, 0) 
 
     conn:on("receive", function(conn, payload)
-        if (Debug == 1) then print("Received:"..payload) end
+        if Debug == 1 then print("Received:"..payload) end
         SentOK = 1 -- pouze pokud prijde odpoved ze serveru povazuji to za ok
-        tmr.alarm(0, 50, 0, function() conn:close() end)
+        tmr.alarm(0, 100, 0, function() conn:close() end)
     end)
 
     conn:on("sent", function(conn) 
-        if (Debug == 1) then print("Sent.") end
+        if Debug == 1 then print("Sent.") end
         tmr.alarm(0, 2000, 0, function() conn:close() end)
     end)
     
     conn:on("disconnection", function(conn) 
-        if (Debug == 1) then print("Got disconnection.") end
+        if Debug == 1 then print("Got disconnection.") end
         tmr.stop(1)
         conn = nil
         tmr.stop(1) -- zastavim nouzovy casovac
@@ -46,16 +46,16 @@
         -- pridam velikost heapu a cas od startu
             Fields[ReportFieldPrefix.."hp"] = node.heap()
             Fields[ReportFieldPrefix.."tm"] = tmr.now()/1000
-        if (Debug == 1) then
-            print("Connected, sending data:")
-            print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey.. " HTTP/1.1")
-        end
-        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey.. " HTTP/1.1\r\n")
-        conn:send("Host: emon.jiffaco.cz\r\n") 
-        conn:send("\r\n")
-        conn:send("\r\n")
 
-        Fields = nil
+        if Debug == 1 then 
+            print("Sending data...")
+            print("...?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey) 
+        end
+
+        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. 
+                  "&json=" .. cjson.encode(Fields) .. 
+                  "&apikey=" .. ReportApiKey.. 
+                  " HTTP/1.1\r\nHost: emon.jiffaco.cz\r\n\r\n\r\n")
     end)
 
 -- jiffaco localne 192.168.129.3
