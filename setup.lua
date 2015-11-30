@@ -1,7 +1,7 @@
 --setup.lua
 
     -- prevede ID luatoru do 36-kove soustavy
-    function IDIn36(IN)
+    local function IDIn36(IN)
         local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
         while (IN>0) do 
             IN,znak=math.floor(IN/36),(IN % 36)+1
@@ -22,28 +22,27 @@
         if (InitDelayTime > 0) then
             tmr.alarm(0, InitDelayStep+math.random(-5,5), 0,  function() InitDelay() end)
         else
+            Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
+            Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
+
+            if Debug == 1 then print ("Batt max/min: "..AnalogMaximum.."/"..AnalogMinimum) end
+
+            AnalogMinimum = nil
+            AnalogMaximum = nil
             InitDelayTime = nil
             InitDelayStep = nil
-
-            if Debug == 1 then print ("Batt min: "..AnalogMinimum) end
-            Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
-            AnalogMinimum = nil
-            if Debug == 1 then print ("Batt max: "..AnalogMaximum) end
-            Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
-            AnalogMaximum = nil
-
             -- a spoustim hlavni proces vyhledani AP
-            tmr.alarm(0, 50, 0,  function() dofile("start.lc") end)
+            tmr.alarm(0, 10, 0,  function() dofile("start.lc") end)
         end
     end
 
     local function InitDelayStart()
+        print("Measuring battery.") 
         adc.read(0) -- nekdy prvni prevod vrati nesmysl
         InitDelayTime = 3000
-        InitDelayStep = 20
+        InitDelayStep = 100
         AnalogMinimum = 1024
         AnalogMaximum = 0
-        print("Measuring battery.") 
         InitDelay()
     end
 
@@ -66,4 +65,4 @@
     -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
     
     InitDelayStart()
-    -- Spustim uvodni 3 sekundove mereni baterie
+    -- Spustim uvodni X sekundove mereni baterie

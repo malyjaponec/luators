@@ -3,6 +3,8 @@
     tmr.stop(0)
     tmr.stop(1)
 
+    gpio.write(gpionum[14],gpio.HIGH) -- fotodpor musi jit do 1 aby byl minimalni odber
+
 -- vypocet casu
     local time = (ReportInterval * 60*1000*1000) - tmr.now()
 -- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval

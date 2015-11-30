@@ -1,13 +1,14 @@
 -- measure.lua
 
     tmr.stop(0)
+    print("Measuring sensors.")
    
 -- Temperature and Humidity
 
     local result,Tint,Hint,Tfrac,Hfrac
     counter = 20
     while (counter > 0) do
-        if Debug == 1 then print("Measuring...") end
+        if Debug == 1 then print("Reading DHT.") end
         result, Tint, Hint, Tfrac, Hfrac = dht.read(DHT22pin)
         if (result == 0) then
             break
@@ -48,6 +49,4 @@
 -- konec a spusteni odesilani
     
     collectgarbage()
-    
-    tmr.alarm(0, 50, 0, function() dofile("send.lc") end)
-    if Debug == 1 then print("Sending initiated...") end
+    tmr.alarm(0, 10, 0, function() dofile("send.lc") end)
