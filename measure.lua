@@ -18,16 +18,18 @@
     end
     
     if (0 == result) then
-        -- tohle tisknu vzdy
-        print ("Temp: "..Tint.." / "..Tfrac)
-        print ("Humi: "..Hint.." / "..Hfrac)
+        if Debug == 1 then 
+            print ("Temp: "..Tint)
+            print ("Humi: "..Hint)
+        else
+            print ("DHT4 ok")
+        end
         
         Fields[ReportFieldPrefix.."teplota"] = Tint
         Fields[ReportFieldPrefix.."vlhkost"] = Hint
-
-        Fields[ReportFieldPrefix.."sensor_failed"] = 0
+        Fields[ReportFieldPrefix.."dht4_ok"] = 1
     else
-        Fields[ReportFieldPrefix.."sensor_failed"] = 1
+        Fields[ReportFieldPrefix.."dht4_ok"] = 0
     end
 
     -- uklid
@@ -39,9 +41,7 @@
 
     gpio.write(gpionum[14],gpio.LOW) -- prijim fotoodpor na zem, cimz se pripravim na mereni svetla misto baterie
 
-    local AnalogValue = adc.read(0)
-    Fields[ReportFieldPrefix.."light"] = 1024-AnalogValue -- otoceni logiky hodnot
-    AnalogValue = nil
+    Fields[ReportFieldPrefix.."an14"] =  adc.read(0)
 
     gpio.write(gpionum[14],gpio.HIGH) -- fotoodpor na 1, tedy nepotece skrz nej nic
 
@@ -49,5 +49,5 @@
     
     collectgarbage()
     
-    tmr.alarm(0, 100, 0, function() dofile("send.lc") end)
+    tmr.alarm(0, 50, 0, function() dofile("send.lc") end)
     if Debug == 1 then print("Sending initiated...") end

@@ -7,9 +7,6 @@
 
 -- prepare reboot if something bad, timeout 10 s
     tmr.alarm(0, 10000, 0, function() node.restart() end)
-
--- pridam velikost heapu
-    Fields[ReportFieldPrefix.."heap"] = node.heap()
     
 -- make conection to cloud
     print("Connecting...")
@@ -19,7 +16,7 @@
     conn:on("receive", function(conn, payload)
         if (Debug == 1) then print("Received:"..payload) end
         SentOK = 1 -- pouze pokud prijde odpoved ze serveru povazuji to za ok
-        tmr.alarm(0, 100, 0, function() conn:close() end)
+        tmr.alarm(0, 50, 0, function() conn:close() end)
     end)
 
     conn:on("sent", function(conn) 
@@ -46,6 +43,9 @@
 
     conn:on("connection", function(conn)
         ConnOK = 1
+        -- pridam velikost heapu a cas od startu
+            Fields[ReportFieldPrefix.."hp"] = node.heap()
+            Fields[ReportFieldPrefix.."tm"] = tmr.now()/1000
         if (Debug == 1) then
             print("Connected, sending data:")
             print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey.. " HTTP/1.1")

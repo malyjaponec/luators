@@ -26,14 +26,14 @@
             InitDelayStep = nil
 
             if Debug == 1 then print ("Batt min: "..AnalogMinimum) end
-            Fields[ReportFieldPrefix.."baterie_min"] = AnalogMinimum
+            Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
             AnalogMinimum = nil
             if Debug == 1 then print ("Batt max: "..AnalogMaximum) end
-            Fields[ReportFieldPrefix.."baterie_max"] = AnalogMaximum
+            Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
             AnalogMaximum = nil
 
             -- a spoustim hlavni proces vyhledani AP
-            tmr.alarm(0, 100, 0,  function() dofile("start.lc") end)
+            tmr.alarm(0, 50, 0,  function() dofile("start.lc") end)
         end
     end
 
@@ -48,7 +48,7 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 10 -- minut
+    ReportInterval = 1 -- minut
     ReportNode = "3"
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
