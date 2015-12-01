@@ -6,9 +6,9 @@
     gpio.write(gpionum[14],gpio.HIGH) -- fotodpor musi jit do 1 aby byl minimalni odber
 
 -- vypocet casu
-    local time = (ReportInterval * 60*1000*1000) - tmr.now()
+    local time = (ReportInterval * 1000*1000) - tmr.now()
 -- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval
-    if time < (ReportInterval * 60*1000*1000) then time = (ReportInterval * 60*1000*1000) end
+    if time < ((ReportInterval-30) * 1000*1000) then time = ((ReportInterval-30) *1000*1000) end
 -- kontrolni tisk
     if Debug == 1 then print("Sleeping for "..(time/1000000).." s") end
 

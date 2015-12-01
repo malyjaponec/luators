@@ -29,7 +29,7 @@ local InitStartTime
         
         if (tmr.now() < (InitStartTime+InitDelayTime)) then
             AnalogCount = AnalogCount + 1
-            tmr.alarm(0, math.random(10,50), 0,  function() InitDelay() end)
+            tmr.alarm(0, math.random(1,2), 0,  function() InitDelay() end)
         else
             Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
             Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
@@ -43,7 +43,7 @@ local InitStartTime
     local function InitDelayStart()
         adc.read(0) -- nekdy prvni prevod vrati nesmysl
         InitStartTime = tmr.now()
-        InitDelayTime = 3000000 -- X sekundy limit, pak se s merenim skonci
+        InitDelayTime = 1000000 -- X sekundy limit, pak se s merenim skonci
         math.randomseed(tmr.now())
         AnalogMinimum = 1024
         AnalogMaximum = 0
@@ -52,7 +52,7 @@ local InitStartTime
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 1 -- minut
+    ReportInterval = 60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportNode = "3"
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
@@ -69,6 +69,6 @@ local InitStartTime
     -- pripojim fotoodpor na + (je to pres diodu) tak aby nemel svod pri mereni baterie 
     -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
     
-    InitDelayStart()
     print("Measuring battery.") 
+    InitDelayStart()
         -- Spustim uvodni X sekundove mereni baterie
