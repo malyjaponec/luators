@@ -68,22 +68,6 @@ function addrs()
   return tbl
 end
 
-function startMeasure(addr)
-  if(addr == nil) then
-    return
-  end
-  setup(pin,res)
-  crc = ow.crc8(string.sub(addr,1,7))
-  if (crc == addr:byte(8)) then
-    if ((addr:byte(1) == 0x10) or (addr:byte(1) == 0x28)) then
-      -- print("Device is a DS18S20 family device.")
-      ow.reset(pin)
-      ow.select(pin, addr)
-      ow.write(pin, 0x44, 1)
-    end
-  end
-end
-
 function readNumber(addr)
   result = nil
   setup(pin,res)
@@ -113,7 +97,11 @@ function readNumber(addr)
           t = t - 65536
         end
         -- prepocet jen vzdy na stupne celsia
-        t = t * 625
+        if (addr:byte(1) == 0x28) then
+          t = t * 625  -- DS18B20, 4 fractional bits
+        else
+          t = t * 5000 -- DS18S20, 1 fractional bit
+        end
 
         -- Kontrola zda je nastavena pozadovana presnost na snimaci
           if ( ((res*32)+0x1F) ~= data:byte(5) ) then 
@@ -140,5 +128,20 @@ function readNumber(addr)
   return result
 end
 
+function startMeasure(addr)
+  if(addr == nil) then
+    return
+  end
+  setup(pin,res)
+  crc = ow.crc8(string.sub(addr,1,7))
+  if (crc == addr:byte(8)) then
+    if ((addr:byte(1) == 0x10) or (addr:byte(1) == 0x28)) then
+      -- print("Device is a DS18S20 family device.")
+      ow.reset(pin)
+      ow.select(pin, addr)
+      ow.write(pin, 0x44, 1)
+    end
+  end
+end
 -- Return module table
 return M

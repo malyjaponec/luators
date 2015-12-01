@@ -18,7 +18,7 @@
 -- konstanty pro reportovani
     Rcnt = 0
     Rint = 5 -- sekund
-    Rnod = "4"
+    Rnod = "3"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
     file.close()
@@ -27,12 +27,8 @@
 -- konstanty a jednorazova priprava pro mereni, zavisi na measure.lua
     -- teploty
     Sb1 = GP[4] -- normalni 3 dratove dalasy
-        -- pul up je realizovany tim ze je mezi GPIO4 a GPIO5, takze aby to chodilo
-        -- je potreba GPIO5 dat na tvrdou 1
-        gpio.mode(GP[5], gpio.OUTPUT) 
-        gpio.write(GP[5], gpio.HIGH)
-    Sb2 = GP[14]  -- normalni 3 dratove dalasy
-    Sb3 = GP[15] -- zapojeni 2 dratove phantom napajeni
+    Sb2 = GP[5]  -- normalni 3 dratove dalasy
+    Sb3 = GP[15] -- zapojeni 2 dratove phantom napajeni -- v tomto se nevyuziva
     Sb3p = 2 -- volba presnosti pro phantom
     Sb3d = 375000 -- odpovidajici cekaci doby
     
@@ -58,11 +54,11 @@
     end
 
     -- binarni vstupy
-    Digi = {}
+    Digi = {} -- v tomto se nepouziva
     
     for q,v in pairs(Digi) do
         gpio.mode(GP[q], gpio.INPUT, gpio.FLOAT) 
     end
 
 -- a ted spustim bezne odesilani
-    tmr.alarm(0, 100, 1, function() dofile("start.lc") end)
+    tmr.alarm(0, 10, 1, function() dofile("start.lc") end)

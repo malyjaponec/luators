@@ -155,5 +155,4 @@
 
 
 -- uklid
-  if (Debug == 1) then print("Sending initiated...") end
-  tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
+  tmr.alarm(0, 10, 0, function() dofile("send.lc") end)
