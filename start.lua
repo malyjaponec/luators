@@ -1,10 +1,22 @@
 local counter = 0
 
+local function SetMAC()
+    local ssid,pass,bset,bssid
+    ssid, pass, bset, bssid=wifi.sta.getconfig()
+    if bssid:len() == 17 then -- delka je presne 17 znaku
+        local hex,len = bssid:gsub(":","") -- odmazu :
+        if len == 5 then -- odmazano presne 5 dvojtecek
+            local dec = tonumber(hex,16) -- prevedu na dekadicke cislo
+            Fields[ReportFieldPrefix.."ap"] = dec -- zaradim k odeslani
+        end
+    end
+end
+
 -- LIBRARY - ap selector
 local ap_was_found = false
 local ap_selected_ssid = ""
 local ap_selected_pass = ""
-function ap_select(t)
+local function ap_select(t)
     ap_was_found = false
 
     if nil == t then 
@@ -61,7 +73,7 @@ local function check_new_ip()
         if Debug == 1 then print("Waiting for IP...") end
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(0, 2000, 0, function() check_new_ip() end)
+            tmr.alarm(0, 500, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("PANIC, not IP assigned, end")
@@ -69,6 +81,7 @@ local function check_new_ip()
         end
     else 
         print("Reconfig done, IP is "..wifi.sta.getip())
+        SetMAC()
         collectgarbage()
         tmr.alarm(0, 10, 0, function() dofile("measure.lc") end)  
     end
@@ -110,6 +123,7 @@ local function check_ip()
     tmr.stop(0)
     if nil ~= wifi.sta.getip() then 
         print("IP is "..wifi.sta.getip())
+        SetMAC();
         collectgarbage()
         tmr.alarm(0, 10, 0, function() dofile("measure.lc") end)
     else
