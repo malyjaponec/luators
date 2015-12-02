@@ -36,6 +36,7 @@ local InitStartTime
             Fields[ReportFieldPrefix.."bat_cnt"] = AnalogCount
 
             -- a spoustim hlavni proces vyhledani AP
+            Fields[ReportFieldPrefix.."tb"] = tmr.now()/1000
             tmr.alarm(0, 10, 0,  function() dofile("start.lc") end)
         end
     end
@@ -52,7 +53,7 @@ local InitStartTime
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 60 -- sekund a nesmi byt kratsi nez 31!!!
+    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportNode = "3"
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
@@ -62,12 +63,20 @@ local InitStartTime
     Debug = 0
     if (file.open("debug.ini", "r") ~= nil) then Debug = 1 end -- debuguje se jen kdyz je soubor debug.ini
     DHT22pin = gpionum[5]
+    DHT22powerpin = gpionum[13]
+    Lightpin = gpionum[14] 
     
--- Inicializace a mereni baterie    
-    gpio.mode(gpionum[14],gpio.OUTPUT)
-    gpio.write(gpionum[14],gpio.HIGH) 
+-- nastaveni pinu pro spravne mereni
+    gpio.mode(Lightpin,gpio.OUTPUT)
+    gpio.write(Lightpin,gpio.HIGH) 
     -- pripojim fotoodpor na + (je to pres diodu) tak aby nemel svod pri mereni baterie 
     -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
+
+-- nastaveni pinu pro zapnuti proudu do DHT22
+    gpio.mode(DHT22powerpin,gpio.OUTPUT)
+    gpio.write(DHT22powerpin,gpio.HIGH) 
+    -- DHT22 napajim pinem GPIO13 (vedle VCC) protoze to pri sleep
+    -- usetri kolem 10uA
     
     print("Measuring battery.") 
     InitDelayStart()

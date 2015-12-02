@@ -45,7 +45,7 @@
         ConnOK = 1
         -- pridam velikost heapu a cas od startu
             Fields[ReportFieldPrefix.."hp"] = node.heap()
-            Fields[ReportFieldPrefix.."tm"] = tmr.now()/1000
+            Fields[ReportFieldPrefix.."ts"] = tmr.now()/1000
 
         if Debug == 1 then 
             print("Sending data...")

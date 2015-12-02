@@ -1,6 +1,7 @@
 -- measure.lua
 
     tmr.stop(0)
+    Fields[ReportFieldPrefix.."ti"] = tmr.now()/1000
     print("Measuring sensors.")
    
 -- Temperature and Humidity
@@ -37,14 +38,15 @@
     result = nil
     Tint, Hint, Tfrac, Hfrac = nil
     collectgarbage()
+    gpio.write(DHT22powerpin,gpio.LOW) -- vypnu napajeni DHT
 
 -- analog prevodnik, mereni alternativni hodnoty s pripojenim gpio14 na zem (fotoodpor)
 
-    gpio.write(gpionum[14],gpio.LOW) -- prijim fotoodpor na zem, cimz se pripravim na mereni svetla misto baterie
+    gpio.write(Lightpin,gpio.LOW) -- prijim fotoodpor na zem, cimz se pripravim na mereni svetla misto baterie
 
     Fields[ReportFieldPrefix.."an14"] =  adc.read(0)
 
-    gpio.write(gpionum[14],gpio.HIGH) -- fotoodpor na 1, tedy nepotece skrz nej nic
+    gpio.write(Lightpin,gpio.HIGH) -- fotoodpor na 1, tedy nepotece skrz nej nic
 
 -- konec a spusteni odesilani
     
