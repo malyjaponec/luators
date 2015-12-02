@@ -6,8 +6,10 @@ local function SetMAC()
     if bssid:len() == 17 then -- delka je presne 17 znaku
         local hex,len = bssid:gsub(":","") -- odmazu :
         if len == 5 then -- odmazano presne 5 dvojtecek
-            local dec = tonumber(hex,16) -- prevedu na dekadicke cislo
-            Fields[ReportFieldPrefix.."ap"] = dec -- zaradim k odeslani
+            local dec = tonumber(hex:sub(1,6),16) -- prevedu na dekadicke cislo
+            Fields[ReportFieldPrefix.."aph"] = dec -- zaradim k odeslani
+            dec = tonumber(hex:sub(7,12),16) -- prevedu na dekadicke cislo            
+            Fields[ReportFieldPrefix.."apl"] = dec -- zaradim k odeslani
         end
     end
 end
