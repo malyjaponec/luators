@@ -38,7 +38,11 @@
     result = nil
     Tint, Hint, Tfrac, Hfrac = nil
     collectgarbage()
+
+    -- uklid napajeni DHT22
     gpio.write(DHT22powerpin,gpio.LOW) -- vypnu napajeni DHT
+    gpio.mode(DHT22pin,gpio.OUTPUT)
+    gpio.write(DHT22pin,gpio.LOW) -- datovy drat taky dam na nulu
 
 -- analog prevodnik, mereni alternativni hodnoty s pripojenim gpio14 na zem (fotoodpor)
 

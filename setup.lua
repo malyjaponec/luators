@@ -7,7 +7,6 @@ local AnalogCount
 local InitDelayTime
 local InitStartTime
 
-
     -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
         local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
@@ -66,7 +65,7 @@ local InitStartTime
     DHT22powerpin = gpionum[13]
     Lightpin = gpionum[14] 
     
--- nastaveni pinu pro spravne mereni
+-- nastaveni pinu pro spravne mereni baterie
     gpio.mode(Lightpin,gpio.OUTPUT)
     gpio.write(Lightpin,gpio.HIGH) 
     -- pripojim fotoodpor na + (je to pres diodu) tak aby nemel svod pri mereni baterie 
