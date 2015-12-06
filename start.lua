@@ -6,10 +6,18 @@ local function SetMAC()
     if bssid:len() == 17 then -- delka je presne 17 znaku
         local hex,len = bssid:gsub(":","") -- odmazu :
         if len == 5 then -- odmazano presne 5 dvojtecek
-            local dec = tonumber(hex:sub(1,6),16) -- prevedu na dekadicke cislo
-            Fields[ReportFieldPrefix.."aph"] = dec -- zaradim k odeslani
-            dec = tonumber(hex:sub(7,12),16) -- prevedu na dekadicke cislo            
-            Fields[ReportFieldPrefix.."apl"] = dec -- zaradim k odeslani
+            -- toto je varianta co posila MAC ciselne jako 2 cisla hornich a dolnich 24 bitu zvlast
+            -- emon to dost tezko zpracovava, sice to lze spojit a logovat ale ty velka cisla 
+            -- mu delaji problem, proto jsem zkusil variantu nize
+                --local dec = tonumber(hex:sub(1,6),16) -- prevedu na dekadicke cislo
+                --Fields[ReportFieldPrefix.."aph"] = dec -- zaradim k odeslani
+                --dec = tonumber(hex:sub(7,12),16) -- prevedu na dekadicke cislo            
+                --Fields[ReportFieldPrefix.."apl"] = dec -- zaradim k odeslani
+            -- toto je varianta, ktera pouzije MAC jako identifikator predavanych dat
+            -- a posila vzdy cislo 1, na zaklade toho se pak da logovat do feedu 
+            -- cislo 1 nasobene pro kazdy vstup jinou konstantou a ziskat cislo AP v jednotkach
+            -- pred MAC je pro jistotu x, aby se nemohlo stat ze se to splete s jinym vstupem
+                Fields[ReportFieldPrefix.."x"..hex] = 1 -- zaradim k odeslani
         end
     end
 end
