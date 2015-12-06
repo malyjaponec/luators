@@ -7,10 +7,6 @@
 -- prepare reboot if something bad, timeout 10 s
     tmr.alarm(1, 10000, 0, function() node.restart() end)
 
--- pridam velikost heapu
-    Rdat[Rpref.."hp"] = node.heap()
-    Rdat[Rpref.."ID"] = node.chipid()
-
 -- pridam velikost counter
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
@@ -49,15 +45,20 @@
     
     conn:on("connection", function(conn)
         ConnOK = 1
+
+        -- pridam velikost heapu
+            Rdat[Rpref.."hp"] = node.heap()
+        
         if (Debug == 1) then
             print("Connected, sending data:")
-            print("GET /emoncms/input/post.json?node=" .. Rnod .. "&json=" .. cjson.encode(Rdat) .. "&apikey=" .. Rapik.. " HTTP/1.1")
+            print("...?node=" .. Rnod .. "&json=" .. cjson.encode(Rdat) .. "&apikey=" .. Rapik)
         end
-        conn:send("GET /emoncms/input/post.json?node=" .. Rnod .. "&json=" .. cjson.encode(Rdat) .. "&apikey=" .. Rapik.. " HTTP/1.1\r\n")
-        conn:send("Host: emon.jiffaco.cz\r\n") 
-        conn:send("\r\n")
-        conn:send("\r\n")
+        conn:send("GET /emoncms/input/post.json?node=" .. Rnod .. 
+                  "&json=" .. cjson.encode(Rdat) .. 
+                  "&apikey=" .. Rapik.. 
+                  " HTTP/1.1\r\nHost: emon.jiffaco.cz\r\n\r\n\r\n")
         Rdat = nil
+
     end)
 
     -- jiffaco localne 192.168.129.3
