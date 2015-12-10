@@ -41,6 +41,9 @@
     gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
     gpio.mode(Sb3, gpio.OUTPUT) 
     gpio.write(Sb3, gpio.HIGH)
+
+    baroD = GP[12]
+    baroC = GP[13]
     
 
     function AddressInHex(IN)

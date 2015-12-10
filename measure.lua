@@ -153,6 +153,23 @@
     end
     value = nil
 
+-- Barometr
+    bmp085.init(baroD,baroC)
+    local value,valuet = 0,0
+    for q = 1,30 do
+        value = value + (bmp085.pressure() / 100)
+        valuet =  valuet + (bmp085.temperature() / 10)
+        tmr.delay(33)
+        tmr.wdclr()
+    end
+    value,valuet = value/10,valuet/10
 
+    if Debug == 1 then 
+        print ("tlak="..value)
+        print ("teplota="..valuet)
+    end
+    Rdat[Rpref.."tlak"] = value
+    Rdat[Rpref.."teplota_t"] = valuet
+    value,valuet = nil,nil
 -- uklid
   tmr.alarm(0, 10, 0, function() dofile("send.lc") end)
