@@ -1,45 +1,42 @@
-    tmr.stop(0)
-    print("HEAP measure_data "..node.heap())
-   
-     Fields = {}   
+-- measure.lua
 
-    -- Temperature and Humidity
+    tmr.stop(0)
+    Fields[ReportFieldPrefix.."ti"] = tmr.now()/1000
+    print("Measuring sensors.")
+   
+-- Temperature and Humidity
+
     local result,Tint,Hint,Tfrac,Hfrac
-    counter = 10
+    counter = 20
     while (counter > 0) do
-        print("Measuring...")
+        if Debug == 1 then print("Reading DHT.") end
         result, Tint, Hint, Tfrac, Hfrac = dht.read(gpionum[2])
         if (result == 0) then
             break
         end
-        print(result)
+        if Debug == 1 then print(result) end
         counter = counter - 1
+        tmr.delay(115000) -- cekani 115ms, nevim muze to treba pomoci
     end
-
+    
     if (0 == result) then
-        print ("Temp: "..Tint..","..Tfrac)
-        print ("Humi: "..Hint..","..Hfrac)
+        if Debug == 1 then 
+            print ("Temp: "..Tint)
+            print ("Humi: "..Hint)
+        else
+            print ("DHT ok")
+        end
 
-        -- frac hodnoty se pouziji jen pro integer preklad, tohle pouziva float a je to primo v prvni promenne
         Fields[ReportFieldPrefix.."teplota"] = Tint
         Fields[ReportFieldPrefix.."vlhkost"] = Hint
+        Fields[ReportFieldPrefix.."dht_ok"] = 1
+    else
+        Fields[ReportFieldPrefix.."dht_ok"] = 0
     end
 
     -- uklid
     result = nil
     Tint, Hint, Tfrac, Hfrac = nil
-
-    collectgarbage()
-
-    -- analog prevodnik, pouze zpracovani dat, mereni se provadi pri startu
-    baterie_voltage = AnalogMinimum * 0.003436
-    print ("Batt min: "..baterie_voltage)
-    Fields[ReportFieldPrefix.."baterie_min"] = baterie_voltage
-    baterie_voltage = AnalogMaximum * 0.003436
-    print ("Batt max: "..baterie_voltage)
-    Fields[ReportFieldPrefix.."baterie_max"] = baterie_voltage
-    baterie_voltage = nil
-
     collectgarbage()
 
     -- Sbernice DALASu
@@ -48,7 +45,7 @@
     local addrs1 = t.addrs() -- nacte adresy do lokalniho pole
     if (addrs1 ~= nil) then
         local pocetsnimacu = table.getn(addrs1)
-        print("ds18b20 sensors: "..pocetsnimacu) -- pocet senzoru 
+        print("temp sensors: "..pocetsnimacu) -- pocet senzoru 
         if (pocetsnimacu > 0) then
             -- Start measure for all sensors
             for q,v in pairs(addrs1) do
@@ -69,7 +66,7 @@
                     value = value/10000
                     textaddr = v:byte(1).."-"..v:byte(2).."-"..v:byte(3).."-"..v:byte(4).."-"..v:byte(5).."-"..v:byte(6).."-"..v:byte(7).."-"..v:byte(8)
                     Fields[ReportFieldPrefix.."t"..textaddr] = value
-                    print("t"..textaddr.." = "..value)
+                    if (Debug == 1) then print("t"..textaddr.." = "..value) end
                     addrs1[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
                     tmr.wdclr()
                 else
@@ -87,6 +84,25 @@
     ds18b20 = nil
     package.loaded["ds18b20"]=nil
 
+-- Barometr, provede se nekolik mereni a posle se prumer
+    bmp085.init(gpionum[12],gpionum[14]) -- a nebo opacne, stejne I2C jako pro RTC
+    local value,valuet = 0,0
+    for q = 1,10 do 
+        value = value + (bmp085.pressure() / 100)
+        valuet =  valuet + (bmp085.temperature() / 10)
+        tmr.delay(math.random(10,50)) -- doba mezi merenim nahodna, nevim zda to ma smysl, ale proc ne
+        tmr.wdclr()
+    end
+    value,valuet = value/10,valuet/10
+
+    if Debug == 1 then 
+        print ("Pres="..value)
+        print ("Temp(B)="..valuet)
+    end
+    Rdat[Rpref.."tlak"] = value
+    Rdat[Rpref.."teplota_b"] = valuet
+    value,valuet = nil,nil    
+
     -- Mereni dokoncena 
     tmr.alarm(0, 200, 0, function() dofile("send.lc") end)
-    print("Sending initiated...")
+

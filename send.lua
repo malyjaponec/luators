@@ -1,48 +1,65 @@
-    tmr.stop(0)
-    print("HEAP send_data "..node.heap())
-    
-    local SentOK = 0
+-- send.lua
 
-    -- pridam velikost heapu
-    Fields[ReportFieldPrefix.."heap"] = node.heap()
+    tmr.stop(0)
+
+    local SentOK = 0
+    local ConnOK = 0
+
+-- prepare reboot if something bad, timeout 10 s
+    tmr.alarm(0, 10000, 0, function() node.restart() end)
     
-    print(Fields) -- debug
-        
-    -- make conection to thingspeak.com
-    print("Connecting to gate.jiffaco.cz...")
+-- make conection to cloud
+    print("Connecting...")
+
     local conn=net.createConnection(net.TCP, 0) 
 
     conn:on("receive", function(conn, payload)
-        print("RX:"..payload) 
+        if Debug == 1 then print("Received:"..payload) end
+        SentOK = 1 -- pouze pokud prijde odpoved ze serveru povazuji to za ok
+        tmr.alarm(0, 100, 0, function() conn:close() end)
     end)
 
     conn:on("sent", function(conn) 
-        print("Sent...") 
-        tmr.alarm(0, 1000, 0, function() conn:close() end)
+        if Debug == 1 then print("Sent.") end
+        tmr.alarm(0, 2000, 0, function() conn:close() end)
     end)
     
     conn:on("disconnection", function(conn) 
-        print("Got disconnection.") 
+        if Debug == 1 then print("Got disconnection.") end
         conn = nil
-        dofile("sleep.lc")
+        tmr.stop(0)
+        tmr.stop(1) -- zastavim nouzovy casovac
+        if (SentOK == 1) then
+            print("Seding OK.") 
+        else
+            print("Sending FAILED.") 
+        end
+        if (ConnOK == 1) then -- pripraveno na ruzne reakce, zatim vzdy stejne
+            dofile("sleep.lc")
+        else
+            dofile("sleep.lc")
+        end
     end)
 
     conn:on("connection", function(conn)
-        SentOK = 1
-        print("Connected, sending data...")
-        --print("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
-        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey .. " HTTP/1.1\r\n")
-        conn:send("Host: emon.jiffaco.cz\r\n") 
-        -- zbytek neni potreba, pro minimalni uspokojeni protokolu 1.1 staci GET a host
-        --conn:send("Accept: */*\r\n") 
-        --conn:send("User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; no OS)\r\n")
-        conn:send("\r\n")
-        conn:send("\r\n")
+        ConnOK = 1
+        -- pridam velikost heapu a cas od startu
+            Fields[ReportFieldPrefix.."hp"] = node.heap()
+            Fields[ReportFieldPrefix.."ts"] = tmr.now()/1000
+
+        if Debug == 1 then 
+            print("Sending data...")
+            print("...?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey) 
+        end
+
+        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. 
+                  "&json=" .. cjson.encode(Fields) .. 
+                  "&apikey=" .. ReportApiKey.. 
+                  " HTTP/1.1\r\nHost: emon.jiffaco.cz\r\n\r\n\r\n")
     end)
 
-    -- jiffaco localne 192.168.129.3
-    -- jiffaco externe i lokalne 77.104.219.2
+-- jiffaco localne 192.168.129.3
+-- jiffaco externe i lokalne 77.104.219.2
+
     conn:connect(80,'77.104.219.2')
-
-
-
+    
