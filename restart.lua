@@ -2,5 +2,6 @@
 
     Stime = tmr.now()
     Rdat = {}
-    tmr.alarm(0, 100, 0, function() dofile("start.lc") end)
+    SetMAC()
+    tmr.alarm(0, 100, 0, function() dofile("measure.lc") end)
 

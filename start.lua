@@ -1,6 +1,6 @@
 local counter = 0
 
-local function SetMAC()
+function SetMAC()
     local ssid,pass,bset,bssid
     ssid, pass, bset, bssid=wifi.sta.getconfig()
     if bssid:len() == 17 then -- delka je presne 17 znaku

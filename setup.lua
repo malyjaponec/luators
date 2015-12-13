@@ -42,9 +42,9 @@
     gpio.mode(Sb3, gpio.OUTPUT) 
     gpio.write(Sb3, gpio.HIGH)
 
+    baro_on = 0
     baroD = GP[12]
     baroC = GP[13]
-    
 
     function AddressInHex(IN)
         local hexkody,out,high,low,w="0123456789ABCDEF",""

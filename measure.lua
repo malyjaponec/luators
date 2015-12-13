@@ -139,10 +139,8 @@
     package.loaded["ds18b20"]=nil
     q,v = nil,nil
 
-
--- Analogovy vstup, neni zapojen
+-- Analogovy vstup, je na tom fotoodpor
     Rdat[Rpref.."an"] = adc.read(0)
-
 
 -- Pins
     local value = ""
@@ -154,22 +152,25 @@
     value = nil
 
 -- Barometr
-    bmp085.init(baroD,baroC)
-    local value,valuet = 0,0
-    for q = 1,30 do
-        value = value + (bmp085.pressure() / 100)
-        valuet =  valuet + (bmp085.temperature() / 10)
-        tmr.delay(33)
-        tmr.wdclr()
+    if baro_on == 1 then
+        bmp085.init(baroD,baroC)
+        local value,valuet = 0,0
+        for q = 1,30 do
+            value = value + (bmp085.pressure() / 100)
+            valuet =  valuet + (bmp085.temperature() / 10)
+            tmr.delay(33)
+            tmr.wdclr()
+        end
+        value,valuet = value/10,valuet/10
+    
+        if Debug == 1 then 
+            print ("tlak="..value)
+            print ("teplota="..valuet)
+        end
+        Rdat[Rpref.."tlak"] = value
+        Rdat[Rpref.."teplota_t"] = valuet
+        value,valuet = nil,nil
     end
-    value,valuet = value/10,valuet/10
-
-    if Debug == 1 then 
-        print ("tlak="..value)
-        print ("teplota="..valuet)
-    end
-    Rdat[Rpref.."tlak"] = value
-    Rdat[Rpref.."teplota_t"] = valuet
-    value,valuet = nil,nil
--- uklid
+    
+-- odeslani
   tmr.alarm(0, 10, 0, function() dofile("send.lc") end)
