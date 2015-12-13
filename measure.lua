@@ -46,6 +46,7 @@
     if (addrs1 ~= nil) then
         local pocetsnimacu = table.getn(addrs1)
         print("temp sensors: "..pocetsnimacu) -- pocet senzoru 
+        Fields[ReportFieldPrefix.."t_cnt"] = pocetsnimacu
         if (pocetsnimacu > 0) then
             -- Start measure for all sensors
             for q,v in pairs(addrs1) do
@@ -99,8 +100,8 @@
         print ("Pres="..value)
         print ("Temp(B)="..valuet)
     end
-    Rdat[Rpref.."tlak"] = value
-    Rdat[Rpref.."teplota_b"] = valuet
+    Fields[ReportFieldPrefix.."tlak"] = value
+    Fields[ReportFieldPrefix.."teplota_b"] = valuet
     value,valuet = nil,nil    
 
     -- Mereni dokoncena 

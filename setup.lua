@@ -4,6 +4,9 @@
     local AnalogCount
     local InitDelayTime
     local InitStartTime
+    local SecurityOffInterval
+    local ReportInterval
+    local ReportIntervalLowBat
 
 -- nastaveni hodin na 0:0:0
     local function ClockInit()
@@ -119,10 +122,10 @@
     end
 
 -- konstanty pro reportovani
-    local ReportInterval = 0x10 -- minut, v BCD!!!
-    local ReportIntervalLowBat = 0x59 -- hodnota pro nizkou baterii (60 minut nejde, tak 59)
+    ReportInterval = 0x10 -- minut, v BCD!!!
+    ReportIntervalLowBat = 0x59 -- hodnota pro nizkou baterii (60 minut nejde, tak 59)
     ReportIntervalNoRTC = 5 -- v pripade ze nepujde vypnout zdroj, mel by byt jiny aby se na cloudu poznalo ze je problem
-    local SecurityOffInterval = 35 -- sekund na vsechno, zmereni, preneseni, potvrzeni
+    SecurityOffInterval = 35 -- sekund na vsechno, zmereni, preneseni, potvrzeni
     ReportNode = "3"
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
