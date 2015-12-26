@@ -1,4 +1,8 @@
 --setup.lua
+-- konstanty pro GPIO operace
+    GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
+-- konstanty pro rozdelni casovaci    
+    TM = {["ip"]=0,["m"]=1,["r"]=2,["s"]=3,["s2"]=4} 
 
 -- prevede ID luatoru do 36-kove soustavy
     function IDIn36(IN)
@@ -13,7 +17,11 @@
 
 -- vice vypisu
     Debug = 0
-    if (file.open("debug.ini", "r") ~= nil) then Debug = 1 end
+    if (file.open("debug.ini", "r") ~= nil) then 
+        Debug_IP = 1
+        Debug_S = 1
+        Debug = 1 
+    end
 
 -- konstanty pro reportovani
     Rcnt = 0
@@ -63,5 +71,12 @@
         gpio.mode(GP[q], gpio.INPUT, gpio.FLOAT) 
     end
 
--- a ted spustim bezne odesilani
-    tmr.alarm(0, 10, 1, function() dofile("start.lc") end)
+-- a ted spustim bezne cinnost
+    Completed_Network = 0
+    tmr.alarm(TM["ip"], 1000, 0, function() dofile("network.lc") end)
+    Completed_Measure = 0
+    --tmr.alarm(TM["m"], 10, 0,  function() dofile("measure.lc") end)
+    Completed_Radio = 0
+    --tmr.alarm(TM["r"], 10, 0,  function() dofile("radio.lc") end)
+    -- odesilac
+    tmr.alarm(TM["s"], 100, 0,  function() dofile("send.lc") end)

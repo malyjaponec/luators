@@ -26,12 +26,13 @@ local Host = nil
 -- inicializace ok
 local Configured = 0
 -- pouzivany timer
-local TimerNo = 6
+local TimerNo = nil
 -- Stav operace
 local Status = -1
 
 -- Defaultni hodnoty
 local DefaultNode = 1
+local DefaultTimerNo = 6
 --------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ setfenv(1,M)
 --------------------------------------------------------------------------------
 
 -- Konfigurace serveru a apiklice
-function setup(emonip, apikey, node, host)
+function setup(emonip, apikey, node, host, timerno)
     Configured = 0
     EmonIP = emonip
     if EmonIP == nil then
@@ -71,6 +72,10 @@ function setup(emonip, apikey, node, host)
     Host = host
     if Host == nil then
         Host = EmonIP -- pokud neudam virtaulniho hosta, posle tam to co jsem uvedl v IP
+    end
+    TimerNo = timer
+    if TimerNo == nil then
+        TimerNo = DefaultTimerNo
     end
     return 1
 end
