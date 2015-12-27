@@ -68,6 +68,7 @@ local function check_new_ip()
         end
     else 
         print("Reconfig done, IP is "..wifi.sta.getip())
+        Rdat[Rpref.."ti"] = tmr.now()/1000
         Completed_Network = 1
     end
 end
@@ -105,6 +106,7 @@ end
 local function check_ip()
     if nil ~= wifi.sta.getip() then 
         if Debug_IP == 1 then print("ip> IP is "..wifi.sta.getip()) end
+        Rdat[Rpref.."ti"] = tmr.now()/1000
         Completed_Network = 1
     else
         if Debug_IP == 1 then print("ip> Connecting AP...") end

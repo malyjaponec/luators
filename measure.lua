@@ -1,5 +1,5 @@
 -- measure.lua
-    tmr.stop(0)
+    tmr.stop(TM["m"])
       
 -- Knihovna na cteni z dalasu
     t = require("ds18b20")
@@ -173,4 +173,5 @@
     end
     
 -- odeslani
-  tmr.alarm(0, 10, 0, function() dofile("send.lc") end)
+  Rdat[Rpref.."tm"] = tmr.now()/1000
+  Completed_Measure = 1

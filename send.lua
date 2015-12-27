@@ -23,6 +23,7 @@ local function Konec()
             -- package.loaded["cloud"]=nil
             -- dofile("wait.lc") 
             -- sem pridat dalsi mereni nebo radio nebo tak...
+            print("odeslano")
     else
         tmr.alarm(TM["s"], 100, 0, function() Konec() end)
     end
@@ -39,14 +40,13 @@ local function OdesliTed()
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
     Rdat[Rpref.."hp"] = node.heap()    
-    Rdat[Rpref.."tx"] = tmr.now()
+    Rdat[Rpref.."tx"] = tmr.now()/1000
     Start()
 end
 
 local function KontrolaOdeslani()
     if Debug_S == 1 then
-        print("s> net="..Completed_Network)
-        print("s> m="..Completed_Measure)
+        print("s> net="..Completed_Network.." m="..Completed_Measure)
     end
     if (Completed_Network > 0) and (Completed_Measure > 0) then -- mozne odesilat
          tmr.alarm(TM["s"], 100, 0,  function() OdesliTed() end)

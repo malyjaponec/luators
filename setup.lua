@@ -18,8 +18,9 @@
 -- vice vypisu
     Debug = 0
     if (file.open("debug.ini", "r") ~= nil) then 
-        Debug_IP = 1
-        Debug_S = 1
+        --Debug_IP = 1
+        --Debug_S = 1
+        Debug_M = 1
         Debug = 1 
     end
 
@@ -75,7 +76,7 @@
     Completed_Network = 0
     tmr.alarm(TM["ip"], 1000, 0, function() dofile("network.lc") end)
     Completed_Measure = 0
-    --tmr.alarm(TM["m"], 10, 0,  function() dofile("measure.lc") end)
+    tmr.alarm(TM["m"], 10, 0,  function() dofile("measure.lc") end)
     Completed_Radio = 0
     --tmr.alarm(TM["r"], 10, 0,  function() dofile("radio.lc") end)
     -- odesilac
