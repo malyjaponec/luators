@@ -15,7 +15,7 @@ end
 
 local function Konec()
     local res = x.get_state()
-    print(res)
+    if Debug_S == 1 then print("s> res:"..res) end
     if res == 4 then
             if Debug_S == 1 then print("s> Done.") end
             -- x = nil
@@ -23,7 +23,10 @@ local function Konec()
             -- package.loaded["cloud"]=nil
             -- dofile("wait.lc") 
             -- sem pridat dalsi mereni nebo radio nebo tak...
-            print("odeslano")
+            if Debug_S == 1 then print("s>odeslano") end
+            Rdat = {} -- Vynuluju pole
+            Completed_Measure = 0 -- Nastavim, ze neni nic zmereno
+            tmr.alarm(TM["s"], 100, 0, function() KontrolaOdeslani() end) -- A cekam na na dalsi mereni
     else
         tmr.alarm(TM["s"], 100, 0, function() Konec() end)
     end
@@ -44,7 +47,7 @@ local function OdesliTed()
     Start()
 end
 
-local function KontrolaOdeslani()
+function KontrolaOdeslani()
     if Debug_S == 1 then
         print("s> net="..Completed_Network.." m="..Completed_Measure)
     end
@@ -53,7 +56,7 @@ local function KontrolaOdeslani()
          return
     else
         if (Completed_Network < 0) or (Completed_Measure < 0) then -- fatlani problem
-            -- reboot ??
+            dofile("reset.lc") -- reboot
             return
         end
     end
