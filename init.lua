@@ -1,6 +1,6 @@
 -- init.lua
-    --uart.setup(0,115200,0,1,1)
-    uart.setup(0,9600,0,1,1)
+    uart.setup(0,115200,0,1,1)
+    --uart.setup(0,9600,0,1,1)
     
 -- rizeni casovani
     Stime = tmr.now()

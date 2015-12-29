@@ -5,7 +5,7 @@
     TM = {["ip"]=0,["m"]=1,["r"]=2,["s"]=3,["s2"]=4} 
 
 -- prevede ID luatoru do 36-kove soustavy
-    function IDIn36(IN)
+    local function IDIn36(IN)
         local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
         while (IN>0) do 
             IN,znak=math.floor(IN/36),(IN % 36)+1
@@ -13,7 +13,9 @@
         end
         return out
     end
-    Rpref = IDIn36(node.chipid()).."_"
+-- nastavi prefix vsech odesilanych dat    
+    --Rpref = IDIn36(node.chipid()).."_" nepouziva se, samostatne na nodu
+    Rpref = "h_"
 
 -- vice vypisu
     Debug = 0
@@ -27,7 +29,7 @@
 -- konstanty pro reportovani
     Rcnt = 0
     Rint = 5 -- sekund
-    Rnod = "3"
+    Rnod = "1"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
     file.close()
@@ -78,6 +80,6 @@
     Completed_Measure = 0
     tmr.alarm(TM["m"], 10, 0,  function() dofile("measure.lc") end)
     Completed_Radio = 0
-    --tmr.alarm(TM["r"], 10, 0,  function() dofile("radio.lc") end)
+    tmr.alarm(TM["r"], 10, 0,  function() dofile("radio.lc") end)
     -- odesilac
     tmr.alarm(TM["s"], 100, 0,  function() dofile("send.lc") end)
