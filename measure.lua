@@ -41,7 +41,7 @@
             Rdat[Rpref.."an"] = adc.read(0)
             
             Completed_Measure = 1
-            MeasureCounter = 12
+            MeasureCounter = 11
             --tmr.alarm(TM["m"], 10000, 0,  function() AktivujOdeslani() end) 
         end
         --rgb cervena
