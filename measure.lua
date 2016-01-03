@@ -19,10 +19,11 @@
     end
 
 -- Odesilaci funkce
-    local function AktivujOdeslani()
-        print("---")
-        print("m>e1="..PCount1)
-        print("m>e2="..PCount2)
+    function AktivujOdeslani()
+        --rgb modra
+        gpio.mode(GP[13], gpio.OUTPUT)     
+        gpio.write(GP[13], gpio.HIGH)
+        if Debug_M == 1 then print("m>e1="..PCount1.." e2="..PCount2) end
         Rdat[Rpref.."count1"],PCount1 = PCount1,0
         Rdat[Rpref.."count2"],PCount2 = PCount2,0
       

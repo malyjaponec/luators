@@ -27,6 +27,9 @@ local function Konec()
             Rdat = {} -- Vynuluju pole
             Completed_Measure = 0 -- Nastavim, ze neni nic zmereno
             tmr.alarm(TM["s"], 100, 0, function() KontrolaOdeslani() end) -- A cekam na na dalsi mereni
+            --rgb zelena
+            gpio.mode(GP[12], gpio.OUTPUT)     
+            gpio.write(GP[12], gpio.LOW)
     else
         tmr.alarm(TM["s"], 100, 0, function() Konec() end)
     end
@@ -45,6 +48,9 @@ local function OdesliTed()
     Rdat[Rpref.."hp"] = node.heap()    
     Rdat[Rpref.."tx"] = tmr.now()/1000
     Start()
+    --rgb zelena
+    gpio.mode(GP[12], gpio.OUTPUT)     
+    gpio.write(GP[12], gpio.HIGH)
 end
 
 function KontrolaOdeslani()
@@ -52,8 +58,11 @@ function KontrolaOdeslani()
         print("s> net="..Completed_Network.." m="..Completed_Measure)
     end
     if (Completed_Network > 0) and (Completed_Measure > 0) then -- mozne odesilat
-         tmr.alarm(TM["s"], 100, 0,  function() OdesliTed() end)
-         return
+        --rgb modra
+        gpio.mode(GP[13], gpio.OUTPUT)     
+        gpio.write(GP[13], gpio.LOW)
+        tmr.alarm(TM["s"], 100, 0,  function() OdesliTed() end)
+        return
     else
         if (Completed_Network < 0) or (Completed_Measure < 0) then -- fatlani problem
             dofile("reset.lc") -- reboot

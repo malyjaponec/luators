@@ -4,6 +4,29 @@
 -- konstanty pro rozdelni casovaci    
     TM = {["ip"]=0,["m"]=1,["r"]=2,["s"]=3,["s2"]=4} 
 
+-- uklid pinu 
+    --cervena
+    gpio.mode(GP[0], gpio.OUTPUT)     
+    gpio.write(GP[0], gpio.HIGH)
+    --cervena necham, zaroven je modra na modulu, nebylo by videt ze pracuje
+--    gpio.mode(GP[2], gpio.OUT)     
+--    gpio.write(GP[2], gpio.HIGH)
+    --rgb cervena
+    gpio.mode(GP[15], gpio.OUTPUT)     
+    gpio.write(GP[15], gpio.LOW)
+    -- cervena
+    gpio.mode(GP[16], gpio.OUTPUT)     
+    gpio.write(GP[16], gpio.HIGH)
+    -- cervena
+    gpio.mode(GP[14], gpio.OUTPUT)     
+    gpio.write(GP[14], gpio.HIGH)
+    --rgb zelena
+    gpio.mode(GP[12], gpio.OUTPUT)     
+    gpio.write(GP[12], gpio.LOW)
+    --rgb modra
+    gpio.mode(GP[13], gpio.OUTPUT)     
+    gpio.write(GP[13], gpio.LOW)
+
 -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
         local kody,out,znak="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",""
@@ -14,14 +37,17 @@
         return out
     end
 -- nastavi prefix vsech odesilanych dat    
-    --Rpref = IDIn36(node.chipid()).."_" nepouziva se, samostatne na nodu
-    Rpref = "h_"
+    Rpref = IDIn36(node.chipid()).."_" --nepouziva se, samostatne na nodu
+    --Rpref = "h_"
 
 -- vice vypisu
     Debug = 0
+    Debug_IP = 0
+    Debug_S = 0
+    Debug_M = 0
     if (file.open("debug.ini", "r") ~= nil) then 
-        --Debug_IP = 1
-        --Debug_S = 1
+        Debug_IP = 1
+        Debug_S = 1
         Debug_M = 1
         Debug = 1 
     end
@@ -29,7 +55,7 @@
 -- konstanty pro reportovani
     Rcnt = 0
     Rint = 5 -- sekund
-    Rnod = "1" -- vsechny elektromery jsou 4
+    Rnod = "4" -- vsechny elektromery jsou 4
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
     file.close()
