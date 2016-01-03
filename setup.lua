@@ -49,12 +49,10 @@
         Debug_IP = 1
         Debug_S = 1
         Debug_M = 1
-        Debug = 1 
     end
 
 -- konstanty pro reportovani
     Rcnt = 0
-    Rint = 5 -- sekund
     Rnod = "4" -- vsechny elektromery jsou 4
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
@@ -71,4 +69,6 @@
 -- Spustim odesilac, ktery ceka az je k dispozici sit a zmerena data a provede odeslani
     tmr.alarm(TM["s"], 100, 0,  function() dofile("send.lc") end)
 
-    print("system started")
+    uart.write(0,"system started")
+    collectgarbage()
+

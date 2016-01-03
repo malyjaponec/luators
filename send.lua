@@ -61,6 +61,7 @@ function KontrolaOdeslani()
         --rgb modra
         gpio.mode(GP[13], gpio.OUTPUT)     
         gpio.write(GP[13], gpio.LOW)
+        
         tmr.alarm(TM["s"], 100, 0,  function() OdesliTed() end)
         return
     else
@@ -73,10 +74,12 @@ function KontrolaOdeslani()
     if Debug_S == 1 then
         tmr.alarm(TM["s"], 3000, 0,  function() KontrolaOdeslani() end)
     else
-        tmr.alarm(TM["s"], 100, 0,  function() KontrolaOdeslani() end)
+        tmr.alarm(TM["s"], 250, 0,  function() KontrolaOdeslani() end)
     end
+    collectgarbage()
 end
 
 x = require("cloud")
 x.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',TM["s2"])
 KontrolaOdeslani()
+
