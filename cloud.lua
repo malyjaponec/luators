@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- OpenEnergyMonitor sender for NODEMCU
 -- 
--- LICENCE: http://opensource.org/licenses/MIT
+-- 
 -- 
 -- 
 --------------------------------------------------------------------------------
@@ -29,6 +29,7 @@ local Configured = 0
 local TimerNo = nil
 -- Stav operace
 local Status = -1
+local Confirmed = 0
 
 -- Defaultni hodnoty
 local DefaultNode = 1
@@ -83,6 +84,7 @@ end
 -- Odeslani dat
 function send(data)
     Status = 0 -- operace probiha
+    Confirmed = 0 -- neni potvrzeno doruceni dat
     local Data = data
     if Data == nil then
         return -1
@@ -92,6 +94,7 @@ function send(data)
 
     c:on("receive", function(c, payload)
         Status = 3 -- prijata odpoved
+        Confirmed = 1 -- zatim nekontroluji obsah, dulezite je ze jsem dostal odpoved
         tmr.alarm(TimerNo, 100, 0, function() c:close() end)
     end)
 
@@ -114,12 +117,18 @@ function send(data)
     end)
 
     c:connect(80,EmonIP)
+    tmr.alarm(TimerNo, 20000, 0, function() c:close() end) -- 20s timeout pak vzdy koncim
 end  
 
 -- Vraci vysledek operace (nebo jeji prubeh)
 function get_state()
-    return Status
+    return Status,Confirmed
 end
+
+function abort()
+    c.close()
+end
+   
   
 -- Return module table
 return M

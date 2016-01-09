@@ -5,7 +5,7 @@ tmr.stop(3)
 tmr.stop(4)
 tmr.stop(5)
 
-print("Waiting for reboot")
-
+print("restart")
+rgb.set("white")
 tmr.alarm(0, 1000, 0, function() node.restart() end)
 

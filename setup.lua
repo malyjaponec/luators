@@ -11,21 +11,12 @@
     --cervena necham, zaroven je modra na modulu, nebylo by videt ze pracuje
 --    gpio.mode(GP[2], gpio.OUT)     
 --    gpio.write(GP[2], gpio.HIGH)
-    --rgb cervena
-    gpio.mode(GP[15], gpio.OUTPUT)     
-    gpio.write(GP[15], gpio.LOW)
     -- cervena
     gpio.mode(GP[16], gpio.OUTPUT)     
     gpio.write(GP[16], gpio.HIGH)
     -- cervena
     gpio.mode(GP[14], gpio.OUTPUT)     
     gpio.write(GP[14], gpio.HIGH)
-    --rgb zelena
-    gpio.mode(GP[12], gpio.OUTPUT)     
-    gpio.write(GP[12], gpio.LOW)
-    --rgb modra
-    gpio.mode(GP[13], gpio.OUTPUT)     
-    gpio.write(GP[13], gpio.LOW)
 
 -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
@@ -40,16 +31,14 @@
     Rpref = IDIn36(node.chipid()).."_" --nepouziva se, samostatne na nodu
     --Rpref = "h_"
 
+-- nastavi knihovnu pro RGB
+    rgb = require("rgb")
+    rgb.setup() -- volam z defaultnimi hodnotami
+    rgb.set() -- volam bez parametru = cerna
+
 -- vice vypisu
-    Debug = 0
-    Debug_IP = 0
-    Debug_S = 0
-    Debug_M = 0
-    if (file.open("debug.ini", "r") ~= nil) then 
-        Debug_IP = 1
-        Debug_S = 1
-        Debug_M = 1
-    end
+    Debug = 0 
+    if (file.open("debug.ini", "r") ~= nil) then Debug = 1 end
 
 -- konstanty pro reportovani
     Rcnt = 0
@@ -61,14 +50,16 @@
 
 -- Spustim procesy nastavujici sit a merici data
 
-    Completed_Network = 0
+    Network_Ready = 0 -- sit neni inicialozvana
     tmr.alarm(TM["ip"], 100, 0, function() dofile("network.lc") end)
-    Completed_Measure = 0
+
+    Measure_Faze = { GP[4], GP[5], GP[2] } -- definice pinu ktere se ctou
     tmr.alarm(TM["m"], 100, 0,  function() dofile("measure.lc") end)
 
--- Spustim odesilac, ktery ceka az je k dispozici sit a zmerena data a provede odeslani
+    Send_Busy = 1 -- je to busy, sam si to zmeni az bude network ready
+    Send_Request = 0 -- neni zadny pozadavek
+    Send_Failed = 0 -- neni chyba
     tmr.alarm(TM["s"], 100, 0,  function() dofile("send.lc") end)
 
-    uart.write(0,"system started")
-    collectgarbage()
-
+    print("run")
+    --collectgarbage()

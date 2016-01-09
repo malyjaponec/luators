@@ -1,75 +1,138 @@
 -- measure.lua
     tmr.stop(TM["m"])
 
--- globalni citace pro 2 elektromer
-    MeasureCounter = 11
-    PCount1 = 0
-    PCount2 = 0
+-- nastaveni pro mereni
+    local SendEnergyCounter = 11
+    local PowerReportTimer = 5000
+    local PulseEnergy = 0.5 -- 0,5 Wh
+    -- Measure_Faze musi byt definovana z vnejsku
 
--- Citaci funkce
-    function CitacPulzu1(level)
+-- citace, casovace a akumulatory
+    local SendCounter = 0
+    local Energy_Faze = {0,0,0}
+    local Power_Faze = {0,0,0}
+    local Time_Faze = {0,0,0}
+    local SentEnergy_Faze = {0,0,0}
+
+-- Generalizovana citaci funkce
+    local function CitacInterni(_kanal)
+        -- jako prvni si zaznamenam cas pulzu aby to neyblo ovlivneno nejakym dalsimi nedeterministickymi vypocty
         local timenow = tmr.now()
-        PCount1 = PCount1 + 1
-        local timedif = timenow - PowerTimer1
-        PowerTimer1 = timenow
+        -- akumuluji energii, prictu energetiuckou hodnotu pulzu
+        Energy_Faze[_kanal] = Energy_Faze[_kanal] + PulseEnergy
+        -- spocitam cas od posledniho pulzu - periodu a ulozim si aktualni casovou znacku pro priste
+        local timedif = timenow - Time_Faze[_kanal]
+        Time_Faze[_kanal] = timenow
+        timenow = nil
+        -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
         if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-            Power1 = 1800000000/timedif -- hodnota ve watech (pri pulzu 0,5Wh)
+            local power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
+            if power < 5000 then -- nepripustim ze bych meril neco pres 20A
+                Power_Faze[_kanal] = power
+            end
+            power = nil
         end
-        gpio.trig(Pulzy1, "down") 
+        timedif = nil
+    end
+      
+-- Citaci funkce 1 2 a 3
+    function CitacPulzu1(_level)
+        CitacInterni(1)
+        gpio.trig(Measure_Faze[1], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
-      
+    function CitacPulzu2(_level)
+        CitacInterni(2)
+        gpio.trig(Measure_Faze[2], "down") 
+        --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
+    end
+    function CitacPulzu3(_level)
+        CitacInterni(3)
+        gpio.trig(Measure_Faze[3], "down") 
+        --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
+    end
+
 -- Odesilaci funkce
-    local function AktivujOdeslani()
-        --rgb cervena
-        gpio.mode(GP[15], gpio.OUTPUT)     
-        gpio.write(GP[15], gpio.HIGH)
+    local function ZpracujMereni()
+        local i
 
         -- snizeni vykonu kdyz se nic nedeje
-        local timedif = tmr.now() - PowerTimer1
-        if timedif > 10000000 then -- jiz 10 sekund neprisel pulz prepocitam vykon
-            local PowerX = 1800000000/timedif 
-            if PowerX < Power1 then
-                Power1 = PowerX
+        local timedif,power
+        local timenow = tmr.now()
+        for i=1,3 do 
+            local timedif = timenow - Time_Faze[i]
+            if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
+                power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
+                if power < 5000 then -- nepripustim ze bych meril neco pres 20A
+                    if Power_Faze[i] > power then -- vypocteny vykon je nizsi nez predchozi, znamena to se ze se prodluzuji
+                    -- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
+                        Power_Faze[i] = power
+                    end
+                end
             end
         end
+        power = nil
+        timenow = nil
+        timedif = nil
 
-        if MeasureCounter > 0 then
-            -- if Debug_M == 1 then uart.write(0,"\r\nm> "..PCount1.."/"..PCount2) end
-            MeasureCounter = MeasureCounter - 1
-            Rdat[Rpref.."power1"] = Power1
-            Rdat[Rpref.."an"] = adc.read(0)
-            Completed_Measure = 1
-        else
-            -- if Debug_M == 1then uart.write(0,"\r\nm> out "..PCount1.."/"..PCount2) end
-            --rgb modra
-            gpio.mode(GP[13], gpio.OUTPUT)     
-            gpio.write(GP[13], gpio.HIGH)
-            Rdat[Rpref.."power1"] = Power1
-            Rdat[Rpref.."energy1"],PCount1 = PCount1/2,0
-            Rdat[Rpref.."an"] = adc.read(0)
-            
-            Completed_Measure = 1
-            MeasureCounter = 11
-            --tmr.alarm(TM["m"], 10000, 0,  function() AktivujOdeslani() end) 
+        -- kontrola dat z neuspesneho odeslani a pricteni k datum
+        if Send_Failed == 1 then
+            for i=1,3 do 
+                Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
+                -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
+            end
+            Send_Failed = 0 -- vymazu si indikaci, kterou muze nastavit odesilac
         end
-        --rgb cervena
-        gpio.mode(GP[15], gpio.OUTPUT)     
-        gpio.write(GP[15], gpio.LOW)
-        collectgarbage()
+
+        -- predani dat k odeslani
+        if SendCounter < SendEnergyCounter then -- predava se jen aktualni vykon
+            if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
+                for i=1,3 do 
+                    Rdat[Rpref.."power"..i] = Power_Faze[i]
+                end
+                Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
+                Send_Request = 1
+                rgb.set("blue")
+                SendCounter = SendCounter + 1
+            end
+        else -- predava se i energii
+            if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
+                for i=1,3 do 
+                    Rdat[Rpref.."power"..i] = Power_Faze[i]
+                    -- pocatek kriticke sekce
+                        SentEnergy_Faze[i],Energy_Faze[i] = Energy_Faze[i],0
+                    -- konec kriticke sekce
+                    Rdat[Rpref.."energy"..i] = SentEnergy_Faze[i]
+                    Rdat[Rpref.."energy_time"] = tmr.now()/1000000
+                end
+                Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
+                Send_Request = 1;
+                rgb.set("blue")
+                SendCounter = 0 -- odeslani spotreby se v pripaden neuspechu odlozi zase o jednu dlouhou periodu
+                -- nebudu se snazit to tlacit rychle v dalsi kratke periode ven, protoze o nic neprijdu, neodeslane
+                -- energie si nactu zpet a pridam priste
+            end
+        end
+        --collectgarbage()
     end
       
--- Konfigurace, kam jsou elektromery pripojeny
-    Pulzy1 = GP[4]
+-- Nastaveni pinu na preruseni
+    if Measure_Faze[1] ~= nil then
+        gpio.mode(Measure_Faze[1], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[1], gpio.INT, gpioPULLUP) 
+        gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
+    end
+    if Measure_Faze[2] ~= nil then
+        gpio.mode(Measure_Faze[2], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[2], gpio.INT, gpioPULLUP) 
+        gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
+    end
+    if Measure_Faze[3] ~= nil then
+        gpio.mode(Measure_Faze[3], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[3], gpio.INT, gpioPULLUP) 
+        gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
+    end
     
--- Nastaveni pinu
-    gpio.mode(Pulzy1, gpio.INPUT, gpioPULLUP)
-    gpio.mode(Pulzy1, gpio.INT, gpioPULLUP) 
-    gpio.trig(Pulzy1, "down", CitacPulzu1)
-
-    Power1 = 0
-    PowerTimer1=0
-
 -- Nacasu prvni odeslani
-  tmr.alarm(TM["m"], 5000, 1,  function() AktivujOdeslani() end) 
-  collectgarbage()
+    tmr.alarm(TM["m"], PowerReportTimer, 1,  function() ZpracujMereni() end) 
+    --collectgarbage()
