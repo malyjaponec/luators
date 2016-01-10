@@ -1,11 +1,13 @@
-tmr.stop(0)
-tmr.stop(1)
-tmr.stop(2)
-tmr.stop(3)
-tmr.stop(4)
-tmr.stop(5)
+--tmr.stop(0)
+--tmr.stop(1)
+--tmr.stop(2)
+--tmr.stop(3)
+--tmr.stop(4)
+--tmr.stop(5)
+
+rgb.set("white")
 
 print("restart")
-rgb.set("white")
-tmr.alarm(0, 1000, 0, function() node.restart() end)
+--tmr.alarm(0, 250, 0, function() node.restart() end)
+node.restart()
 

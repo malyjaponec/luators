@@ -8,11 +8,13 @@
     -- Measure_Faze musi byt definovana z vnejsku
 
 -- citace, casovace a akumulatory
-    local SendCounter = 0
-    local Energy_Faze = {0,0,0}
-    local Power_Faze = {0,0,0}
-    local Time_Faze = {0,0,0}
-    local SentEnergy_Faze = {0,0,0}
+    local SendCounter = 0 -- citac cyklujici odesilani vykonu a energie
+    local SentEnergy = 0 -- indikace zda se posila energie nebo jen vykon
+    local Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    local Power_Faze = {0,0,0} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+    local Time_Faze = {0,0,0} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
+    local SentEnergy_Faze = {0,0,0} -- ulozeni energie, ktera se predala k posilani, tak aby pri neuspechu se mohla vratit
+        -- do citacu, ktere se s predanim dat k odeslani nuluji
 
 -- Generalizovana citaci funkce
     local function CitacInterni(_kanal)
@@ -75,23 +77,27 @@
         timenow = nil
         timedif = nil
 
-        -- kontrola dat z neuspesneho odeslani a pricteni k datum
-        if Send_Failed == 1 then
-            for i=1,3 do 
-                Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
-                -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
+        -- kontrola dat z neuspesneho odeslani a pricteni k datum, ale jen pokud byla pred tim odesilana energie
+        if (Send_Failed == 1) then
+            if (SentEnergy == 1) then
+                for i=1,3 do 
+                    Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
+                    -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
+                end
             end
-            Send_Failed = 0 -- vymazu si indikaci, kterou muze nastavit odesilac
+            Send_Failed = 0 -- vymazu si indikaci, kterou muze nastavit odesilac, to delam vzdy i kdyz jsem nic nevracel
         end
 
         -- predani dat k odeslani
         if SendCounter < SendEnergyCounter then -- predava se jen aktualni vykon
             if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
+                rgb.set() -- zhasnu led, abych mohl radne zmerit okolni svetlo snad nasledujici kod bude stacit na stabilizaci hodnoty
                 for i=1,3 do 
                     Rdat[Rpref.."power"..i] = Power_Faze[i]
                 end
                 Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
                 Send_Request = 1
+                SentEnergy = 0 -- nebyla odeslana energie
                 rgb.set("blue")
                 SendCounter = SendCounter + 1
             end
@@ -106,7 +112,8 @@
                     Rdat[Rpref.."energy_time"] = tmr.now()/1000000
                 end
                 Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
-                Send_Request = 1;
+                Send_Request = 1
+                SentEnergy = 1 -- byla odeslana energie
                 rgb.set("blue")
                 SendCounter = 0 -- odeslani spotreby se v pripaden neuspechu odlozi zase o jednu dlouhou periodu
                 -- nebudu se snazit to tlacit rychle v dalsi kratke periode ven, protoze o nic neprijdu, neodeslane

@@ -1,6 +1,7 @@
 -- send.lua
 local x
-local Timeout
+local KonecCounter
+local FailCounter
 
 local function Get_AP_MAC()
     local ssid,pass,bset,bssid
@@ -15,21 +16,34 @@ local function Get_AP_MAC()
 end
 
 local function Konec()
-    local state,result = x.get_state()
+    local state,result = x.get_state() -- vyctu si stav cloud knihovny
+
+    -- Zajisteni 30s timeoutu i kdyz knihovna ma vlastni 20s timeout jenze nevime co se stane pri vypadku wifi pri prenosu
+    KonecCounter = KonecCounter + 1
+    if KonecCounter > 300 then -- pri kontrole 100ms tedy 10x za sekundu je 30sekund asi 300
+        x.abort() -- volam abort cloudoveho prenosu at udelal co udelal
+        state = 4 -- fejkuju stav 4 - konec prenosu
+        result = 0 -- stejne tak nastavuji vysledek na nepreneseno a o zbytek se postaraji standardni mechanizmy
+    end
+
+    -- Kontrola stavu cloud knihovny
     if (state == 4) then -- ukonceno spojeni
         if result == 1 then -- predana data
             if Debug_S == 1 then print("s>odeslano") end
+            FailCounter = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
             rgb.set()
         else -- data nepredana
-            Send_Failed = 1
+            if Debug_S == 1 then print("s>chyba,nepredano") end
+            Send_Failed = 1 -- chyba, data se musi zopakovat
+            FailCounter = FailCounter + 1 -- zvysuji citac chyb prenosu
             rgb.set("magenta")
         end
         Rdat = {} -- Vynuluju data, nikdo jiny to nedela
         Send_Request = 0 -- Vymazu pozadavek
         Send_Busy = 0 -- Vymazu blokaci z jineho duvodu
         tmr.alarm(TM["s"], 100, 0, function() KontrolaOdeslani() end) -- A cekam na na dalsi mereni
-    else -- nez skonci cekani cekam, knihovna ma 20s timeout a mela by vzdycky dojit do stavu 4
-        tmr.alarm(TM["s"], 100, 0, function() Konec() end)
+    else -- nez skonci cekani cekam
+        tmr.alarm(TM["s"], 100, 0, function() Konec() end) -- Cekam na stav 4
     end
 end
 
@@ -39,10 +53,12 @@ local function Start()
     Rdat[Rpref.."x"..Get_AP_MAC()] = 1 
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
-    Rdat[Rpref.."hp"] = node.heap()    
+    Rdat[Rpref.."fc"] = FailCounter   
+    Rdat[Rpref.."hp"] = node.heap() 
 
     x.send(Rdat) -- dam pozadavek prenosu dat na cloud
-    
+
+    KonecCounter = 0 -- citac pro timeout 
     tmr.alarm(TM["s"], 100, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
 end
 
@@ -69,10 +85,21 @@ function KontrolaOdeslani()
         return
     end
 
+--    if FailCounter > 20 then -- reset v pripade X chyb prenosu
+--        tmr.alarm(TM["s"], 100, 0,  function() dofile("reset.lc") end)
+--        return
+--    end        
+-- nevim zda je lepsi udelat reset a ztratit informaci o spotrebe a nebo pocitat s tim ze bez resetu
+-- se to z problemu vykope samo, asi to druhe, stejne pri vypadku wifi signalu to zacne restartovat
+-- je otazka zda to neni spatne, mozna by se nemel reset takoveho zarizeni delat nikdy protoze nedostupnost
+-- wifi muze byt jen otazka docasna a treba za pul hodiny se opravi a system by jinak dokazal naakumulovana
+-- data poslat i po takove dobe
+
     -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
     tmr.alarm(TM["s"], 250, 0,  function() KontrolaOdeslani() end)
 end
 
+FailCounter = 0 -- toto pocita kontinualni chyby prenosu a po 20 radeji zarizeni restartuje
 x = require("cloud")
 x.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',TM["s2"])
 tmr.alarm(TM["s"], 250, 0,  function() KontrolaOdeslani() end)
