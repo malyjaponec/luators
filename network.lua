@@ -61,7 +61,7 @@ local function check_new_ip()
         if Debug == 1 then print("ip> Waiting for IP...") end
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(TM["ip"], 500, 0, function() check_new_ip() end)
+            tmr.alarm(0, 500, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("ip> PANIC, not IP assigned, end")
@@ -85,11 +85,11 @@ local function reset_apn()
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
         counter = 10
-        tmr.alarm(TM["ip"], 5000, 0, function() check_new_ip() end)
+        tmr.alarm(0, 5000, 0, function() check_new_ip() end)
     else 
         if Debug == 1 then print("ip> Waiting between scans...") end
         if (counter > 0) then
-            tmr.alarm(TM["ip"], 3000, 0, function() reset_apn() end)   
+            tmr.alarm(0, 3000, 0, function() reset_apn() end)   
             -- musi cekat 3 sekundy jinak to nikdy neprojde a ne vzdycky to prochazi na poprve 
         else
             print("ip> PANIC, not wifi coverage, end")
@@ -119,7 +119,7 @@ local function check_ip()
         if Debug == 1 then print("ip> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(TM["ip"], 500, 0, function() check_ip() end) -- Mensi cas taky funguje
+            tmr.alarm(0, 500, 0, function() check_ip() end) -- Mensi cas taky funguje
         else
             if Debug == 1 then print("ip> status:"..wifi.sta.status()) end
             change_apn()
@@ -131,4 +131,4 @@ end
 
 Network_Ready = 0 -- toto se sice nastavuje vnejsem pri volani ze setupu ale kdyz to budu volat z sendu tak at si to nastavi samo
 counter = 5 -- 5 bylo pozuito pro 2s cekani na IP, pro 500ms cekani by to chtelo 20
-tmr.alarm(TM["ip"], 250, 0, function() check_ip() end)
+tmr.alarm(0, 250, 0, function() check_ip() end)

@@ -2,6 +2,7 @@
 local x
 local KonecCounter
 local FailCounter
+local CoverageFailCounter
 
 local function Get_AP_MAC()
     local ssid,pass,bset,bssid
@@ -38,28 +39,29 @@ local function Konec()
             FailCounter = FailCounter + 1 -- zvysuji citac chyb prenosu
             rgb.set("magenta")
         end
+        Rdat = nil
         Rdat = {} -- Vynuluju data, nikdo jiny to nedela
         Send_Request = 0 -- Vymazu pozadavek
         Send_Busy = 0 -- Vymazu blokaci z jineho duvodu
-        tmr.alarm(TM["s"], 100, 0, function() KontrolaOdeslani() end) -- A cekam na na dalsi mereni
+        tmr.alarm(2, 500, 0, function() KontrolaOdeslani() end) -- A cekam na na dalsi pozadavek odeslani dat
     else -- nez skonci cekani cekam
-        tmr.alarm(TM["s"], 100, 0, function() Konec() end) -- Cekam na stav 4
+        tmr.alarm(2, 500, 0, function() Konec() end) -- Cekam na stav 4
     end
 end
 
 local function Start()
     rgb.set("green")
     -- pridam si nektera technologicka data, ktera predavam na cloud
-    Rdat[Rpref.."x"..Get_AP_MAC()] = 1 
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
+    Rdat[Rpref.."x"..Get_AP_MAC()] = 1 
     Rdat[Rpref.."fc"] = FailCounter   
     Rdat[Rpref.."hp"] = node.heap() 
 
     x.send(Rdat) -- dam pozadavek prenosu dat na cloud
 
     KonecCounter = 0 -- citac pro timeout 
-    tmr.alarm(TM["s"], 100, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
+    tmr.alarm(2, 1000, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
 end
 
 function KontrolaOdeslani()
@@ -69,11 +71,11 @@ function KontrolaOdeslani()
         if wifi.sta.status() ~= 5 then -- indikuje to ze wifi neni v poradku
             rgb.set("cyan")
             Send_Busy = 1
-            tmr.alarm(TM["ip"], 1000, 0, function() dofile("network.lc") end) -- reinicalizace site, zkousim poprve nikdy jsem to neresil, vzdy to vedlo k resetu
+            tmr.alarm(0, 100, 0, function() dofile("network.lc") end) -- reinicalizace site
         else
             Send_Busy = 0 -- indikuji ze je mozne vydavat pozadavky (wifi je pripojena)
             if Send_Request == 1 then -- merici system zada odeslani dat na cloud
-                tmr.alarm(TM["s"], 100, 0,  function() Start() end) -- Jdu na to
+                tmr.alarm(2, 100, 0,  function() Start() end) -- Jdu na to
                 return
             end
         end
@@ -81,12 +83,19 @@ function KontrolaOdeslani()
     end
 
     if Network_Ready < 0 then -- chyba v pristupu k siti, reset barvu si reset zaridi sam
-        tmr.alarm(TM["s"], 100, 0,  function() dofile("reset.lc") end)
-        return
+		CoverageFailCounter = CoverageFailCounter + 1
+		if FailCounter > 5 then -- reset v pripade X nenalezeneho AP
+			tmr.alarm(2, 100, 0,  function() dofile("reset.lc") end)
+			return
+		else
+			rgb.set("cyan")
+			Send_Busy = 1
+			tmr.alarm(0, 100, 0, function() dofile("network.lc") end) -- reinicalizace site
+		end
     end
 
 --    if FailCounter > 20 then -- reset v pripade X chyb prenosu
---        tmr.alarm(TM["s"], 100, 0,  function() dofile("reset.lc") end)
+--        tmr.alarm(2, 100, 0,  function() dofile("reset.lc") end)
 --        return
 --    end        
 -- nevim zda je lepsi udelat reset a ztratit informaci o spotrebe a nebo pocitat s tim ze bez resetu
@@ -96,11 +105,12 @@ function KontrolaOdeslani()
 -- data poslat i po takove dobe
 
     -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
-    tmr.alarm(TM["s"], 250, 0,  function() KontrolaOdeslani() end)
+    tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
 end
 
 FailCounter = 0 -- toto pocita kontinualni chyby prenosu a po 20 radeji zarizeni restartuje
+CoverageFailCounter = 0 -- pocita pocet pokusu kdy nenajde AP
 x = require("cloud")
-x.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',TM["s2"])
-tmr.alarm(TM["s"], 250, 0,  function() KontrolaOdeslani() end)
+x.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',3)
+tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
 

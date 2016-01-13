@@ -1,5 +1,5 @@
 -- measure.lua
-    tmr.stop(TM["m"])
+    tmr.stop(1)
 
 -- nastaveni pro mereni
     local SendEnergyCounter = 11
@@ -93,9 +93,9 @@
             if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
                 rgb.set() -- zhasnu led, abych mohl radne zmerit okolni svetlo snad nasledujici kod bude stacit na stabilizaci hodnoty
                 for i=1,3 do 
-                    Rdat[Rpref.."power"..i] = Power_Faze[i]
+                    Rdat[Rpref.."p"..i] = Power_Faze[i]	-- prepisuji odesilaci data
                 end
-                Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
+                Rdat[Rpref.."an"] = adc.read(0) -- prepocty se mohou delat na cloudu, poslu hodnotu
                 Send_Request = 1
                 SentEnergy = 0 -- nebyla odeslana energie
                 rgb.set("blue")
@@ -104,12 +104,12 @@
         else -- predava se i energii
             if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
                 for i=1,3 do 
-                    Rdat[Rpref.."power"..i] = Power_Faze[i]
+                    Rdat[Rpref.."p"..i] = Power_Faze[i]
                     -- pocatek kriticke sekce
                         SentEnergy_Faze[i],Energy_Faze[i] = Energy_Faze[i],0
                     -- konec kriticke sekce
-                    Rdat[Rpref.."energy"..i] = SentEnergy_Faze[i]
-                    Rdat[Rpref.."energy_time"] = tmr.now()/1000000
+                    Rdat[Rpref.."e"..i] = SentEnergy_Faze[i]
+                    Rdat[Rpref.."et"] = tmr.now()/1000000
                 end
                 Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
                 Send_Request = 1
@@ -141,5 +141,5 @@
     end
     
 -- Nacasu prvni odeslani
-    tmr.alarm(TM["m"], PowerReportTimer, 1,  function() ZpracujMereni() end) 
+    tmr.alarm(1, PowerReportTimer, 1,  function() ZpracujMereni() end) 
     --collectgarbage()
