@@ -30,11 +30,11 @@ local function Konec()
     -- Kontrola stavu cloud knihovny
     if (state == 4) then -- ukonceno spojeni
         if result == 1 then -- predana data
-            if Debug_S == 1 then print("s>odeslano") end
+            if Debug == 1 then print("s>odeslano") end
             FailCounter = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
             rgb.set()
         else -- data nepredana
-            if Debug_S == 1 then print("s>chyba,nepredano") end
+            if Debug == 1 then print("s>chyba,nepredano") end
             Send_Failed = 1 -- chyba, data se musi zopakovat
             FailCounter = FailCounter + 1 -- zvysuji citac chyb prenosu
             rgb.set("magenta")

@@ -8,3 +8,5 @@
     print(".")
     print(".") 
     print(".")
+
+-- pouzity fw: 160109 master - node, file, gpio, wifi, net, tmr, adc, uart, cjson

@@ -84,7 +84,7 @@ local function reset_apn()
         wifi.sta.config(ap_selected_ssid,ap_selected_pass)
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
-        counter = 10
+        counter = 30
         tmr.alarm(0, 5000, 0, function() check_new_ip() end)
     else 
         if Debug == 1 then print("ip> Waiting between scans...") end
@@ -130,5 +130,5 @@ end
 -- start.lua
 
 Network_Ready = 0 -- toto se sice nastavuje vnejsem pri volani ze setupu ale kdyz to budu volat z sendu tak at si to nastavi samo
-counter = 5 -- 5 bylo pozuito pro 2s cekani na IP, pro 500ms cekani by to chtelo 20
+counter = 20 -- 5 bylo pozuito pro 2s cekani na IP, pro 500ms cekani by to chtelo 20
 tmr.alarm(0, 250, 0, function() check_ip() end)

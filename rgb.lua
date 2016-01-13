@@ -67,7 +67,7 @@ end
 -- Nastaveni cistych barev
 function set(_color)
 	if Configured == 0 then
-		retunr 0
+		return 0
 	end
     local R,G,B = gpio.LOW,gpio.LOW,gpio.LOW
     if (_color == "red") then
