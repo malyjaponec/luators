@@ -32,14 +32,21 @@
 
 -- vice vypisu, temer se v nove vzniknutych kodech nepouziva, ale v sitove vrstve je pouzito
     Debug = 0 
-    if (file.open("debug.ini", "r") ~= nil) then Debug = 1 end
+    if (file.open("debug.ini", "r") ~= nil) then
+        Debug = 1
+        file.close()
+    end
 
 -- konstanty pro reportovani
     Rcnt = 0
-    Rnod = "4" -- vsechny elektromery jsou 4
-    file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
+    Rnod = "1" -- vsechny elektromery jsou 4
+    if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
-    file.close()
+        file.close()
+    else
+        Rapik = "xxx"
+        print("PANIC: no apikey.ini")
+    end
     Rdat = {}
 
 -- Spustim procesy nastavujici sit a merici data

@@ -4,7 +4,7 @@
 -- nastaveni pro mereni
     local SendEnergyCounter = 11
     local PowerReportTimer = 5000
-    local PulseEnergy = 0.5 -- 0,5 Wh
+    local PulseEnergy = 1 -- pro celociselny system nesmi byt desetine cislo, pro float je mozne nastavit velikost jednoho pulzu
     -- Measure_Faze musi byt definovana z vnejsku
 
 -- citace, casovace a akumulatory
@@ -83,8 +83,8 @@
         timedif = nil
 
         -- kontrola dat z neuspesneho odeslani a pricteni k datum, ale jen pokud byla pred tim odesilana energie
-        if (Send_Failed == 1) then
-            if (SentEnergy == 1) then
+        if Send_Failed == 1 then
+            if SentEnergy == 1 then
                 for i=1,3 do 
                     Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
                     -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
