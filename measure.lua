@@ -11,7 +11,7 @@
     local SendCounter = 0 -- citac cyklujici odesilani vykonu a energie
     local SentEnergy = 0 -- indikace zda se posila energie nebo jen vykon
     local Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
-    local Power_Faze = {0,0,0} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+    local Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
     local Time_Faze = {0,0,0} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local SentEnergy_Faze = {0,0,0} -- ulozeni energie, ktera se predala k posilani, tak aby pri neuspechu se mohla vratit
         -- do citacu, ktere se s predanim dat k odeslani nuluji
@@ -20,21 +20,26 @@
     local function CitacInterni(_kanal)
         -- jako prvni si zaznamenam cas pulzu aby to neyblo ovlivneno nejakym dalsimi nedeterministickymi vypocty
         local timenow = tmr.now()
-        -- akumuluji energii, prictu energetiuckou hodnotu pulzu
-        Energy_Faze[_kanal] = Energy_Faze[_kanal] + PulseEnergy
         -- spocitam cas od posledniho pulzu - periodu a ulozim si aktualni casovou znacku pro priste
         local timedif = timenow - Time_Faze[_kanal]
-        Time_Faze[_kanal] = timenow
-        timenow = nil
-        -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
-        if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-            local power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
-            if power < 5000 then -- nepripustim ze bych meril neco pres 20A
-                Power_Faze[_kanal] = power
+        if Time_Faze[_kanal] == 0 then -- po startu nevim kdy byl predchozi pulz, pouze ulozim cas a necham power na -1
+            Time_Faze[_kanal] = timenow
+            timenow = nil
+        else
+            Time_Faze[_kanal] = timenow
+            timenow = nil
+            -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
+            if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
+                local power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
+                if power < 5000 then -- nepripustim ze bych meril neco pres 20A
+                    Power_Faze[_kanal] = power
+                end
+                power = nil
             end
-            power = nil
         end
         timedif = nil
+        -- akumuluji energii, prictu energetiuckou hodnotu pulzu
+        Energy_Faze[_kanal] = Energy_Faze[_kanal] + PulseEnergy
     end
       
 -- Citaci funkce 1 2 a 3
@@ -84,6 +89,7 @@
                     Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
                     -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
                 end
+                SentEnergy = 0 -- nejsem si jisty, zda tohle vymazat taky ale pro jistotu jo
             end
             Send_Failed = 0 -- vymazu si indikaci, kterou muze nastavit odesilac, to delam vzdy i kdyz jsem nic nevracel
         end
@@ -92,8 +98,10 @@
         if SendCounter < SendEnergyCounter then -- predava se jen aktualni vykon
             if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
                 rgb.set() -- zhasnu led, abych mohl radne zmerit okolni svetlo snad nasledujici kod bude stacit na stabilizaci hodnoty
-                for i=1,3 do 
-                    Rdat[Rpref.."p"..i] = Power_Faze[i]	-- prepisuji odesilaci data
+                for i=1,3 do
+                    if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
+                        Rdat[Rpref.."p"..i] = Power_Faze[i]	-- prepisuji odesilaci data
+                    end
                 end
                 Rdat[Rpref.."an"] = adc.read(0) -- prepocty se mohou delat na cloudu, poslu hodnotu
                 Send_Request = 1
@@ -104,7 +112,9 @@
         else -- predava se i energii
             if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
                 for i=1,3 do 
-                    Rdat[Rpref.."p"..i] = Power_Faze[i]
+                    if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
+                        Rdat[Rpref.."p"..i] = Power_Faze[i]
+                    end
                     -- pocatek kriticke sekce
                         SentEnergy_Faze[i],Energy_Faze[i] = Energy_Faze[i],0
                     -- konec kriticke sekce
