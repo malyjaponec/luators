@@ -4,3 +4,5 @@
 # hesla
 passwd.ini
 apikey.ini
+# slozky
+compiled_*/*

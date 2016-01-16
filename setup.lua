@@ -39,7 +39,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0
-    Rnod = "1" -- vsechny elektromery jsou 4
+    Rnod = "4" -- vsechny elektromery jsou 4
     if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
