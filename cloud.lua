@@ -23,17 +23,11 @@ local EmonIP = nil
 local Node = nil
 -- ulozeni nazvu host (pro virtual host)
 local Host = nil
--- inicializace ok
-local Configured = 0
 -- pouzivany timer
 local TimerNo = nil
 -- Stav operace
 local Status = -1
 local Confirmed = 0
-
--- Defaultni hodnoty
-local DefaultNode = 1
-local DefaultTimerNo = 6
 --------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -56,7 +50,6 @@ setfenv(1,M)
 
 -- Konfigurace serveru a apiklice
 function setup(emonip, apikey, node, host, timerno)
-    Configured = 0
     EmonIP = emonip
     if EmonIP == nil then
         return -1 -- error
@@ -65,10 +58,9 @@ function setup(emonip, apikey, node, host, timerno)
     if ApiKey == nil then
         return -1 -- error
     end
-    Configured = 1
     Node = node
     if Node == nil then
-        Node = DefaultNode
+        Node = 1 -- default
     end
     Host = host
     if Host == nil then
@@ -76,9 +68,9 @@ function setup(emonip, apikey, node, host, timerno)
     end
     TimerNo = timer
     if TimerNo == nil then
-        TimerNo = DefaultTimerNo
+        TimerNo = 6 -- default
     end
-    return 1
+    return 0
 end
 
 -- Odeslani dat
@@ -117,7 +109,7 @@ function send(data)
     end)
 
     c:connect(80,EmonIP)
-    tmr.alarm(TimerNo, 20000, 0, function() c:close() end) -- 20s timeout pak vzdy koncim
+    tmr.alarm(TimerNo, 10000, 0, function() c:close() end) -- 10s timeout pak vzdy koncim
 end  
 
 -- Vraci vysledek operace (nebo jeji prubeh)

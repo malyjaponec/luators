@@ -2,10 +2,9 @@
     tmr.stop(1)
 
 -- nastaveni pro mereni
+    -- Measure_Faze musi byt definovana z vnejsku - 3 GPIO ze kterych to cte
     local SendEnergyCounter = 11
     local PowerReportTimer = 5000
-    local PulseEnergy = 1 -- pro celociselny system nesmi byt desetine cislo, pro float je mozne nastavit velikost jednoho pulzu
-    -- Measure_Faze musi byt definovana z vnejsku
 
 -- citace, casovace a akumulatory
     local SendCounter = 0 -- citac cyklujici odesilani vykonu a energie
@@ -30,7 +29,7 @@
             timenow = nil
             -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
             if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-                local power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
+                local power = 3600000000/timedif -- hodnota ve watech
                 if power < 5000 then -- nepripustim ze bych meril neco pres 20A
                     Power_Faze[_kanal] = power
                 end
@@ -39,21 +38,21 @@
         end
         timedif = nil
         -- akumuluji energii, prictu energetiuckou hodnotu pulzu
-        Energy_Faze[_kanal] = Energy_Faze[_kanal] + PulseEnergy
+        Energy_Faze[_kanal] = Energy_Faze[_kanal] + 1
     end
       
 -- Citaci funkce 1 2 a 3
-    function CitacPulzu1(_level)
+    local function CitacPulzu1(_level)
         CitacInterni(1)
         gpio.trig(Measure_Faze[1], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
-    function CitacPulzu2(_level)
+    local function CitacPulzu2(_level)
         CitacInterni(2)
         gpio.trig(Measure_Faze[2], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
-    function CitacPulzu3(_level)
+    local function CitacPulzu3(_level)
         CitacInterni(3)
         gpio.trig(Measure_Faze[3], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
@@ -69,7 +68,7 @@
         for i=1,3 do 
             local timedif = timenow - Time_Faze[i]
             if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-                power = 3600000000*PulseEnergy/timedif -- hodnota ve watech
+                power = 3600000000/timedif -- hodnota ve watech
                 if power < 5000 then -- nepripustim ze bych meril neco pres 20A
                     if Power_Faze[i] > power then -- vypocteny vykon je nizsi nez predchozi, znamena to se ze se prodluzuji
                     -- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
@@ -103,7 +102,6 @@
                         Rdat[Rpref.."p"..i] = Power_Faze[i]	-- prepisuji odesilaci data
                     end
                 end
-                Rdat[Rpref.."an"] = adc.read(0) -- prepocty se mohou delat na cloudu, poslu hodnotu
                 Send_Request = 1
                 SentEnergy = 0 -- nebyla odeslana energie
                 rgb.set("blue")
@@ -121,7 +119,6 @@
                     Rdat[Rpref.."e"..i] = SentEnergy_Faze[i]
                     Rdat[Rpref.."et"] = tmr.now()/1000000
                 end
-                Rdat[Rpref.."an"] = adc.read(0) -- analog moc nepouzivam a tak tam hodim hodnotu
                 Send_Request = 1
                 SentEnergy = 1 -- byla odeslana energie
                 rgb.set("blue")

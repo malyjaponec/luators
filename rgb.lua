@@ -14,17 +14,13 @@ _G[modname] = M
 -- Local used variables
 --------------------------------------------------------------------------------
 -- ulozeni vyvodu RGB led
-local RedIO = nil
-local GreenIO = nil
-local BlueIO = nil
+local RedIO
+local GreenIO 
+local BlueIO 
 -- inicializace ok
-local Configured = 0
+--local Configured = 0
 
--- Defaultni hodnoty
-local DefaultRed = 8 -- GPIO 15
-local DefaultGreen = 6 -- GPIO 12
-local DefaultBlue = 7 -- GPIO 13
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
 -- String module
@@ -39,20 +35,20 @@ setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Konfigurace GPIO pinu s defaultem pro kit
 function setup(_red,_green,_blue)
-    Configured = 0
+    --Configured = 0
     RedIO = _red
     if RedIO == nil then
-        RedIO = DefaultRed
+        RedIO = 8 -- GPIO 15
     end
     GreenIO = _green
     if GreenIO == nil then
-        GreenIO = DefaultGreen
+        GreenIO = 6 -- GPIO 12 
     end
     BlueIO = _blue
     if BlueIO == nil then
-        BlueIO = DefaultBlue
+        BlueIO = 7 -- GPIO 13
     end
-    Configured = 1
+    --Configured = 1
 
     gpio.mode(RedIO, gpio.OUTPUT)     
     gpio.write(RedIO, gpio.LOW)
