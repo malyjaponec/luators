@@ -53,7 +53,10 @@ local InitStartTime
 
 -- konstanty pro reportovani
     ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
-    ReportNode = "3"
+    ReportIntervalFast = 2*60 -- rychlost rychlych reportu
+    ReportFast = 0 -- defaultne vypnute
+    
+    ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         ReportApiKey = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
@@ -70,6 +73,16 @@ local InitStartTime
     gpio.write(Lightpin,gpio.HIGH) 
     -- pripojim fotoodpor na + (je to pres diodu) tak aby nemel svod pri mereni baterie 
     -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
+
+-- konstanty a jednorazova priprava pro mereni, zavisi na measure.lua
+    -- teploty
+    Sb3 = gpionum[12] -- zapojeni 2 dratove phantom napajeni
+    Sb3p = 3 -- volba presnosti pro phantom
+    Sb3d = 750000 -- odpovidajici cekaci doby
+    gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
+    gpio.mode(Sb3, gpio.OUTPUT) 
+    gpio.write(Sb3, gpio.HIGH)
+    
 
 -- nastaveni pinu pro zapnuti proudu do DHT22
     gpio.mode(DHT22powerpin,gpio.OUTPUT)
