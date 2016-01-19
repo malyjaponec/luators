@@ -44,17 +44,17 @@
 -- Citaci funkce 1 2 a 3
     local function CitacPulzu1(_level)
         CitacInterni(1)
-        gpio.trig(Measure_Faze[1], "down") 
+        --gpio.trig(Measure_Faze[1], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
     local function CitacPulzu2(_level)
         CitacInterni(2)
-        gpio.trig(Measure_Faze[2], "down") 
+        --gpio.trig(Measure_Faze[2], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
     local function CitacPulzu3(_level)
         CitacInterni(3)
-        gpio.trig(Measure_Faze[3], "down") 
+        --gpio.trig(Measure_Faze[3], "down") 
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
 
