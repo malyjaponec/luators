@@ -36,18 +36,9 @@ setfenv(1,M)
 -- Konfigurace GPIO pinu s defaultem pro kit
 function setup(_red,_green,_blue)
     --Configured = 0
-    RedIO = _red
-    if RedIO == nil then
-        RedIO = 8 -- GPIO 15
-    end
-    GreenIO = _green
-    if GreenIO == nil then
-        GreenIO = 6 -- GPIO 12 
-    end
-    BlueIO = _blue
-    if BlueIO == nil then
-        BlueIO = 7 -- GPIO 13
-    end
+    RedIO = _red or 8 -- GPIO 15
+    GreenIO = _green or 6 -- GPIO 12 
+    BlueIO = _blue or 7 -- GPIO 13
     --Configured = 1
 
     gpio.mode(RedIO, gpio.OUTPUT)     

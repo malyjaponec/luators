@@ -55,11 +55,11 @@
     tmr.alarm(0, 100, 0, function() dofile("network.lc") end)
 
     Measure_Faze = { GP[4], GP[5], GP[2] } -- definice pinu ktere se ctou
+    Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
     tmr.alarm(1, 200, 0,  function() dofile("measure.lc") end)
 
-    Send_Busy = 1 -- je to busy, sam si to zmeni az bude network ready
-    Send_Request = 0 -- neni zadny pozadavek
-    Send_Failed = 0 -- neni chyba
+    -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
     tmr.alarm(2, 300, 0,  function() dofile("send.lc") end)
 
 -- uklid toho co uz nepotrebujem 

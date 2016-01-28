@@ -1,8 +1,10 @@
 -- send.lua
 local Web
-local KonecCounter
-local Fail_Send
-local Fail_Wifi
+local KonecCounter = 0
+local Fail_Send = 0
+local Fail_Wifi = 0
+local SendTime = 0
+local SentEnergy_Faze = {0,0,0}
 
 local function Get_AP_MAC()
     local ssid,pass,bset,bssid
@@ -28,44 +30,64 @@ local function Konec()
     end
 
     -- Kontrola stavu cloud knihovny
-    if (state == 4) then -- ukonceno spojeni
+    if state == 4 then -- ukonceno spojeni
         if result == 1 then -- predana data
             if Debug == 1 then print("s>odeslano") end
-            Send_Failed = 0 -- nuluji indikaci chyby
             Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
+            SentEnergy_Faze = {0,0,0}
             rgb.set()
         else -- data nepredana
             if Debug == 1 then print("s>chyba,nepredano") end
-            Send_Failed = 1 -- chyba, data se musi zopakovat
             Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
             rgb.set("magenta")
         end
-        Rdat = {} -- Vynuluju data, nikdo jiny to nedela
-        Send_Busy = 0 -- Vymazu blokaci z jineho duvodu, doslo k odeslani, wifi musi fungovat
-        Send_Request = 0 -- Vymazu pozadavek, cimz dam measure echo, ze muze poslat dalsi
-        tmr.alarm(2, 2000, 0, function() KontrolaOdeslani2() end) -- A cekam na na dalsi pozadavek odeslani dat, tim zaroven delam klid mezi vysilanima
-        collectgarbage()
+        SendTime = tmr.now() -- po odeslani si zapisu cas, takze dalsi prenos zacne za urcenou dobu, pocita se od konce prenosu        
+        tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+        --collectgarbage()
     else -- nez skonci cekani cekam
-        tmr.alarm(2, 250, 0, function() Konec() end) -- Cekam na stav 4
+        if (state > 0) then -- doslo k sestaveni TCP, domlouvaji se servery
+            rgb.set("green")
+            tmr.alarm(2, 250, 0, function() Konec() end) -- Cekam na odeslani pomalu, uz svtim zelene
+        else
+            tmr.alarm(2, 100, 0, function() Konec() end) -- Cekam na odeslani ale rychle abych vcas prepnul do zelena, jiank by se zelena vubec nemusela objevit
+        end
     end
 end
 
 local function Start()
-    rgb.set("green")
-    collectgarbage()
-    
+    rgb.set("blue")
+
+    -- vytvorim zakladni data, ktera chci prenest na cloud
+    local Rdat = {}
+    local i,energy
+    for i=1,3 do 
+        -- zpracovani vykonu k odeslani
+        if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
+            Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
+        end
+        -- pocatek kriticke sekce
+            -- prepise si hodnoty energie k odeslani a v merici smaze na 0
+            energy,Energy_Faze[i] = Energy_Faze[i],0
+        -- konec kriticke sekce
+        -- sam si akumuluji hodnoty k odeslani ziskane z merice a mazu je jen po uspesnem predani
+        SentEnergy_Faze[i] = SentEnergy_Faze[i] + energy 
+        Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
+        
+    end
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
     Rdat[Rpref.."an"] = adc.read(0) -- mereni svetla nebo neceho takoveho
-    Rdat[Rpref.."x"..Get_AP_MAC()] = 1 
+    -- nektere moduly me davaji 65k takze tohle se musi kdyz tak odkomentovat
+    Rdat[Rpref.."x"..Get_AP_MAC()] = 1
     Rdat[Rpref.."fc"] = Fail_Send   
+    Rdat[Rpref.."et"] = tmr.now()/1000000
     Rdat[Rpref.."hp"] = node.heap() 
 
     Web.send(Rdat) -- dam pozadavek prenosu dat na cloud
 
     KonecCounter = 0 -- citac pro timeout 
-    tmr.alarm(2, 250, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
+    tmr.alarm(2, 100, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
 end
 
 local function ReinicializujSit()
@@ -81,7 +103,8 @@ end
 local function KontrolaOdeslani()
 
     if Network_Ready > 0 then -- mozne odesilat, sit dostupna
-        
+
+        -- napred probiha kontrola zda nedoslo k problemum na wifi
         local status = wifi.sta.status()
         if (status == 0) or 
            (status == 2) or 
@@ -89,10 +112,12 @@ local function KontrolaOdeslani()
            (status == 4) or 
            (wifi.sta.getip() == nil) 
           then -- indikuje to ze wifi neni v poradku
-            ReinicializujSit()
+            ReinicializujSit() -- volam externi reinicializacni skript
         else
-            Send_Busy = 0 -- indikuji ze je mozne vydavat pozadavky (wifi nevykazuje prolbem)
-            if Send_Request == 1 then -- kontrola zda merici system zada odeslani dat na cloud
+            -- Kontrola zda uz neni cas poslat na cloud aktualizaci
+            local timedif = tmr.now() - SendTime
+            if (timedif > 4500000) or (timedif < -4500000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
+                 if Debug == 1 then print("s>odesilam,cas:"..timedif/1000000) end
                 tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
             end
@@ -102,11 +127,11 @@ local function KontrolaOdeslani()
     end
 
     if Network_Ready < 0 then -- chyba v pristupu k siti, nepovedlo se najit AP nebo nedostal IP
-    -- -1 not coverage
-    -- -2 not IP assigned
-    -- -9 not password file
+        -- -1 not coverage
+        -- -2 not IP assigned
+        -- -9 not password file
 		Fail_Wifi = Fail_Wifi + 1
-		if Fail_Wifi > 100 then -- fakt uz to trva dlouho
+		if Fail_Wifi > 100 then -- fakt uz to trva dlouho - zde je otazka zda v novem systemu odesilani neni lepsi udelat rovnou reset nez se pokouset o reinicalizaci
 			tmr.alarm(2, 100, 0,  function() dofile("reset.lc") end) -- volam restart, ztratim vsechno zmerene
 			return
 		else
@@ -122,12 +147,11 @@ local function KontrolaOdeslani()
     tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
 end
 
-function KontrolaOdeslani2() -- toto je finta jak mit globalni funkci co nejmensi
+function KontrolaOdeslani2() -- toto je finta jak mit globalni funkci co nejmensi, protoze ji potrebuju volat vyse kde lokalni funkce neni dostupna
     KontrolaOdeslani()
 end
 
-Fail_Send = 0 -- toto pocita kontinualni chyby prenosu a po 20 radeji zarizeni restartuje
-Fail_Wifi = 0 -- pocita pocet pokusu kdy nenajde AP
 Web = require("cloud")
 Web.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',3)
-tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
+tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end) 
+

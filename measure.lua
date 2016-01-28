@@ -1,18 +1,17 @@
--- measure.lua
+--[[ measure.lua
+    Tento kod nespocita vykon drive nez dostane 2 pulzy. Z jednoho pulzu si to neovodi a ceka dokud neprijde druhy
+    To mi prislo blbe, kdyz se zapne system na 0 spotrebe a proto je zde podmika, ktera rika ze pokud je klid 
+    dobu delsi nez odpovida spotrebe MinmalPower tak se na cloud zacne posilat nula, hodnota se definuje nize.
+    Nijak to neovlivni minimalni mozny zmereny vykon, ten muze byt klidne 0,01W pokud ovsem behem mereni nedojde
+    k pretoceni casovace coz je asi 40 minut pak kdo vi co se zacne dit, ne vzdy vyjde zaporne cislo, ktere se 
+    samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
+--]]
     tmr.stop(1)
-
--- nastaveni pro mereni
-    -- Measure_Faze musi byt definovana z vnejsku - 3 GPIO ze kterych to cte
-    local SendEnergyCounter = 11
-    local PowerReportTimer = 5000
+    local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
+    local MaximalPower = 10000 -- pro 0,5Wh pulze je to 5kW, rychlejsi sled pulzu to jiz ignoruje
 
 -- citace, casovace a akumulatory
-    local SendCounter = 0 -- citac cyklujici odesilani vykonu a energie
-    local SentEnergy = 0 -- indikace zda se posila energie nebo jen vykon
-    local Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
-    local Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
     local Time_Faze = {0,0,0} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
-    local SentEnergy_Faze = {0,0,0} -- ulozeni energie, ktera se predala k posilani, tak aby pri neuspechu se mohla vratit
         -- do citacu, ktere se s predanim dat k odeslani nuluji
 
 -- Generalizovana citaci funkce
@@ -23,22 +22,23 @@
         local timedif = timenow - Time_Faze[_kanal]
         if Time_Faze[_kanal] == 0 then -- po startu nevim kdy byl predchozi pulz, pouze ulozim cas a necham power na -1
             Time_Faze[_kanal] = timenow
-            timenow = nil
         else
             Time_Faze[_kanal] = timenow
-            timenow = nil
             -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
             if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-                local power = 3600000000/timedif -- hodnota ve watech
-                if power < 5000 then -- nepripustim ze bych meril neco pres 20A
+                local power = 3600000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
+                if power < 10000 then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity (10kW pri 1Wh, 5kW pri 0,5Wh na pulz)
                     Power_Faze[_kanal] = power
                 end
                 power = nil
             end
         end
         timedif = nil
+        timenow = nil
         -- akumuluji energii, prictu energetiuckou hodnotu pulzu
-        Energy_Faze[_kanal] = Energy_Faze[_kanal] + 1
+        -- zacatek kriticke sekce
+            Energy_Faze[_kanal] = Energy_Faze[_kanal] + 1
+        -- konec kriticke sekce
     end
       
 -- Citaci funkce 1 2 a 3
@@ -58,76 +58,36 @@
         --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
 
--- Odesilaci funkce
-    local function ZpracujMereni()
-        local i
+-- Uprava vykonu pokud se nic nedeje
+    local function ZpracujPauzu()
 
         -- snizeni vykonu kdyz se nic nedeje
-        local timedif,power
+        local i,timedif,power
         local timenow = tmr.now()
         for i=1,3 do 
+            -- standardnim zpusobem spocitam diferenci pro urceni vykonu
             local timedif = timenow - Time_Faze[i]
             if timedif > 0 then -- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnota a tu zahodim
-                power = 3600000000/timedif -- hodnota ve watech
-                if power < 5000 then -- nepripustim ze bych meril neco pres 20A
-                    if Power_Faze[i] > power then -- vypocteny vykon je nizsi nez predchozi, znamena to se ze se prodluzuji
+                power = 3600000000/timedif -- hodnota ve watech pro pulz 1Wh, standardni vypocet jako nahore
+                if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, zde asi je jedno protoze nasleduje pouze snizovani ne zvysovani
+                    if (Power_Faze[i] > power) then -- vypocteny vykon je nizsi nez predchozi, znamena to se ze se prodluzuji
                     -- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
+                    -- takze opravim vykon na aktualni delku bezpulzi
                         Power_Faze[i] = power
                     end
+                end
+                if (Power_Faze[i] == -1) and (power < MinimalPower) then -- pokud stale nebyl predan vykon,
+                    -- protoze nepisel pulz a zaroven uz je nameren vykon mensi nez minimum, doba je to desna,
+                    -- tak zapisu do vykonu 0 aby se zacalo neco predavat
+                    Power_Faze[i] = 0
                 end
             end
         end
         power = nil
         timenow = nil
         timedif = nil
+        i = nil
 
-        -- kontrola dat z neuspesneho odeslani a pricteni k datum, ale jen pokud byla pred tim odesilana energie
-        if Send_Failed == 1 then
-            if SentEnergy == 1 then
-                for i=1,3 do 
-                    Energy_Faze[i] = Energy_Faze[i] + SentEnergy_Faze[i] -- vracim neodeslane hodnoty vykonu
-                    -- nic dalsiho vracet nemusim, protoze o tyhle hodnoty bych jinak prisel, protoze jsem nuloval
-                end
-                SentEnergy = 0 -- nejsem si jisty, zda tohle vymazat taky ale pro jistotu jo
-            end
-            Send_Failed = 0 -- vymazu si indikaci, kterou muze nastavit odesilac, to delam vzdy i kdyz jsem nic nevracel
-        end
-
-        -- predani dat k odeslani
-        if SendCounter < SendEnergyCounter then -- predava se jen aktualni vykon
-            if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
-                rgb.set() -- zhasnu led, abych mohl radne zmerit okolni svetlo snad nasledujici kod bude stacit na stabilizaci hodnoty
-                for i=1,3 do
-                    if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
-                        Rdat[Rpref.."p"..i] = Power_Faze[i]	-- prepisuji odesilaci data
-                    end
-                end
-                Send_Request = 1
-                SentEnergy = 0 -- nebyla odeslana energie
-                rgb.set("blue")
-                SendCounter = SendCounter + 1
-            end
-        else -- predava se i energii
-            if (Send_Busy == 0) and (Send_Request == 0) then -- vysilam pozdaveky pouze pokud odesilac neni busy a neni jiny pozadavek ve vzduchu 
-                for i=1,3 do 
-                    if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
-                        Rdat[Rpref.."p"..i] = Power_Faze[i]
-                    end
-                    -- pocatek kriticke sekce
-                        SentEnergy_Faze[i],Energy_Faze[i] = Energy_Faze[i],0
-                    -- konec kriticke sekce
-                    Rdat[Rpref.."e"..i] = SentEnergy_Faze[i]
-                    Rdat[Rpref.."et"] = tmr.now()/1000000
-                end
-                Send_Request = 1
-                SentEnergy = 1 -- byla odeslana energie
-                rgb.set("blue")
-                SendCounter = 0 -- odeslani spotreby se v pripaden neuspechu odlozi zase o jednu dlouhou periodu
-                -- nebudu se snazit to tlacit rychle v dalsi kratke periode ven, protoze o nic neprijdu, neodeslane
-                -- energie si nactu zpet a pridam priste
-            end
-        end
-        --collectgarbage()
     end
       
 -- Nastaveni pinu na preruseni
@@ -148,5 +108,5 @@
     end
     
 -- Nacasu prvni odeslani
-    tmr.alarm(1, PowerReportTimer, 1,  function() ZpracujMereni() end) 
+    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
     --collectgarbage()

@@ -58,18 +58,9 @@ function setup(emonip, apikey, node, host, timerno)
     if ApiKey == nil then
         return -1 -- error
     end
-    Node = node
-    if Node == nil then
-        Node = 1 -- default
-    end
-    Host = host
-    if Host == nil then
-        Host = EmonIP -- pokud neudam virtaulniho hosta, posle tam to co jsem uvedl v IP
-    end
-    TimerNo = timer
-    if TimerNo == nil then
-        TimerNo = 6 -- default
-    end
+    Node = node or 1 -- defaultni node je 1
+    Host = host or EmonIP -- pokud neudam virtaulniho hosta, posle tam to co jsem uvedl v IP
+    TimerNo = timer or 6 -- bud to co ma promenna timer nebo 6
     return 0
 end
 
