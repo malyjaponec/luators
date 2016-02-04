@@ -155,5 +155,5 @@ end
 
 tmr.stop(1)
 tmr.stop(0)
-counter = 20 -- 5 bylo pozuito pro 2s cekani na IP, pro 500ms cekani by to chtelo 20
+counter = 40 -- 5 bylo pozuito pro 2s cekani na IP, pro 500ms cekani by to chtelo 20
 check_ip()
