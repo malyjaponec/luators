@@ -35,6 +35,7 @@ local function Konec()
             if Debug == 1 then print("s>odeslano") end
             Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
             SentEnergy_Faze = {0,0,0}
+            -- TODO: nuluji zalozni hodnoty v RTC memory
             rgb.set()
         else -- data nepredana
             if Debug == 1 then print("s>chyba,nepredano") end
@@ -61,19 +62,26 @@ local function Start()
     local Rdat = {}
     local i,energy
     for i=1,3 do 
-        -- zpracovani vykonu k odeslani
-        if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
-            Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
-        end
+    
         -- pocatek kriticke sekce
             -- prepise si hodnoty energie k odeslani a v merici smaze na 0
             energy,Energy_Faze[i] = Energy_Faze[i],0
         -- konec kriticke sekce
+        
         -- sam si akumuluji hodnoty k odeslani ziskane z merice a mazu je jen po uspesnem predani
-        SentEnergy_Faze[i] = SentEnergy_Faze[i] + energy 
+        -- TODO: vyctu si hodnoty z RTC memory 
+        SentEnergy_Faze[i] = SentEnergy_Faze[i] + energy -- prictu aktualni citace za posledni periodu
+        -- TODO: zapisu si hodnoty do RTC memory
         Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
+	
         
     end
+    for i=1,3 do 
+        -- zpracovani vykonu k odeslani
+        if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
+            Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
+        end
+	end    
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt

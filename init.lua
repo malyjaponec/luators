@@ -4,8 +4,9 @@
 
     
 -- emergency delay
-    tmr.alarm(0, 1000, 0,  function() dofile("setup.lc") end)
+    --tmr.alarm(0, 1000, 0,  function() dofile("setup.lc") end)
     print(".")
     print(".") 
     print(".")
+    dofile("setup.lc")
 

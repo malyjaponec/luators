@@ -7,7 +7,7 @@
     samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
 --]]
     tmr.stop(1)
-    local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
+    local MinimalPower = 6 -- pro 0,5Wh pulzy to je vlastne mene nez 3W, 
     local MaximalPower = 10000 -- pro 0,5Wh pulze je to 5kW, rychlejsi sled pulzu to jiz ignoruje
 
 -- citace, casovace a akumulatory
@@ -29,6 +29,7 @@
                 local power = 3600000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
                 if power < 10000 then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity (10kW pri 1Wh, 5kW pri 0,5Wh na pulz)
                     Power_Faze[_kanal] = power
+                    -- TODO: zapisu si hodnotu tez do RTC memory pro pripad restartu
                 end
                 power = nil
             end
@@ -36,26 +37,22 @@
         timedif = nil
         timenow = nil
         -- akumuluji energii, prictu energetiuckou hodnotu pulzu
+
         -- zacatek kriticke sekce
             Energy_Faze[_kanal] = Energy_Faze[_kanal] + 1
         -- konec kriticke sekce
+
     end
       
 -- Citaci funkce 1 2 a 3
     local function CitacPulzu1(_level)
         CitacInterni(1)
-        --gpio.trig(Measure_Faze[1], "down") 
-        --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
     local function CitacPulzu2(_level)
         CitacInterni(2)
-        --gpio.trig(Measure_Faze[2], "down") 
-        --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
     local function CitacPulzu3(_level)
         CitacInterni(3)
-        --gpio.trig(Measure_Faze[3], "down") 
-        --if level == 1 then gpio.trig(Pulzy1, "down") else gpio.trig(Pulzy1, "up") end
     end
 
 -- Uprava vykonu pokud se nic nedeje
@@ -74,11 +71,18 @@
                     -- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
                     -- takze opravim vykon na aktualni delku bezpulzi
                         Power_Faze[i] = power
+                        -- TODO: zapisu si hodnotu tez do RTC memory pro pripad restartu
                     end
                 end
                 if (Power_Faze[i] == -1) and (power < MinimalPower) then -- pokud stale nebyl predan vykon,
                     -- protoze nepisel pulz a zaroven uz je nameren vykon mensi nez minimum, doba je to desna,
                     -- tak zapisu do vykonu 0 aby se zacalo neco predavat
+
+                    -- TODO: budu porovnavat take s hodnotou v RTC memory a jakmile to bude nizsi tak zacnu tu 
+                    -- TODO: hodnotu vydavat za aktualni vykon, pokud bude v RTC memory hodnota nula nebo nizsi
+                    -- TODO: nez Minimal power, uplatni se drive podminka o Minimal poweru, ktera zacne vydava
+                    -- TODO: nulu za aktualni vykon
+                    
                     Power_Faze[i] = 0
                 end
             end

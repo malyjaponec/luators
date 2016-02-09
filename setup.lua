@@ -52,15 +52,16 @@
 -- Spustim procesy nastavujici sit a merici data
 
     Network_Ready = 0 -- sit neni inicialozvana
-    tmr.alarm(0, 100, 0, function() dofile("network.lc") end)
+    tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 
     Measure_Faze = { GP[4], GP[5], GP[2] } -- definice pinu ktere se ctou
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-    tmr.alarm(1, 200, 0,  function() dofile("measure.lc") end)
+    tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
+		-- minimalni cas aby to co nejdrive zacalo merit
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
-    tmr.alarm(2, 300, 0,  function() dofile("send.lc") end)
+    tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
 
 -- uklid toho co uz nepotrebujem 
     print("run")
