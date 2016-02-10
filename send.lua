@@ -34,8 +34,7 @@ local function Konec()
         if result == 1 then -- predana data
             if Debug == 1 then print("s>odeslano") end
             Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
-            SentEnergy_Faze = {0,0,0}
-            -- TODO: nuluji zalozni hodnoty v RTC memory
+            rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
             rgb.set()
         else -- data nepredana
             if Debug == 1 then print("s>chyba,nepredano") end
@@ -61,6 +60,7 @@ local function Start()
     -- vytvorim zakladni data, ktera chci prenest na cloud
     local Rdat = {}
     local i,energy
+    local suma = 0
     for i=1,3 do 
     
         -- pocatek kriticke sekce
@@ -69,13 +69,13 @@ local function Start()
         -- konec kriticke sekce
         
         -- sam si akumuluji hodnoty k odeslani ziskane z merice a mazu je jen po uspesnem predani
-        -- TODO: vyctu si hodnoty z RTC memory 
+        SentEnergy_Faze[i] = rtcmem.read32(i,1) -- vyctu si hodnotu z RTC memory 
         SentEnergy_Faze[i] = SentEnergy_Faze[i] + energy -- prictu aktualni citace za posledni periodu
-        -- TODO: zapisu si hodnoty do RTC memory
+        rtcmem.write32(i, SentEnergy_Faze[i])-- zapisu si hodnoty do RTC memory
+        suma = suma + SentEnergy_Faze[i] -- scitam si kontrolni soucet
         Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
-	
-        
     end
+    rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti
     for i=1,3 do 
         -- zpracovani vykonu k odeslani
         if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne

@@ -49,8 +49,17 @@
     end
     Rdat = {}
 
--- Spustim procesy nastavujici sit a merici data
+-- vycisteni RTC ram pameti, pouziva se pro nahodne restarty a ne pro ochranu pred 
+-- zapnutim napajeni, ale jak poznam, ze je to zapnuti systemu? podle kontrolniho souctu
+-- energii, ktery zapisuji vzdy pri zmene energi
+    local sum,value1,value2,value3
+    sum,value1,value2,value3 = rtcmem.read32(0,4)
+    if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
+        rtcmem.write32(0, 0,0,0,0,0,0,0)
+    end
 
+
+-- Spustim procesy nastavujici sit a merici data
     Network_Ready = 0 -- sit neni inicialozvana
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 
