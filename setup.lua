@@ -76,12 +76,14 @@ local InitStartTime
 
 -- konstanty a jednorazova priprava pro mereni, zavisi na measure.lua
     -- teploty
-    Sb3 = gpionum[12] -- zapojeni 2 dratove phantom napajeni
+    Sb3 = nil -- zapojeni 2 dratove phantom napajeni
     Sb3p = 3 -- volba presnosti pro phantom
     Sb3d = 750000 -- odpovidajici cekaci doby
-    gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
-    gpio.mode(Sb3, gpio.OUTPUT) 
-    gpio.write(Sb3, gpio.HIGH)
+    if (Sb3 ~= nil) then
+        gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
+        gpio.mode(Sb3, gpio.OUTPUT) 
+        gpio.write(Sb3, gpio.HIGH)
+    end
     
 
 -- nastaveni pinu pro zapnuti proudu do DHT22
