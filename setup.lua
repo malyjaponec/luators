@@ -1,11 +1,6 @@
 --setup.lua
 
-local AnalogMinimum
-local AnalogMaximum
-local AnalogCount
-
-local InitDelayTime
-local InitStartTime
+    gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 
     -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
@@ -15,40 +10,6 @@ local InitStartTime
             out = string.sub(kody,znak,znak)..out
         end
         return out
-    end
-
-    local function InitDelay()
-        local AnalogValue = adc.read(0)
-        if (AnalogValue > AnalogMaximum) then 
-            AnalogMaximum = AnalogValue
-        end
-        if (AnalogValue < AnalogMinimum) then 
-            AnalogMinimum = AnalogValue
-        end
-        
-        if (tmr.now() < (InitStartTime+InitDelayTime)) then
-            AnalogCount = AnalogCount + 1
-            tmr.alarm(0, math.random(1,2), 0,  function() InitDelay() end)
-        else
-            Fields[ReportFieldPrefix.."bat_min"] = AnalogMinimum
-            Fields[ReportFieldPrefix.."bat_max"] = AnalogMaximum
-            Fields[ReportFieldPrefix.."bat_cnt"] = AnalogCount
-
-            -- a spoustim hlavni proces vyhledani AP
-            Fields[ReportFieldPrefix.."tb"] = tmr.now()/1000
-            tmr.alarm(0, 10, 0,  function() dofile("start.lc") end)
-        end
-    end
-
-    local function InitDelayStart()
-        adc.read(0) -- nekdy prvni prevod vrati nesmysl
-        InitStartTime = tmr.now()
-        InitDelayTime = 1000000 -- X sekundy limit, pak se s merenim skonci
-        math.randomseed(tmr.now())
-        AnalogMinimum = 1024
-        AnalogMaximum = 0
-        AnalogCount = 1
-        InitDelay()
     end
 
 -- konstanty pro reportovani
@@ -85,13 +46,20 @@ local InitStartTime
         gpio.write(Sb3, gpio.HIGH)
     end
     
-
 -- nastaveni pinu pro zapnuti proudu do DHT22
-    gpio.mode(DHT22powerpin,gpio.OUTPUT)
-    gpio.write(DHT22powerpin,gpio.HIGH) 
-    -- DHT22 napajim pinem GPIO13 (vedle VCC) protoze to pri sleep
-    -- usetri kolem 10uA
+
     
-    print("Measuring battery.") 
-    InitDelayStart()
-        -- Spustim uvodni X sekundove mereni baterie
+
+-- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
+-- to je misto kde si proces odesilajici vycte data
+    local battery
+    battery = require("battery")
+    battery.setup(1) -- casovac 1 se pouziva pro mereni baterie
+
+-- Spustim proces merici DHT a DALAS
+--    local measure
+    sensors = require("sensors")
+    sensors.start(2) -- casovac 2 pro merici algoritmy
+    
+-- uklid toho co uz nepotrebujem 
+    print("run")
