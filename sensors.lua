@@ -61,12 +61,68 @@ local function readoutdalas()
    a zakonci mereni
 end
 
-local function dommanddalas()
+local function commandDALAS()
+    if PinDALAS == nil then
+        tmr.alarm(Casovac, 50, 0,  function() measuredatlas() end)
+        
+
+    else
    pozada o mereni vsechny nalezene dalasy
    s casovym zpozdenim zavola readoutdalas
 end
 
-local function measuredht()
+local function finishDHT()
+    
+    if PinDHTpower ~= nil then
+        -- uklid napajeni DHT22
+        gpio.write(PinDHTpower,gpio.LOW)
+    end
+    if PinDHT ~= nil then
+        -- vypnu na nulu i datovy vodic
+        gpio.mode(PinDHT,gpio.OUTPUT)
+        gpio.write(PinDHT,gpio.LOW)
+    end
+
+    tmr.alarm(Casovac, 25, 0,  function() commandDALAS() end)    
+end
+
+local function measureDHT()
+
+    if PinDHT ~= nil then
+        local result,T,H
+        local Tavr,Havr,Cnt = 0,0,0
+        local counter = 20 -- urcuje pocet opakovani mereni z DHT
+        while (counter > 0) do
+            result, T, H = dht.read(DHT22pin)
+            if (result == 0) then
+                Cnt = Cnt + 1
+                Tavr = Tavr + T
+                Havr = Havr + H
+            end
+            counter = counter - 1
+        end
+        
+        if (Cnt > 0) then
+            Tavr = Tavr / Cnt;
+            Havr = Havr / Cnt;
+    
+            if Debug == 1 then 
+                print ("Temp: "..Tavr)
+                print ("Humi: "..Havr)
+    |       end
+            
+            Data[ReportFieldPrefix."t22"] = Tint
+            Fields[ReportFieldPrefix.."h22"] = Hint
+            Fields[ReportFieldPrefix.."dht_ok"] = 1
+        else
+            Fields[ReportFieldPrefix.."dht_ok"] = 0
+        end
+    end
+
+    tmr.alarm(Casovac, 25, 0,  function() finishDHT() end)    
+end
+
+local function prepareDHT()
 
     if PinDHTpower ~= nil then
         gpio.mode(PinDHTpower,gpio.OUTPUT)
@@ -74,7 +130,7 @@ local function measuredht()
         -- vypinani DHT behem sleepu usetri kolem 10uA
     end
 
-    tmr.alarm(Casovac, 50, 0,  function() measuredatlas() end)
+    tmr.alarm(Casovac, 25, 0,  function() measureDHT() end)
 end  
 
 function setup(_casovac,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom) 
@@ -87,7 +143,7 @@ function setup(_casovac,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom)
     Data = {}
     Finished = 0
   
-    tmr.alarm(Casovac, 50, 0,  function() measuredht() end)
+    tmr.alarm(Casovac, 50, 0,  function() prepareDHT() end)
     
     return Casovac
 end
