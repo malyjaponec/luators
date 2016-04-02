@@ -1,5 +1,15 @@
 -- measure.lua
 
+    local function AddressInHex(IN)
+        local hexkody,out,high,low,w="0123456789ABCDEF",""
+        for w = 1,8 do 
+            high = (math.floor(IN:byte(w)) / 16) + 1
+            low = ((IN:byte(w)) % 16) + 1
+            out = out..string.sub(hexkody,high,high)..string.sub(hexkody,low,low)
+        end
+        return out
+    end
+
     tmr.stop(0)
     Fields[ReportFieldPrefix.."ti"] = tmr.now()/1000
     print("Measuring sensors.")
@@ -48,33 +58,34 @@
         print("temp sensors: "..pocetsnimacu) -- pocet senzoru 
         Fields[ReportFieldPrefix.."t_cnt"] = pocetsnimacu
         if (pocetsnimacu > 0) then
+
             -- Start measure for all sensors
             for q,v in pairs(addrs1) do
                 t.startMeasure(v)
+                -- Wait until measure is done
+                tmr.delay(750000)
             end
-            -- Pro pripad fantom napajeni radeji zapnu HIGH na datovem vodici, od jisteho FW to umi OW sama
-            gpio.mode(gpionum[4],  gpio.OUTPUT) 
-            gpio.write(gpionum[4], gpio.HIGH)
-            -- Wait until measure is done
-            tmr.delay(750000)
+
             -- Read temperatures
             local value = ""
             local textaddr = ""
+            pocetsnimacu = 0 -- zase to vynuluju
             for q,v in pairs(addrs1) do
                 value = t.readNumber(v)
-                textaddr = v:byte(1).."-"..v:byte(2).."-"..v:byte(3).."-"..v:byte(4).."-"..v:byte(5).."-"..v:byte(6).."-"..v:byte(7).."-"..v:byte(8)
+                textaddr = AddressInHex(v)
                 if (value ~= nil) then
                     value = value/10000
-                    textaddr = v:byte(1).."-"..v:byte(2).."-"..v:byte(3).."-"..v:byte(4).."-"..v:byte(5).."-"..v:byte(6).."-"..v:byte(7).."-"..v:byte(8)
                     Fields[ReportFieldPrefix.."t"..textaddr] = value
                     if (Debug == 1) then print("t"..textaddr.." = "..value) end
                     addrs1[q] = nil -- mazu z pole adresu, uz ji nebudu potrebovat
                     tmr.wdclr()
+                    pocetsnimacu = pocetsnimacu+1 -- pocitam si jen ty co vratili hodnotu
                 else
                     print("ERROR, "..textaddr.." returned nil")
                 end
             end
         end
+        Fields[ReportFieldPrefix.."t_cnt"] = pocetsnimacu
         pocetsnimacu = nil
         value = nil
         textaddr = nil
