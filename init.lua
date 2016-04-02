@@ -1,6 +1,6 @@
 -- init.lua
     StartTime = tmr.now()
-    --uart.setup(0,115200,0,1,1)
+    --uart.setup(0,115200,8,uart.PARITY_NONE,uart.STOPBITS_1,1)
     
 -- konstanty pro GPIO operace
    
