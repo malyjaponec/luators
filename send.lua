@@ -43,7 +43,6 @@ local function Konec(code, data)
         if Debug == 1 then print("s>chyba/".. code) end
         Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
     end
-    SendTime = tmr.now() -- po odeslani si zapisu cas, takze dalsi prenos zacne za urcenou dobu, pocita se od konce prenosu        
     tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
@@ -68,13 +67,16 @@ local function Start()
         rtcmem.write32(i, SentEnergy_Faze[i])-- zapisu si hodnoty do RTC memory
         suma = suma + SentEnergy_Faze[i] -- scitam si kontrolni soucet
         Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
+        --if Debug == 1 then print("e:" .. SentEnergy_Faze[i]) end
     end
+    
     rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti
     for i=1,3 do 
         -- zpracovani vykonu k odeslani
         if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
             Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
         end
+        --if Debug == 1 then print("p:" .. Power_Faze[i]) end
 	end    
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
@@ -127,8 +129,9 @@ local function KontrolaOdeslani()
         else
             -- Kontrola zda uz neni cas poslat na cloud aktualizaci
             local timedif = tmr.now() - SendTime
-            if (timedif > 4900000) or (timedif < -4900000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
-                 if Debug == 1 then print("s>odesilam,cas:"..timedif/1000000) end
+            if (timedif > 5000000) or (timedif < -5000000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
+                SendTime = tmr.now() -- Zapisu si cas ted tak aby perioda byla neovlivnena tim jak dlouho se to prenasi
+                if Debug == 1 then print("s>odesilam,cas:"..timedif/1000000) end
                 tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
             end
