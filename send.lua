@@ -1,5 +1,4 @@
 -- send.lua
-local Web
 local KonecCounter = 0
 local Fail_Send = 0
 local Fail_Wifi = 0
@@ -18,44 +17,39 @@ local function Get_AP_MAC()
     return "????"
 end
 
-local function Konec()
-    local state,result = Web.get_state() -- vyctu si stav cloud knihovny
-
-    -- Zajisteni 15s timeoutu i kdyz knihovna ma vlastni 10s timeout jenze nevime co se stane pri vypadku wifi pri prenosu
-    KonecCounter = KonecCounter + 1
-    if KonecCounter > 150 then -- pri kontrole 100ms tedy 10x za sekundu je 15sekund asi 150
-        Web.abort() -- volam abort cloudoveho prenosu at udelal co udelal
-        state = 4 -- fejkuju stav 4 - konec prenosu
-        result = 0 -- stejne tak nastavuji vysledek na nepreneseno a o zbytek se postaraji standardni mechanizmy
-    end
-
-    -- Kontrola stavu cloud knihovny
-    if state == 4 then -- ukonceno spojeni
-        if result == 1 then -- predana data
-            if Debug == 1 then print("s>odeslano") end
-            Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
-            rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
-            rgb.set()
-        else -- data nepredana
-            if Debug == 1 then print("s>chyba,nepredano") end
-            Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
-            rgb.set("magenta")
-        end
-        SendTime = tmr.now() -- po odeslani si zapisu cas, takze dalsi prenos zacne za urcenou dobu, pocita se od konce prenosu        
-        tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
-        --collectgarbage()
-    else -- nez skonci cekani cekam
-        if (state > 0) then -- doslo k sestaveni TCP, domlouvaji se servery
-            rgb.set("green")
-            tmr.alarm(2, 250, 0, function() Konec() end) -- Cekam na odeslani pomalu, uz svtim zelene
-        else
-            tmr.alarm(2, 100, 0, function() Konec() end) -- Cekam na odeslani ale rychle abych vcas prepnul do zelena, jiank by se zelena vubec nemusela objevit
-        end
-    end
+--------------------------------------------------------------------------------
+local function KonecAbnormal()
+    rgb.set("magenta")
+    -- knihovna http se nema volat konkurencne ale kdyz mi do 15s nic nevrati
+    -- tak se vratim do stvu kdy muzu zase posilat a jestli jeste bezi predchozi
+    -- beh, je to jeji problem, mela do 10s skoncit 
+    state = 4 -- fejkuju stav 4 - konec prenosu
+    result = 0 -- stejne tak nastavuji vysledek na nepreneseno a o zbytek se postaraji standardni mechanizmy
+    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
+--------------------------------------------------------------------------------
+local function Konec(code, data)
+    if (code == nil) then
+        code = -100
+    end
+    if (code > 0) then
+        rgb.set()
+        if Debug == 1 then print("s>odeslano/" .. code) end
+        Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
+        rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
+    else
+        rgb.set("blue")
+        if Debug == 1 then print("s>chyba/".. code) end
+        Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
+    end
+    SendTime = tmr.now() -- po odeslani si zapisu cas, takze dalsi prenos zacne za urcenou dobu, pocita se od konce prenosu        
+    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+end
+
+--------------------------------------------------------------------------------
 local function Start()
-    rgb.set("blue")
+    rgb.set("green")
 
     -- vytvorim zakladni data, ktera chci prenest na cloud
     local Rdat = {}
@@ -92,23 +86,31 @@ local function Start()
     Rdat[Rpref.."et"] = tmr.now()/1000000
     Rdat[Rpref.."hp"] = node.heap() 
 
-    Web.send(Rdat) -- dam pozadavek prenosu dat na cloud
-
-    KonecCounter = 0 -- citac pro timeout 
-    tmr.alarm(2, 100, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
+    -- prevedu na URL
+    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 
+                "&json=" .. cjson.encode(Rdat) .. 
+                "&apikey=" .. Rapik
     Rdat = nil -- data smazu explicitne
+
+    http.get(url, nil, function(code,data) Konec(code,data) end )
+
+    url = nil
+    KonecCounter = 0 -- citac pro timeout 
+    tmr.alarm(2, 15000, 0, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback
 end
 
+--------------------------------------------------------------------------------
 local function ReinicializujSit()
     rgb.set("cyan")
     Send_Busy = 1 -- nesmi chodit pozadavky od mericiho systemu, ten si bude dal akumulovat spotrebu
     wifi.sta.disconnect()    
     wifi.sta.connect()
     wifi.sta.autoconnect(1)
-    tmr.alarm(0, 100, 0, function() dofile("network.lc") end) -- reinicalizace site, to bud sit opravi
+    tmr.alarm(0, 500, 0, function() dofile("network.lc") end) -- reinicalizace site, to bud sit opravi
     -- nebo to vrati network ready zaporne cislo a dojde k citani chyb wifi
 end
 
+--------------------------------------------------------------------------------
 local function KontrolaOdeslani()
 
     if Network_Ready > 0 then -- mozne odesilat, sit dostupna
@@ -125,7 +127,7 @@ local function KontrolaOdeslani()
         else
             -- Kontrola zda uz neni cas poslat na cloud aktualizaci
             local timedif = tmr.now() - SendTime
-            if (timedif > 4500000) or (timedif < -4500000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
+            if (timedif > 4900000) or (timedif < -4900000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
                  if Debug == 1 then print("s>odesilam,cas:"..timedif/1000000) end
                 tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
@@ -156,11 +158,11 @@ local function KontrolaOdeslani()
     tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
 end
 
+--------------------------------------------------------------------------------
 function KontrolaOdeslani2() -- toto je finta jak mit globalni funkci co nejmensi, protoze ji potrebuju volat vyse kde lokalni funkce neni dostupna
     KontrolaOdeslani()
 end
 
-Web = require("cloud")
-Web.setup('77.104.219.2',Rapik,Rnod,'emon.jiffaco.cz',3)
+--------------------------------------------------------------------------------
 tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end) 
 
