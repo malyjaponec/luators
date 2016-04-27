@@ -21,7 +21,7 @@ end
 local function Konec()
     local state,result = Web.get_state() -- vyctu si stav cloud knihovny
 
-    -- Zajisteni 30s timeoutu i kdyz knihovna ma vlastni 20s timeout jenze nevime co se stane pri vypadku wifi pri prenosu
+    -- Zajisteni 15s timeoutu i kdyz knihovna ma vlastni 10s timeout jenze nevime co se stane pri vypadku wifi pri prenosu
     KonecCounter = KonecCounter + 1
     if KonecCounter > 150 then -- pri kontrole 100ms tedy 10x za sekundu je 15sekund asi 150
         Web.abort() -- volam abort cloudoveho prenosu at udelal co udelal
@@ -96,6 +96,7 @@ local function Start()
 
     KonecCounter = 0 -- citac pro timeout 
     tmr.alarm(2, 100, 0, function() Konec() end) -- nacasuji kontrolu jestli se to povedlo
+    Rdat = nil -- data smazu explicitne
 end
 
 local function ReinicializujSit()

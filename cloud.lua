@@ -68,10 +68,12 @@ end
 function send(data)
     Status = 0 -- operace probiha
     Confirmed = 0 -- neni potvrzeno doruceni dat
-    local Data = data
-    if Data == nil then
+    if data == nil then
         return -1
     end
+    local URLtext = "GET /emoncms/input/post.json?node=" .. Node .. "&json=" .. cjson.encode(data) .. 
+                     "&apikey=" .. ApiKey.. " HTTP/1.1\r\nHost: ".. Host .."\r\n\r\n\r\n"
+    data = nil -- pridana data vice nepotrebuju
 
     local c=net.createConnection(net.TCP, 0) 
 
@@ -94,8 +96,7 @@ function send(data)
     
     c:on("connection", function(c)
         Status = 1 -- navazano TCP spojeni
-        c:send("GET /emoncms/input/post.json?node=" .. Node .. "&json=" .. cjson.encode(data) .. 
-               "&apikey=" .. ApiKey.. " HTTP/1.1\r\nHost: ".. Host .."\r\n\r\n\r\n")
+        c:send(URLtext)
         
     end)
 
@@ -110,6 +111,8 @@ end
 
 function abort()
     c.close()
+    c = nil   -- dimto si nejsem jisty, close se pak nejspis nemuze provest, nezpusobi to memory leak?
+    -- je to vlastne pokus nad tim vyresit problem ze se to cas od casu restartuje.
 end
    
   
