@@ -91,5 +91,7 @@ local InitStartTime
     -- usetri kolem 10uA
     
     print("Measuring battery.") 
-    InitDelayStart()
+    --InitDelayStart()
+    dofile("measure.lc")
+    
         -- Spustim uvodni X sekundove mereni baterie
