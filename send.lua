@@ -78,6 +78,7 @@ local function Start()
         end
         --if Debug == 1 then print("p:" .. Power_Faze[i]) end
 	end    
+    if Debug == 1 then print("s>p1:"..Power_Faze[1]) end 
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
