@@ -38,7 +38,7 @@ local function ap_select(t)
         until line == nil
     end
     file.close()
-     ap_was_found = 0
+    ap_was_found = 0
 end
 
 local function check_new_ip()

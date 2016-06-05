@@ -37,6 +37,7 @@ local function Konec(code, data)
         rgb.set()
         if Debug == 1 then print("s>odeslano/" .. code) end
         Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
+        Fail_Wifi = 0 -- kdyz se to preneslo tak bude wifi asi v poradku, nuluju, jinde se to nedela
         rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
     else
         rgb.set("blue")
@@ -105,12 +106,16 @@ end
 --------------------------------------------------------------------------------
 local function ReinicializujSit()
     rgb.set("cyan")
-    Send_Busy = 1 -- nesmi chodit pozadavky od mericiho systemu, ten si bude dal akumulovat spotrebu
+    if Debug == 1 then print("s>network failure") end
     wifi.sta.disconnect()    
     wifi.sta.connect()
     wifi.sta.autoconnect(1)
-    tmr.alarm(0, 500, 0, function() dofile("network.lc") end) -- reinicalizace site, to bud sit opravi
-    -- nebo to vrati network ready zaporne cislo a dojde k citani chyb wifi
+    tmr.alarm(0, 500, 0, function() dofile("network.lc") end) 
+    -- reinicalizace site, casovac je zde aby svitila dost dlouho dioda cian
+    tmr.alarm(2, 2500, 0,  function() KontrolaOdeslani2() end)
+    -- a dalsi kontrolu odeslani nacasuju za 2,5 sekundy protoze prihlaseni k siti nebude
+    -- extra rychle a nesmim to nacasovat kratsi nez se provede predchozi casovac jinak
+    -- by se ten predchozi furt precasovaval
 end
 
 --------------------------------------------------------------------------------
@@ -127,6 +132,7 @@ local function KontrolaOdeslani()
            (wifi.sta.getip() == nil) 
           then -- indikuje to ze wifi neni v poradku
             ReinicializujSit() -- volam externi reinicializacni skript
+            return
         else
             -- Kontrola zda uz neni cas poslat na cloud aktualizaci
             local timedif = tmr.now() - SendTime
@@ -151,11 +157,13 @@ local function KontrolaOdeslani()
 			return
 		else
 			ReinicializujSit()
+            return
 		end
     end
 
     if Fail_Send > 20 then -- uz se po sobe X krat nepodarilo predat
         ReinicializujSit()
+        return
     end        
 
     -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
