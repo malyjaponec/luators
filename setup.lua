@@ -54,9 +54,7 @@
     Network_Ready = 0 -- sit neni inicialozvana
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 
-    -- elektromer v rozvodne skrini
-    --Measure_Faze = { GP[4], GP[5], GP[2] } -- definice pinu ktere se ctou
-    -- elektromer v garazi
+    -- sjednocene elektromery, GP[2] se nesmi pouzit, zpusobuje to zaseknuti po restartu
     Measure_Faze = { GP[4], GP[5], GP[14] } -- definice pinu ktere se ctou, prestal jsem pouzivat pin 2 zasekaval system
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
