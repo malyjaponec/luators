@@ -13,8 +13,8 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
-    ReportIntervalFast = 2*60 -- rychlost rychlych reportu
+    ReportInterval = 1*60 -- sekund a nesmi byt kratsi nez 31!!!
+    ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
     
     ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
@@ -49,17 +49,25 @@
 -- nastaveni pinu pro zapnuti proudu do DHT22
 
     
+-- Spustim procesy nastavujici sit
+--    local network -- musi byt local protoze globalni promenna s necim koliduje
+    network = require("network")
+    network.setup(0, gpionum[0]) -- casovace 0 pro sit
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
 -- to je misto kde si proces odesilajici vycte data
-    local battery
+--    local battery
     battery = require("battery")
     battery.setup(1) -- casovac 1 se pouziva pro mereni baterie
 
 -- Spustim proces merici DHT a DALAS
---    local measure
+--    local sensors
     sensors = require("sensors")
-    sensors.start(2) -- casovac 2 pro merici algoritmy
+    sensors.setup(2,ReportFieldPrefix) -- casovac 2 pro merici algoritmy
     
--- uklid toho co uz nepotrebujem 
-    print("run")
+-- Spustim cekani na konec
+    dofile("send.lua") -- pouziva casovac 3
+    
+
+
+

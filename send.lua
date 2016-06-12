@@ -1,65 +1,87 @@
 -- send.lua
 
-    tmr.stop(0)
+local function Get_AP_MAC()
+    local ssid,pass,bset,bssid
+    ssid, pass, bset, bssid=wifi.sta.getconfig()
+    if bssid:len() == 17 then -- delka je presne 17 znaku
+        local hex,len = bssid:gsub(":","") -- odmazu :
+        if len == 5 then -- odmazano presne 5 dvojtecek
+            return hex;
+        end
+    end
+    return "????"
+end
 
-    local SentOK = 0
-    local ConnOK = 0
+--------------------------------------------------------------------------------
+local function KonecAbnormal()
+    dofile("sleep.lua")
+end
 
--- prepare reboot if something bad, timeout 10 s
-    tmr.alarm(0, 10000, 0, function() node.restart() end)
+--------------------------------------------------------------------------------
+local function Konec(code, data)
+    if (code == nil) then
+        code = -100
+    end
+    if (code > 0) then
+        if Debug == 1 then print("s>odeslano/" .. code) end
+    else
+        if Debug == 1 then print("s>chyba/".. code) end
+    end
+    dofile("sleep.lua")
+end
+
+--------------------------------------------------------------------------------
+local function Start()
+     if Debug == 1 then print("s>sedning...") end
+     -- rozsvitim druhou led dodelat
     
--- make conection to cloud
-    print("Connecting...")
+    -- vytvorim zakladni data, ktera chci prenest na cloud
+    Rdat = sensors.getvalues()
 
-    local conn=net.createConnection(net.TCP, 0) 
+    -- bateriova data
+    min,max,cnt = battery.getvalues()
+    Rdat[ReportFieldPrefix.."bmin"] = min
+    Rdat[ReportFieldPrefix.."bmax"] = max
+    Rdat[ReportFieldPrefix.."bcnt"] = cnt
 
-    conn:on("receive", function(conn, payload)
-        if Debug == 1 then print("Received:"..payload) end
-        SentOK = 1 -- pouze pokud prijde odpoved ze serveru povazuji to za ok
-        tmr.alarm(0, 100, 0, function() conn:close() end)
-    end)
+    -- doplnkova data
+    Rdat[ReportFieldPrefix.."cnt"] = Rcnt
+    Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
+    Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
+    Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
+    Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
+    Rdat[ReportFieldPrefix.."hp"] = node.heap() 
 
-    conn:on("sent", function(conn) 
-        if Debug == 1 then print("Sent.") end
-        tmr.alarm(0, 2000, 0, function() conn:close() end)
-    end)
-    
-    conn:on("disconnection", function(conn) 
-        if Debug == 1 then print("Got disconnection.") end
-        tmr.stop(1)
-        conn = nil
-        tmr.stop(1) -- zastavim nouzovy casovac
-        if (SentOK == 1) then
-            print("Seding OK.") 
+    -- prevedu na URL
+    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
+                "&json=" .. cjson.encode(Rdat) .. 
+                "&apikey=" .. ReportApiKey
+    Rdat = nil -- data smazu explicitne
+    http.get(url, nil, function(code,data) Konec(code,data) end )
+    url = nil -- url uz taky mazu
+    tmr.alarm(3, 15000, 0, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
+end
+
+--------------------------------------------------------------------------------
+local function KontrolaOdeslani()
+
+    if network.status() > 0 and sensors.status() > 0 then -- odesilame
+
+        tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
+
+    else
+        if network.status() == -1 then
+
+            dofile("sleep.lua")
+
         else
-            print("Sending FAILED.") 
+            -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
+            tmr.alarm(3, 100, 0,  function() KontrolaOdeslani() end)
+
         end
-        if (ConnOK == 1) then -- pripraveno na ruzne reakce, zatim vzdy stejne
-            dofile("sleep.lc")
-        else
-            dofile("sleep.lc")
-        end
-    end)
+    end
+end
 
-    conn:on("connection", function(conn)
-        ConnOK = 1
-        -- pridam velikost heapu a cas od startu
-            Fields[ReportFieldPrefix.."hp"] = node.heap()
-            Fields[ReportFieldPrefix.."ts"] = tmr.now()/1000
+--------------------------------------------------------------------------------
+tmr.alarm(3, 500, 0,  function() KontrolaOdeslani() end)  -- Na zacatku klidne muzu cekat dele
 
-        if Debug == 1 then 
-            print("Sending data...")
-            print("...?node=" .. ReportNode .. "&json=" .. cjson.encode(Fields) .. "&apikey=" .. ReportApiKey) 
-        end
-
-        conn:send("GET /emoncms/input/post.json?node=" .. ReportNode .. 
-                  "&json=" .. cjson.encode(Fields) .. 
-                  "&apikey=" .. ReportApiKey.. 
-                  " HTTP/1.1\r\nHost: emon.jiffaco.cz\r\n\r\n\r\n")
-    end)
-
--- jiffaco localne 192.168.129.3
--- jiffaco externe i lokalne 77.104.219.2
-
-    conn:connect(80,'77.104.219.2')
-    

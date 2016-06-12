@@ -27,6 +27,8 @@ local PinDHTpower
 local PinDALAS
 local Phantom
 local Finished = 0
+local t
+local taddr
 
 -------------------------------------------------------------------------------
 -- Local used modules
@@ -35,40 +37,61 @@ local Finished = 0
 local tmr = tmr
 -- Mathematic module
 local math = math
+-- Debug
+local Debug = Debug
 
 -- Limited to local environment
 setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Implementation
 --------------------------------------------------------------------------------
-local function pahntomreadout()
-    vycte hodnotu a zavola poantom command()
-end
 
-local function pahntomcommand()
-    prvnimu v seznamu posle prikaz pro mereni
-    s casovym zpozdenim zavola pantomreadout()
-    pokud je nahodou seznam prazdny zakonci mereni
-end
+--local function pahntomreadout()
+--    vycte hodnotu a zavola poantom command()
+--end
+--
+--local function pahntomcommand()
+--    prvnimu v seznamu posle prikaz pro mereni
+--    s casovym zpozdenim zavola pantomreadout()
+--    pokud je nahodou seznam prazdny zakonci mereni
+--end
+--
+--local function readoutDALAS()
+--
+--end
+--
+--local function measureDALAS()
+--    if 
+--    -- pozada jeden dalas o zmereni teploty
+--
+--    -- skoci readout
+--
+--end
+--
+local function prepareDALAS()
+  Finished = tmr.now()+1
 
-local function pahntomscan()
-    naplni pole adres dalasu 
-    a zavola phandomcommand()
-end
-
-local function readoutdalas()
-   vycte hodnoty s dalasu 
-   a zakonci mereni
-end
-
-local function commandDALAS()
-    if PinDALAS == nil then
-        tmr.alarm(Casovac, 50, 0,  function() measuredatlas() end)
-        
-
-    else
-   pozada o mereni vsechny nalezene dalasy
-   s casovym zpozdenim zavola readoutdalas
+--
+--    if PinDALAS == nil then
+--        tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
+--    else
+--      t = require("ds18b20")
+--        t.setup(PinDALAS)
+--        local taddr = t.addrs() -- nacte adresy do lokalniho pole
+--        local pocetsnimacu = 0
+--        if (taddr ~= nil) then
+--            pocetsnimacu = table.getn(addrs1)
+--            if Debug == 1
+--                print("m>temp sensors: "..pocetsnimacu) -- pocet senzoru 
+--            end
+--            Data[Prefix.."t_cnt"] = pocetsnimacu
+--        end
+--        if pocet snimacu == 0 then -- zadne snimace nenalezeny preskocime mereni
+--            tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
+--        else
+--            tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
+--        end
+--    end
 end
 
 local function finishDHT()
@@ -83,7 +106,7 @@ local function finishDHT()
         gpio.write(PinDHT,gpio.LOW)
     end
 
-    tmr.alarm(Casovac, 25, 0,  function() commandDALAS() end)    
+    tmr.alarm(Casovac, 25, 0,  function() prepareDALAS() end)    
 end
 
 local function measureDHT()
@@ -107,15 +130,18 @@ local function measureDHT()
             Havr = Havr / Cnt;
     
             if Debug == 1 then 
-                print ("Temp: "..Tavr)
-                print ("Humi: "..Havr)
-    |       end
+                print ("m>Temp: "..Tavr)
+                print ("m>Humi: "..Havr)
+            end
             
-            Data[ReportFieldPrefix."t22"] = Tint
-            Fields[ReportFieldPrefix.."h22"] = Hint
-            Fields[ReportFieldPrefix.."dht_ok"] = 1
+            Data[Prefix.."t22"] = Tint
+            Data[Prefix.."h22"] = Hint
+            Data[Prefix.."dht_ok"] = 1
         else
-            Fields[ReportFieldPrefix.."dht_ok"] = 0
+            
+            if Debug == 1 then print("m>DHT not found") end
+            
+            Data[Prefix.."dht_ok"] = 0
         end
     end
 
@@ -133,9 +159,10 @@ local function prepareDHT()
     tmr.alarm(Casovac, 25, 0,  function() measureDHT() end)
 end  
 
-function setup(_casovac,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom) 
+function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom) 
    
     Casovac = _casovac or 4 -- pokud to neuvedu 
+    Prefix = _prefix or "noid" -- pokud neuvedu
     PinDHT = _dhtpin
     PinDHTpower = _dhtpiwerpin
     PinDALAS = _dalaspin
@@ -143,7 +170,7 @@ function setup(_casovac,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom)
     Data = {}
     Finished = 0
   
-    tmr.alarm(Casovac, 50, 0,  function() prepareDHT() end)
+    tmr.alarm(Casovac, 25, 0,  function() prepareDHT() end)
     
     return Casovac
 end
@@ -155,10 +182,11 @@ end
 
 function getvalues()
 
-    if Finished == 1 then
+    if Finished > 0 then
         return Data
     else
-        return {"inprogress"=1}
+        return {}
+    end
 end
 
 -- Return module table

@@ -29,6 +29,8 @@ local adc = adc
 local tmr = tmr
 -- Mathematic module
 local math = math
+-- Debug
+local Debug = Debug
 
 -- Limited to local environment
 setfenv(1,M)
@@ -49,7 +51,7 @@ local function mesureanalog()
         
     Counter = Counter + 1
 
-    tmr.alarm(Casovac, math.random(2,10), 0,  function() mesureanalog() end)
+    tmr.alarm(Casovac, math.random(5,30), 0,  function() mesureanalog() end)
    
     return 1
 end  
@@ -63,7 +65,7 @@ function setup(_casovac)
 
     adc.read(0) -- nekdy prvni prevod vrati nesmysl
 
-    tmr.alarm(Casovac, math.random(2,10), 0,  function() mesureanalog() end)
+    tmr.alarm(Casovac, math.random(5,30), 0,  function() mesureanalog() end)
     
     return Casovac
 end
