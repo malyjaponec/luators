@@ -25,73 +25,145 @@ local Data
 local PinDHT
 local PinDHTpower
 local PinDALAS
-local Phantom
+local PinBARO
 local Finished = 0
+-- pro mereni dalasu
 local t
 local taddr
+local tsnimacu
+-- pro barometr
+local p
+local pt
+-- pro oba
+local tcount
 
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
--- Timer module
-local tmr = tmr
--- Mathematic module
-local math = math
--- Debug
-local Debug = Debug
+--local tmr = tmr
+--local math = math
+--local dht = dht
+--local bmp085 = bmp085
+--local gpio = gpio
+--local print = print
+--local require = require
+--local Debug = Debug
 
 -- Limited to local environment
-setfenv(1,M)
+--setfenv(1,M)
+
 --------------------------------------------------------------------------------
 -- Implementation
 --------------------------------------------------------------------------------
+     
+local function finishBARO()
+    if PinBaro[1] == nil then
+        p,pt = p/tcount, pt/tcount
+        if Debug == 1 then 
+            print ("Pres="..p)
+            print ("Temp(B)="..pt)
+        end
+        Data[Prefix.."tlak"] = p
+        Data[Prefix.."teplota_b"] = pt
+        p,t = nil,nil
+    end
+    -- -- --
+    Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
+end
 
---local function pahntomreadout()
---    vycte hodnotu a zavola poantom command()
---end
---
---local function pahntomcommand()
---    prvnimu v seznamu posle prikaz pro mereni
---    s casovym zpozdenim zavola pantomreadout()
---    pokud je nahodou seznam prazdny zakonci mereni
---end
---
---local function readoutDALAS()
---
---end
---
---local function measureDALAS()
---    if 
---    -- pozada jeden dalas o zmereni teploty
---
---    -- skoci readout
---
---end
---
+local function measureBARO()
+
+    p = p + (bmp085.pressure() / 100) -- tlak
+    pt = pt + (bmp085.temperature() / 10) -- teplota
+    tcount = tcount + 1
+    if (tcount >= 10) then
+        tmr.alarm(Casovac, 25, 0,  function() finishBARO() end)
+    else
+        tmr.alarm(Casovac, math.random(10,50), 0,  function() measureBARO() end)
+    end
+end
+
+local function prepareBARO()
+    if PinBaro[1] == nil then
+        tmr.alarm(Casovac, 25, 0,  function() finishBARO() end)
+    else
+        bmp085.init(PinBARO[1],PinBARO[2])
+        p,pt = 0,0 -- nuluji prumery resp. soucty
+        tcount = 0 -- pocitadlo mereni
+        tmr.alarm(Casovac, 25, 0,  function() measureBARO() end)
+    end
+end
+
+local function finishDALAS()
+
+    if PinDALAS ~= nil then
+        gpio.mode(PinDALAS,gpio.OUTPUT)
+        gpio.write(PinDALAS,gpio.LOW)
+    end
+    addr = nil
+    taddr = nil
+    t = nil
+    ds18b20 = nil
+    package.loaded["ds18b20"]=nil
+    tmr.alarm(Casovac, 25, 0,  function() prepareBARO() end)
+end
+
+local function readoutDALAS()
+
+    local addr = taddr[tcount] -- vezmu adresu z pole
+    local value = t.readNumber(addr) -- vyctu si zmerenou teplotu
+    local textaddr = AddressInHex(addr) -- prevod adresy na gex
+    addr = nil
+    if (value ~= nil) then -- a ted pouze pokud se vycteni povedlo
+        value = value/10000 -- teplotu to vraci v desitkach milicelsiu
+        Data[Prefix.."t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
+        if Debug == 1 then 
+            print("t"..textaddr.." = "..value)
+        end
+    end
+    textaddr = nil
+    value = nil
+    tcount = tcount + 1
+    tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
+end
+
+local function measureDALAS()
+    
+    if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni
+        tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
+    else
+        local addr = taddr[tcount] -- vezmu adresu z pole
+        if Debug == 1 then
+                print("m>addr: "..addr) -- pocet senzoru 
+        end
+        t.startMeasure(addr) -- pozadam dalas o mereni
+        addr = nil
+        tmr.alarm(Casovac, 750, 0,  function() readoutDALAS() end)
+    end
+end
+
 local function prepareDALAS()
-  Finished = tmr.now()+1
 
---
---    if PinDALAS == nil then
---        tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
---    else
---      t = require("ds18b20")
---        t.setup(PinDALAS)
---        local taddr = t.addrs() -- nacte adresy do lokalniho pole
---        local pocetsnimacu = 0
---        if (taddr ~= nil) then
---            pocetsnimacu = table.getn(addrs1)
---            if Debug == 1
---                print("m>temp sensors: "..pocetsnimacu) -- pocet senzoru 
---            end
---            Data[Prefix.."t_cnt"] = pocetsnimacu
---        end
---        if pocet snimacu == 0 then -- zadne snimace nenalezeny preskocime mereni
---            tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
---        else
---            tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
---        end
---    end
+    if PinDALAS == nil then
+        tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
+    else
+        t = require("ds18b20")
+        t.setup(PinDALAS)
+        local taddr = t.addrs() -- nacte adresy do lokalniho pole
+        if (taddr ~= nil) then
+            tsnimacu = table.getn(taddr)
+            if Debug == 1 then
+                print("m>temp sensors: "..tsnimacu) -- pocet senzoru 
+            end
+            Data[Prefix.."t_cnt"] = tsnimacu
+        end
+        if tsnimacu == 0 then -- zadne snimace nenalezeny preskocime mereni
+            tmr.alarm(Casovac, 25, 0,  function() finishDALAS() end)
+        else
+            tcount = 1
+            tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
+        end
+    end
 end
 
 local function finishDHT()
@@ -116,7 +188,7 @@ local function measureDHT()
         local Tavr,Havr,Cnt = 0,0,0
         local counter = 20 -- urcuje pocet opakovani mereni z DHT
         while (counter > 0) do
-            result, T, H = dht.read(DHT22pin)
+            result, T, H = dht.read(PinDHT)
             if (result == 0) then
                 Cnt = Cnt + 1
                 Tavr = Tavr + T
@@ -159,14 +231,14 @@ local function prepareDHT()
     tmr.alarm(Casovac, 25, 0,  function() measureDHT() end)
 end  
 
-function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom) 
+function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_baroB) 
    
     Casovac = _casovac or 4 -- pokud to neuvedu 
     Prefix = _prefix or "noid" -- pokud neuvedu
     PinDHT = _dhtpin
     PinDHTpower = _dhtpiwerpin
     PinDALAS = _dalaspin
-    Phantom = _dalasphantom
+    PinBaro = {_baroA,_baroB}
     Data = {}
     Finished = 0
   
@@ -174,11 +246,13 @@ function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_dalasphantom)
     
     return Casovac
 end
+M.setup = setup
 
 function status()
 
     return Finished
 end
+M.status = status
 
 function getvalues()
 
@@ -188,6 +262,7 @@ function getvalues()
         return {}
     end
 end
+M.getvalues = getvalues
 
 -- Return module table
 return M

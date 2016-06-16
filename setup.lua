@@ -63,7 +63,9 @@
 -- Spustim proces merici DHT a DALAS
 --    local sensors
     sensors = require("sensors")
-    sensors.setup(2,ReportFieldPrefix) -- casovac 2 pro merici algoritmy
+    sensors.setup(2,ReportFieldPrefix,
+        gpionum[2],gpionum[13],gpionum[4],gpionum[12],gpionum[14]) 
+        -- DTH=2, napeniDHT=13, DALAS=4, BARO=12+14
     
 -- Spustim cekani na konec
     dofile("send.lua") -- pouziva casovac 3
