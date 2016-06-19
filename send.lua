@@ -52,6 +52,13 @@ local function Start()
     Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
     Rdat[ReportFieldPrefix.."hp"] = node.heap() 
 
+--    network = nil
+--    battery = nil
+--    sensors = nil
+--    package.loaded["network"]=nil
+--    package.loaded["battery"]=nil
+--    package.loaded["sensors"]=nil
+
     -- prevedu na URL
     local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
                 "&json=" .. cjson.encode(Rdat) .. 
@@ -67,7 +74,7 @@ local function KontrolaOdeslani()
 
     if network.status() > 0 and sensors.status() > 0 then -- odesilame
 
-        tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
+        tmr.alarm(3, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
 
     else
         if network.status() == -1 then

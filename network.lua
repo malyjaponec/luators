@@ -19,36 +19,25 @@ _G[modname] = M
 local Finished
 local Casovac
 local Counter
-local FunkceOk
-local FuncceFail
 local LedIO
 local ApWasFound 
 local LedState
-local TimeIpGet
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
 -- Timer module
-local tmr = tmr
--- Mathematic module
-local math = math
--- Wifi
-local wifi = wifi
--- Filesystem
-local file = file
--- Print for debug
-local print = print
--- Ovladani pinu
-local gpio = gpio
--- Pole
-local pairs = pairs
--- Retezce
-local string = string
--- Debug
-local Debug = Debug
+--local tmr = tmr
+--local math = math
+--local wifi = wifi
+--local file = file
+--local print = print
+--local gpio = gpio
+--local pairs = pairs
+--local string = string
+--local Debug = Debug
 
 -- Limited to local environment
-setfenv(1,M)
+--setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Implementation
 -------------------------------------------------------------------------------
@@ -134,7 +123,6 @@ local function check_new_ip()
         end
     else 
         print("Reconfig done, IP is "..wifi.sta.getip())
-        TimeIpGet = tmr.now()/1000
         led(0)
         Finished = tmr.now()+1
     end
@@ -191,7 +179,6 @@ local function check_ip()
     led(2)
     if nil ~= wifi.sta.getip() then 
         if Debug == 1 then print("ip> IP is "..wifi.sta.getip()) end
-        TimeIpGet = tmr.now()/1000
         led(0)
         Finished = tmr.now()+1
     else
@@ -206,7 +193,7 @@ local function check_ip()
     end
 end
 
-function setup(_casovac,_led,_funkceok,_funkcefail)
+local function setup(_casovac,_led)
 
     Finished = 0
     Casovac = _casovac or 0 -- pokud to neuvedu 
@@ -218,11 +205,13 @@ function setup(_casovac,_led,_funkceok,_funkcefail)
     
     return Casovac
 end
+M.setup = setup
 
-function status()
+local function status()
 
     return Finished
 end
+M.status = status
 
 -- Return module table
 return M

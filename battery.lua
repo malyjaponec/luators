@@ -24,16 +24,13 @@ local Counter
 -- Local used modules
 --------------------------------------------------------------------------------
 -- String module
-local adc = adc
--- Timer module
-local tmr = tmr
--- Mathematic module
-local math = math
--- Debug
-local Debug = Debug
+--local adc = adc
+--local tmr = tmr
+--local math = math
+--local Debug = Debug
 
 -- Limited to local environment
-setfenv(1,M)
+--setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Implementation
 --------------------------------------------------------------------------------
@@ -56,7 +53,7 @@ local function mesureanalog()
     return 1
 end  
 
-function setup(_casovac)
+local function setup(_casovac)
    
     Casovac = _casovac or 5 -- pokud to neuvedu 
     Minimum = 1024
@@ -69,16 +66,20 @@ function setup(_casovac)
     
     return Casovac
 end
+M.setup = setup
 
-function stop()
+local function stop()
 
     tmr.stop(Casovac)
 end
+M.stop = stop
 
-function getvalues()
+local function getvalues()
 
+    tmr.stop(Casovac)
     return Minimum,Maximum,Counter
 end
+M.getvalues = getvalues
 
 -- Return module table
 return M

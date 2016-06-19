@@ -1,6 +1,6 @@
 --setup.lua
 
-    gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
+    local gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 
     -- prevede ID luatoru do 36-kove soustavy
     local function IDIn36(IN)
@@ -16,39 +16,16 @@
     ReportInterval = 1*60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
-    
     ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         ReportApiKey = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
     file.close()
-    Fields = {}
+
+-- Debug
     Debug = 0
     if (file.open("debug.ini", "r") ~= nil) then Debug = 1 end -- debuguje se jen kdyz je soubor debug.ini
-    DHT22pin = gpionum[5]
-    DHT22powerpin = gpionum[13]
-    Lightpin = gpionum[14] 
-    
--- nastaveni pinu pro spravne mereni baterie
-    gpio.mode(Lightpin,gpio.OUTPUT)
-    gpio.write(Lightpin,gpio.HIGH) 
-    -- pripojim fotoodpor na + (je to pres diodu) tak aby nemel svod pri mereni baterie 
-    -- pokud v systemu mereni svetla neni, tak se nic nestane, protoze na GPIO14 nic neni
-
--- konstanty a jednorazova priprava pro mereni, zavisi na measure.lua
-    -- teploty
-    Sb3 = nil -- zapojeni 2 dratove phantom napajeni
-    Sb3p = 3 -- volba presnosti pro phantom
-    Sb3d = 750000 -- odpovidajici cekaci doby
-    if (Sb3 ~= nil) then
-        gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
-        gpio.mode(Sb3, gpio.OUTPUT) 
-        gpio.write(Sb3, gpio.HIGH)
-    end
-    
--- nastaveni pinu pro zapnuti proudu do DHT22
-
-    
+      
 -- Spustim procesy nastavujici sit
 --    local network -- musi byt local protoze globalni promenna s necim koliduje
     network = require("network")
@@ -66,9 +43,12 @@
     sensors.setup(2,ReportFieldPrefix,
         gpionum[2],gpionum[13],gpionum[4],gpionum[12],gpionum[14]) 
         -- DTH=2, napeniDHT=13, DALAS=4, BARO=12+14
-    
--- Spustim cekani na konec
-    dofile("send.lua") -- pouziva casovac 3
+
+-- Uklid
+    gpionum = nil
+        
+-- Spustim odesilac, bez casovace primo
+    dofile("send.lc") -- pouziva casovac 3
     
 
 
