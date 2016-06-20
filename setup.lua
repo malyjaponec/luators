@@ -41,7 +41,7 @@
 --    local sensors
     sensors = require("sensors")
     sensors.setup(2,ReportFieldPrefix,
-        gpionum[2],gpionum[13],gpionum[4],gpionum[12],gpionum[14]) 
+        gpionum[5],gpionum[13],gpionum[4],gpionum[14],gpionum[12]) 
         -- DTH=2, napeniDHT=13, DALAS=4, BARO=12+14
 
 -- Uklid

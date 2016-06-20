@@ -12,10 +12,9 @@
     local time = (RI * 1000*1000) - tmr.now()
     -- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval
     if time < ((RI-30) * 1000*1000) then time = ((RI-30) *1000*1000) end
-    -- kontrolni tisk
-    if Debug == 1 then
-        print("Sleeping for "..(time/1000000).." s") 
-    end
+    -- kontrolni tisk vzdy i kdyz je debug vypnuty
+    print("Sleeping for "..(time/1000000).." s") 
+    
 
 --print(node.heap())
 node.dsleep(time, 1)

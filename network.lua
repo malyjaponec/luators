@@ -21,7 +21,6 @@ local Casovac
 local Counter
 local LedIO
 local ApWasFound 
-local LedState
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -47,22 +46,15 @@ local function led(_stav)
     gpio.mode(LedIO, gpio.OUTPUT) 
     if 1 == _stav then
         gpio.write(LedIO, gpio.LOW)
-        LedState = 1
     else
         if 2 == _stav then
-            if 1 == LedState then
+            if gpio.HIGH == gpio.read(LedIO) then
                 gpio.write(LedIO, gpio.HIGH)
-                LedState = 0
             else
                 gpio.write(LedIO, gpio.LOW)
-                LedState = 1
             end 
-            -- blikani stejne nefunguje, nevim proc ale casovac spusteny 
-            -- v teto knihovne nebezi a funkce se nevolaji asi zmizi 
-            -- jen co je posledni z nich ukoncena, vubec se divim ze to funguje
         else
             gpio.write(LedIO, gpio.HIGH)
-            LedState = 0
         end
     end
 end
@@ -122,7 +114,7 @@ local function check_new_ip()
             tmr.alarm(Casovac, 100, 1, function() led(2) end)
         end
     else 
-        print("Reconfig done, IP is "..wifi.sta.getip())
+        if Debug == 1 then print("Reconfig done, IP is "..wifi.sta.getip()) end
         led(0)
         Finished = tmr.now()+1
     end
