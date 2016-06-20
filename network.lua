@@ -48,7 +48,7 @@ local function led(_stav)
         gpio.write(LedIO, gpio.LOW)
     else
         if 2 == _stav then
-            if gpio.HIGH == gpio.read(LedIO) then
+            if gpio.LOW == gpio.read(LedIO) then
                 gpio.write(LedIO, gpio.HIGH)
             else
                 gpio.write(LedIO, gpio.LOW)

@@ -14,6 +14,9 @@ end
 
 --------------------------------------------------------------------------------
 local function KonecAbnormal()
+     -- druhou led zhasnu
+     gpio.write(LedSend, gpio.HIGH)
+
     dofile("sleep.lua")
 end
 
@@ -27,13 +30,20 @@ local function Konec(code, data)
     else
         if Debug == 1 then print("s>chyba/".. code) end
     end
+
+     -- druhou led zhasnu
+     gpio.write(LedSend, gpio.HIGH)
+     
     dofile("sleep.lua")
 end
 
 --------------------------------------------------------------------------------
 local function Start()
      if Debug == 1 then print("s>sedning...") end
-     -- rozsvitim druhou led dodelat
+  
+     -- rozsvitim druhou led 
+     gpio.mode(LedSend, gpio.OUTPUT) 
+     gpio.write(LedSend, gpio.LOW)
     
     -- vytvorim zakladni data, ktera chci prenest na cloud
     Rdat = sensors.getvalues()
