@@ -102,10 +102,10 @@ end
 local function check_new_ip()
     led(2)
     if nil == wifi.sta.getip() then 
-        if Debug == 1 then print("ip> Waiting for IP...") end
+        if Debug == 1 and Counter % 10 == 0 then print("ip> Waiting for IP...") end
         Counter = Counter - 1
         if (Counter > 0) then
-            tmr.alarm(0, 500, 0, function() check_new_ip() end)
+            tmr.alarm(0, 100, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("ip> PANIC, not IP assigned, end")
@@ -174,10 +174,10 @@ local function check_ip()
         led(0)
         Finished = tmr.now()+1
     else
-        if Debug == 1 then print("ip> Connecting AP...") end
+        if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         Counter = Counter - 1
         if (Counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 2000, 0, function() check_ip() end)
+            tmr.alarm(0, 100, 0, function() check_ip() end)
         else
             if Debug == 1 then print("ip> connect failed, status:"..wifi.sta.status()) end
             change_apn()

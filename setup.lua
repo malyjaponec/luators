@@ -13,7 +13,7 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 1*60 -- sekund a nesmi byt kratsi nez 31!!!
+    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
@@ -45,7 +45,7 @@
         -- DTH=2, napeniDHT=13, DALAS=4, BARO=12+14
 
 -- Spustim odesilac, bez casovace primo
-    LedSend = gpionum[15]
+    LedSend = gpionum[2]
     dofile("send.lc") -- pouziva casovac 3
     
 -- Uklid
