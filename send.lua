@@ -13,14 +13,6 @@ local function Get_AP_MAC()
 end
 
 --------------------------------------------------------------------------------
-local function KonecAbnormal()
-     -- druhou led zhasnu
-     gpio.write(LedSend, gpio.HIGH)
-
-    dofile("sleep.lua")
-end
-
---------------------------------------------------------------------------------
 local function Konec(code, data)
     if (code == nil) then
         code = -100
@@ -38,63 +30,55 @@ local function Konec(code, data)
 end
 
 --------------------------------------------------------------------------------
-local function Start()
-     if Debug == 1 then print("s>sedning...") end
+local function KontrolaOdeslani()
+
+    if network.status() > 0 and sensors.status() > 0 then -- odesilame
+
+        if Debug == 1 then print("s>sedning...") end
   
      -- rozsvitim druhou led 
      gpio.mode(LedSend, gpio.OUTPUT) 
      gpio.write(LedSend, gpio.LOW)
     
-    -- vytvorim zakladni data, ktera chci prenest na cloud
-    Rdat = sensors.getvalues()
+        -- vytvorim zakladni data, ktera chci prenest na cloud
+        Rdat = sensors.getvalues()
+    
+        -- bateriova data
+        min,max,cnt = battery.getvalues()
+        Rdat[ReportFieldPrefix.."bmin"] = min
+        Rdat[ReportFieldPrefix.."bmax"] = max
+        Rdat[ReportFieldPrefix.."bcnt"] = cnt
+    
+        -- doplnkova data
+        Rdat[ReportFieldPrefix.."cnt"] = Rcnt
+        Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
+        Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
+        Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
+        Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
+    
+    --    network = nil
+    --    battery = nil
+    --    sensors = nil
+    --    package.loaded["network"]=nil
+    --    package.loaded["battery"]=nil
+    --    package.loaded["sensors"]=nil
 
-    -- bateriova data
-    min,max,cnt = battery.getvalues()
-    Rdat[ReportFieldPrefix.."bmin"] = min
-    Rdat[ReportFieldPrefix.."bmax"] = max
-    Rdat[ReportFieldPrefix.."bcnt"] = cnt
-
-    -- doplnkova data
-    Rdat[ReportFieldPrefix.."cnt"] = Rcnt
-    Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
-    Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
-    Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
-    Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
-    Rdat[ReportFieldPrefix.."hp"] = node.heap() 
-
---    network = nil
---    battery = nil
---    sensors = nil
---    package.loaded["network"]=nil
---    package.loaded["battery"]=nil
---    package.loaded["sensors"]=nil
-
-    -- prevedu na URL
-    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
-                "&json=" .. cjson.encode(Rdat) .. 
-                "&apikey=" .. ReportApiKey
-    Rdat = nil -- data smazu explicitne
-    http.get(url, nil, function(code,data) Konec(code,data) end )
-    url = nil -- url uz taky mazu
-    tmr.alarm(3, 15000, 0, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
-end
-
---------------------------------------------------------------------------------
-local function KontrolaOdeslani()
-
-    if network.status() > 0 and sensors.status() > 0 then -- odesilame
-
-        tmr.alarm(3, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
+        Rdat[ReportFieldPrefix.."hp"] = node.heap() 
+    
+        -- prevedu na URL
+        local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
+                    "&json=" .. cjson.encode(Rdat) .. 
+                    "&apikey=" .. ReportApiKey
+        Rdat = nil -- data smazu explicitne
+        http.get(url, nil, function(code,data) Konec(code,data) end )
+        url = nil -- url uz taky mazu
+        tmr.alarm(3, 15000, 0, function() dofile("sleep.lua") end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
 
     else
         if network.status() == -1 then
-
             dofile("sleep.lua")
-
         else
-            -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
-            tmr.alarm(3, 100, 0,  function() KontrolaOdeslani() end)
-
+            tmr.alarm(3, 31, 0,  function() KontrolaOdeslani() end)
         end
     end
 end

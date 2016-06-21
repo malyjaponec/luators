@@ -102,7 +102,7 @@ end
 local function check_new_ip()
     led(2)
     if nil == wifi.sta.getip() then 
-        if Debug == 1 and Counter % 10 == 0 then print("ip> Waiting for IP...") end
+        if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         Counter = Counter - 1
         if (Counter > 0) then
             tmr.alarm(0, 100, 0, function() check_new_ip() end)
