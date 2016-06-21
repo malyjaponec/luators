@@ -161,12 +161,6 @@ end
 
 local function measureDHT()
 
-    if PinDHTpower ~= nil then
-        gpio.mode(PinDHTpower,gpio.OUTPUT)
-        gpio.write(PinDHTpower,gpio.HIGH) 
-        -- vypinani DHT behem sleepu usetri kolem 10uA
-    end
-
     if PinDHT ~= nil then
         local result,T,H
         local Tavr,Havr,Cnt = 0,0,0
@@ -190,8 +184,8 @@ local function measureDHT()
                 print ("m>Humi: "..Havr)
             end
             
-            Data[Prefix.."t22"] = Tint
-            Data[Prefix.."h22"] = Hint
+            Data[Prefix.."t22"] = Tavr
+            Data[Prefix.."h22"] = Havr
             Data[Prefix.."dht_ok"] = 1
         else
             
@@ -253,8 +247,15 @@ local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_bar
     Data = {}
     Finished = 0
   
-    tmr.alarm(Casovac, 25, 0,  function() measureDHT() end)
-    
+    if PinDHTpower ~= nil then
+        gpio.mode(PinDHTpower,gpio.OUTPUT)
+        gpio.write(PinDHTpower,gpio.HIGH) 
+        -- vypinani DHT behem sleepu usetri kolem 10uA ale nefunguje to
+        tmr.alarm(Casovac, 100, 0,  function() measureDHT() end)
+    else
+        tmr.alarm(Casovac, 10, 0,  function() measureDHT() end)
+    end
+
     return Casovac
 end
 M.setup = setup

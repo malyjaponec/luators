@@ -122,7 +122,7 @@ end
 
 local function reset_apn_result()
     if ApWasFound == 1 then -- nalezeno, konfiguruji
-        Counter = 40 -- opet cekam 20s na IP
+        Counter = 200 -- opet cekam 20s na IP
         tmr.alarm(Casovac, 2000, 0, function() check_new_ip() end) -- zacnu cekat na IP
         return
     end
@@ -192,7 +192,7 @@ local function setup(_casovac,_led)
     LedIO = _led or 3 -- polud nezadam led pouziju GPIO0
     led(0)
     
-    Counter = 40 -- po 500ms to je 20s
+    Counter = 200 -- po 100ms to je 20s
     tmr.alarm(Casovac, 1000, 0,  function() check_ip() end)
     
     return Casovac

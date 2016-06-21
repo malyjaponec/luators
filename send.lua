@@ -36,33 +36,33 @@ local function KontrolaOdeslani()
 
         if Debug == 1 then print("s>sedning...") end
   
-     -- rozsvitim druhou led 
-     gpio.mode(LedSend, gpio.OUTPUT) 
-     gpio.write(LedSend, gpio.LOW)
+       -- rozsvitim druhou led 
+       gpio.mode(LedSend, gpio.OUTPUT) 
+       gpio.write(LedSend, gpio.LOW)
     
         -- vytvorim zakladni data, ktera chci prenest na cloud
         Rdat = sensors.getvalues()
-    
+        Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
+        sensors = nil
+        package.loaded["sensors"]=nil
+  
         -- bateriova data
         min,max,cnt = battery.getvalues()
+        battery = nil
+        package.loaded["battery"]=nil
         Rdat[ReportFieldPrefix.."bmin"] = min
         Rdat[ReportFieldPrefix.."bmax"] = max
         Rdat[ReportFieldPrefix.."bcnt"] = cnt
-    
+
+        -- sitova data
+        Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
+        network = nil
+        package.loaded["network"]=nil
+       
         -- doplnkova data
         Rdat[ReportFieldPrefix.."cnt"] = Rcnt
         Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
-        Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
-        Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
         Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
-    
-    --    network = nil
-    --    battery = nil
-    --    sensors = nil
-    --    package.loaded["network"]=nil
-    --    package.loaded["battery"]=nil
-    --    package.loaded["sensors"]=nil
-
         Rdat[ReportFieldPrefix.."hp"] = node.heap() 
     
         -- prevedu na URL
