@@ -180,8 +180,8 @@ local function measureDHT()
             Havr = Havr / Cnt;
     
             if Debug == 1 then 
-                print ("m>Temp: "..Tavr)
-                print ("m>Humi: "..Havr)
+                print ("m>22Temp: "..Tavr)
+                print ("m>22Humi: "..Havr)
             end
             
             Data[Prefix.."t22"] = Tavr
