@@ -40,34 +40,52 @@
     end
     Rdat = {}
 
-    TimeStart = 0
-    Time = -1
-    Out = GP[13]
-    In = GP[14]
+    
+    
+    RXbuf = ""
+    Dist = 0
+    Temp = 0
 
-    local function CitacPulzu1(_level)
-        if _level == gpio.HIGH then
-            TimeStart = tmr.now()
-        else
-            Time = tmr.now() - TimeStart
-        end
+
+    local function ProcessTemperature()
+        -- zpracovat data
+        Temp = RXbuf:byte(1) - 45
+        -- zrusit handler
+        uart.on("data")
+        -- prepnout na 115200 a povolit interpret
+        uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
+        -- vratit seriovou linku na port 1 
+        uart.alt(0)
+        -- tisk
+        print("vzdalenost ="..(Dist/10).." cm")
+        print("teplota ="..(Temp).." C")
     end
 
-
-    local function MesureTime()
-        print("Vzdalenost "..((Time*343.2/10000)-15).." cm")
-        --TimeStart = tmr.now()
-        gpio.write(Out,gpio.HIGH)
-        gpio.write(Out,gpio.LOW)
+    local function ProcessDistance()
+        -- zpracovat data
+        Dist = RXbuf:byte(1) * 256 + RXbuf:byte(2)
+        -- nastavit handler prijmu
+        uart.on("data", 1, function(data) RXbuf = data end, 0)
+        -- poslat 0x50
+        uart.write(0, 0x50)
+        -- nacasovat vycteni
+        tmr.alarm(1, 5, 0, function() ProcessTemperature() end)        
     end
 
-    gpio.mode(Out,gpio.OUTPUT)
-    gpio.write(Out,gpio.LOW)
+    local function MesureUltrasonic()
+        -- prepnout seriovou linku na 2. port
+        uart.alt(1)
+        -- nastavit rychlost 9600 a vypnout interpret
+        uart.setup(0, 9600, 8, uart.PARITY_NONE, uart.STOPBITS_1, 0)
+        -- nastavit handler prijmu
+        uart.on("data", 2, function(data) RXbuf = data end, 0)
+        -- poslat 0x55
+        uart.write(0, 0x55)
+        -- nacasovat vycteni
+        tmr.alarm(1, 150, 0, function() ProcessDistance() end)
+    end
+
     
-    gpio.mode(In, gpio.INPUT, gpioPULLUP)
-    gpio.mode(In, gpio.INT, gpioPULLUP) 
-    gpio.trig(In, "both", CitacPulzu1)
-    
-    tmr.alarm(0, 1000, 1, function() MesureTime() end)
+    tmr.alarm(0, 1000, 1, function() MesureUltrasonic() end)
 
     print("run")
