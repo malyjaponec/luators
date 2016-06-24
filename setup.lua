@@ -40,9 +40,10 @@
 -- Spustim proces merici DHT a DALAS
 --    local sensors
     sensors = require("sensors")
-    sensors.setup(2,ReportFieldPrefix,
-        gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12]) 
-        -- DTH=2, napeniDHT=neni, DALAS=4, BARO=12+14
+    -- kompost
+    --sensors.setup(2,ReportFieldPrefix,gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12],nil) 
+    -- nadrz
+    sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,1) 
 
 -- Spustim odesilac, bez casovace primo
     LedSend = gpionum[2]

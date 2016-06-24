@@ -1,13 +1,15 @@
 --------------------------------------------------------------------------------
 -- Sensor measurement
 -- 
--- setup(casovac,dhtpin,dhtpowerpin,dalaspin,dalasphantom) 
--- - nastavi casovac, ktery bude knihovna pouziva a spusti mereni
--- - nastavi pin pro mereni dht
--- - nastavi pin pro napajeni dht
--- - nastavi pin pro mereni dalasu
--- - nastavi zda dalas je phantom nebo ma napajeni
--- status() - vrati zda je mereni dokonceno nebo se jeste meri
+-- setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_baroB,_distance)  
+--  _casovac - nastavi casovac, ktery bude knihovna pouziva a spusti mereni
+--  _prefix - nastavi string na identifikaci zarizeni na cloudu (prefix dat)
+--  _dhtpin - nastavi pin pro mereni dht
+--  _dhtpowerpin - nastavi pin pro napajeni dht
+--  _dalaspin - nastavi pin pro mereni dalasu, vzdy meri phantomove
+--  _baroA a _baroB - nastavi piny kde je I2C siemens barometr
+--  _distance - zvoli zda je pripojen seriovy meric vzdalenosti
+-- status() - vrati zda je mereni dokonceno nebo se jeste meri s casem dokonceni
 -- getvalues() - vrati pole hodnot s namerenym hodnotami
 -- 
 --------------------------------------------------------------------------------
@@ -26,16 +28,15 @@ local PinDHT
 local PinDHTpower
 local PinDALAS
 local PinBARO
+local EnDist
 local Finished = 0
--- pro mereni dalasu
+-- pro mereni dalasu, barometr, atd...
 local t
+local p
 local taddr
 local tsnimacu
--- pro barometr
-local p
--- pro oba
 local tcount
--- fnkce
+
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -68,6 +69,41 @@ local function AddressInHex(IN)
     return out
 end
 
+local function FinishDISK()
+    -- zpracovat data
+    t = tcount:byte(1) - 45
+    -- zrusit handler
+    uart.on("data")
+    tcount = nil
+    -- prepnout na 115200 a povolit interpret
+    uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
+    -- vratit seriovou linku na port 1 
+    uart.alt(0)
+    
+    -- export
+    Data[Prefix.."delka"] = p
+    Data[Prefix.."teplota_d"] = t
+    
+    -- debug print
+    if Debug == 1 then 
+        print("m>sound l="..p)
+        print("m>soudn t="..t)
+    end
+    
+    Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces    
+end
+
+local function ProcessDIST()
+    -- zpracovat data (vzdalenost v milimetrech)
+    p = tcount:byte(1) * 256 + tcount:byte(2)
+    -- nastavit handler prijmu
+    uart.on("data", 1, function(data) tcount = data end, 0)
+    -- poslat 0x50
+    uart.write(0, 0x50)
+    -- nacasovat vycteni
+    tmr.alarm(1, 5, 0, function() FinishDISK() end)        
+end
+
 local function finishBARO()
 
     if PinBARO[1] ~= nil then
@@ -82,15 +118,28 @@ local function finishBARO()
 
         p,t = p/tcount, t/tcount
         if Debug == 1 then 
-            print ("Pres="..p)
-            print ("Temp(B)="..t)
+            print ("m>baro P="..p)
+            print ("m>baro t="..t)
         end
         Data[Prefix.."tlak"] = p
         Data[Prefix.."teplota_b"] = t
         p,t = nil,nil
     end
 
-    Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
+    if EnDist ~= nil then -- povolene mereni vzdalenosti
+        -- prepnout seriovou linku na 2. port
+        uart.alt(1)
+        -- nastavit rychlost 9600 a vypnout interpret
+        uart.setup(0, 9600, 8, uart.PARITY_NONE, uart.STOPBITS_1, 0)
+        -- nastavit handler prijmu
+        uart.on("data", 2, function(data) tcount = data end, 0)
+        -- poslat 0x55
+        uart.write(0, 0x55)
+        -- nacasovat vycteni
+        tmr.alarm(1, 120, 0, function() ProcessDIST() end)
+    else
+        Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
+    end
 end
 
 local function prepareBARO()
@@ -128,7 +177,7 @@ local function readoutDALAS()
         value = value/10000 -- teplotu to vraci v desitkach milicelsiu
         Data[Prefix.."t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
         if Debug == 1 then 
-            print("t"..textaddr.." = "..value)
+            print("m>t"..textaddr.." = "..value)
         end
     end
     textaddr = nil
@@ -236,7 +285,7 @@ local function measureDHT()
     tmr.alarm(Casovac, 25, 0,  function() prepareBARO() end)
 end
 
-local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_baroB) 
+local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_baroB,_distance) 
    
     Casovac = _casovac or 4 -- pokud to neuvedu 
     Prefix = _prefix or "noid" -- pokud neuvedu
@@ -244,6 +293,7 @@ local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_bar
     PinDHTpower = _dhtpiwerpin
     PinDALAS = _dalaspin
     PinBARO = {_baroA,_baroB}
+    EnDist = _distance
     Data = {}
     Finished = 0
   
