@@ -41,7 +41,7 @@
 --    local sensors
     sensors = require("sensors")
     -- kompost
-    --sensors.setup(2,ReportFieldPrefix,gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12],nil) 
+    --sensors.setup(2,ReportFieldPrefix,gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12],0) 
     -- nadrz
     sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,10) 
 

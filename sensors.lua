@@ -70,9 +70,14 @@ local function AddressInHex(IN)
     return out
 end
 
-local function FinishDISK()
+local function FinishDIST()
     -- zpracovat data
     t = t + (taddr:byte(1) - 45)
+
+    if EnDist < tcount then
+        tmr.alarm(1, 20, 0, function() StartDIST() end)        
+    end
+    
     -- zrusit handler
     uart.on("data")
     taddr = nil
@@ -81,11 +86,6 @@ local function FinishDISK()
     -- vratit seriovou linku na port 1 
     uart.alt(0)
 
-    if EnDist < tcount then
-        print("m>sound #"..tcount)
-        startDIST()
-    end
-    
     -- export
     Data[Prefix.."delka"] = p/tcount
     Data[Prefix.."teplota_d"] = t/tcount
@@ -108,10 +108,10 @@ local function ProcessDIST()
     -- poslat 0x50
     uart.write(0, 0x50)
     -- nacasovat vycteni teploty
-    tmr.alarm(1, 5, 0, function() FinishDISK() end)        
+    tmr.alarm(1, 10, 0, function() FinishDIST() end)        
 end
 
-function startDIST()
+function StartDIST()
         -- citac 
         tcount = tcount + 1
         -- poslat 0x55
@@ -143,16 +143,15 @@ local function finishBARO()
     end
 
     if EnDist > 0 then -- povolene mereni vzdalenosti
-        -- prepnout seriovou linku na 2. port
+        -- prepnout seriovou linku na 2. port - OD TED SE NESMI DELAT DEBUG PRINT
         uart.alt(1)
         -- nastavit rychlost 9600 a vypnout interpret
         uart.setup(0, 9600, 8, uart.PARITY_NONE, uart.STOPBITS_1, 0)
         -- nastavit handler prijmu
-        uart.on("data", 2, function(data) tcount = data end, 0)
+        uart.on("data", 2, function(data) taddr = data end, 0)
         -- nacasovat dalsi veci
-        tcount = 0
-        if Debug == 1 then print ("m>sound...")  end
-        startDIST() 
+        tcount,p,t = 0,0,0
+        tmr.alarm(1, 20, 0, function() StartDIST() end)        
     else
         Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
     end
