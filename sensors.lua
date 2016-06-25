@@ -8,7 +8,8 @@
 --  _dhtpowerpin - nastavi pin pro napajeni dht
 --  _dalaspin - nastavi pin pro mereni dalasu, vzdy meri phantomove
 --  _baroA a _baroB - nastavi piny kde je I2C siemens barometr
---  _distance - zvoli zda je pripojen seriovy meric vzdalenosti
+--  _distance - zvoli zda je pripojen seriovy meric vzdalenosti, kolik mereni se ma udelat
+--      piny ma vzdalenost fixni, je to druha seriova linka gpio15 a 13 tusim
 -- status() - vrati zda je mereni dokonceno nebo se jeste meri s casem dokonceni
 -- getvalues() - vrati pole hodnot s namerenym hodnotami
 -- 
@@ -71,18 +72,24 @@ end
 
 local function FinishDISK()
     -- zpracovat data
-    t = tcount:byte(1) - 45
+    t = t + (taddr:byte(1) - 45)
     -- zrusit handler
     uart.on("data")
-    tcount = nil
+    taddr = nil
     -- prepnout na 115200 a povolit interpret
     uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
     -- vratit seriovou linku na port 1 
     uart.alt(0)
+
+    if EnDist < tcount then
+        print("m>sound #"..tcount)
+        startDIST()
+    end
     
     -- export
-    Data[Prefix.."delka"] = p
-    Data[Prefix.."teplota_d"] = t
+    Data[Prefix.."delka"] = p/tcount
+    Data[Prefix.."teplota_d"] = t/tcount
+    tcount = nil
     
     -- debug print
     if Debug == 1 then 
@@ -95,13 +102,22 @@ end
 
 local function ProcessDIST()
     -- zpracovat data (vzdalenost v milimetrech)
-    p = tcount:byte(1) * 256 + tcount:byte(2)
+    p = p + (taddr:byte(1) * 256 + taddr:byte(2))
     -- nastavit handler prijmu
-    uart.on("data", 1, function(data) tcount = data end, 0)
+    uart.on("data", 1, function(data) taddr = data end, 0)
     -- poslat 0x50
     uart.write(0, 0x50)
-    -- nacasovat vycteni
+    -- nacasovat vycteni teploty
     tmr.alarm(1, 5, 0, function() FinishDISK() end)        
+end
+
+function startDIST()
+        -- citac 
+        tcount = tcount + 1
+        -- poslat 0x55
+        uart.write(0, 0x55)
+        -- nacasovat vycteni delky
+        tmr.alarm(1, 120, 0, function() ProcessDIST() end)
 end
 
 local function finishBARO()
@@ -126,17 +142,17 @@ local function finishBARO()
         p,t = nil,nil
     end
 
-    if EnDist ~= nil then -- povolene mereni vzdalenosti
+    if EnDist > 0 then -- povolene mereni vzdalenosti
         -- prepnout seriovou linku na 2. port
         uart.alt(1)
         -- nastavit rychlost 9600 a vypnout interpret
         uart.setup(0, 9600, 8, uart.PARITY_NONE, uart.STOPBITS_1, 0)
         -- nastavit handler prijmu
         uart.on("data", 2, function(data) tcount = data end, 0)
-        -- poslat 0x55
-        uart.write(0, 0x55)
-        -- nacasovat vycteni
-        tmr.alarm(1, 120, 0, function() ProcessDIST() end)
+        -- nacasovat dalsi veci
+        tcount = 0
+        if Debug == 1 then print ("m>sound...")  end
+        startDIST() 
     else
         Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
     end
@@ -293,7 +309,7 @@ local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_bar
     PinDHTpower = _dhtpiwerpin
     PinDALAS = _dalaspin
     PinBARO = {_baroA,_baroB}
-    EnDist = _distance
+    EnDist = _distance or 0
     Data = {}
     Finished = 0
   

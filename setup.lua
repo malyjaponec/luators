@@ -13,7 +13,7 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
+    ReportInterval = 2*60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
@@ -43,7 +43,7 @@
     -- kompost
     --sensors.setup(2,ReportFieldPrefix,gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12],nil) 
     -- nadrz
-    sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,1) 
+    sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,10) 
 
 -- Spustim odesilac, bez casovace primo
     LedSend = gpionum[2]
