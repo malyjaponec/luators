@@ -32,7 +32,11 @@ end
 --------------------------------------------------------------------------------
 local function KontrolaOdeslani()
 
-    if network.status() > 0 and sensors.status() > 0 then -- odesilame
+    if network.status() > 0 and 
+       dnt.status() > 0 and
+       dalas1.status() > 0 and
+       dalas2.status() > 0 and
+       baro.status() > 0 then -- odesilame
 
         if Debug == 1 then print("s>sedning...") end
   
@@ -40,12 +44,39 @@ local function KontrolaOdeslani()
        gpio.mode(LedSend, gpio.OUTPUT) 
        gpio.write(LedSend, gpio.LOW)
     
-        -- vytvorim zakladni data, ktera chci prenest na cloud
-        Rdat = sensors.getvalues()
-        Rdat[ReportFieldPrefix.."tm"] = sensors.status()/1000000
-        sensors = nil
-        package.loaded["sensors"]=nil
-  
+        -- prekopiruju senzorova data
+        local tm,t,k,v = 0
+
+        t =  dht.status()/1000000
+        Rdat[ReportFieldPrefix.."t_dht"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(dht.getvalues()) do Rdat[k] = v end
+        dht = nil
+        package.loaded["dht"] = nil
+
+        t =  dalas1.status()/1000000
+        Rdat[ReportFieldPrefix.."t_d1"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(dalas1.getvalues()) do Rdat[k] = v end
+        dalas1 = nil
+        t =  dalas2.status()/1000000
+        Rdat[ReportFieldPrefix.."t_d2"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(dalas2.getvalues()) do Rdat[k] = v end
+        dalas2 = nil
+        package.loaded["dalas"] = nil
+
+        t =  baro.status()/1000000
+        Rdat[ReportFieldPrefix.."t_b"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(baro.getvalues()) do Rdat[k] = v end
+        baro = nil
+        package.loaded["baro"] = nil
+                
+        Rdat[ReportFieldPrefix.."tm"] = t
+        t = nil
+        k,v = nil,nil
+        
         -- bateriova data
         min,max,cnt = battery.getvalues()
         battery = nil
@@ -72,17 +103,17 @@ local function KontrolaOdeslani()
         Rdat = nil -- data smazu explicitne
         http.get(url, nil, function(code,data) Konec(code,data) end )
         url = nil -- url uz taky mazu
-        tmr.alarm(3, 15000, 0, function() dofile("sleep.lua") end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
+        tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
 
     else
         if network.status() == -1 then
             dofile("sleep.lua")
         else
-            tmr.alarm(3, 31, 0,  function() KontrolaOdeslani() end)
+            tmr.alarm(0, 31, 0,  function() KontrolaOdeslani() end)
         end
     end
 end
 
 --------------------------------------------------------------------------------
-tmr.alarm(3, 500, 0,  function() KontrolaOdeslani() end)  -- Na zacatku klidne muzu cekat dele
+tmr.alarm(0, 500, 0,  function() KontrolaOdeslani() end)  -- Na zacatku klidne muzu cekat dele
 

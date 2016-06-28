@@ -29,24 +29,28 @@
 -- Spustim procesy nastavujici sit
 --    local network -- musi byt local protoze globalni promenna s necim koliduje
     network = require("network")
-    network.setup(0, gpionum[0]) -- casovace 0 pro sit
+    network.setup(1, gpionum[0]) -- casovace 0 pro sit
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
 -- to je misto kde si proces odesilajici vycte data
 --    local battery
     battery = require("battery")
-    battery.setup(1) -- casovac 1 se pouziva pro mereni baterie
+    battery.setup(2) -- casovac 1 se pouziva pro mereni baterie
 
--- Spustim proces merici DHT a DALAS
+-- Spustim proces merici senzoru
 --    local sensors
-    sensors = require("sensors")
-    sensors.setup(2,ReportFieldPrefix,
-        gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12]) 
-        -- DTH=2, napeniDHT=neni, DALAS=4, BARO=12+14
+    dht = require("dht")
+    dht.setup(3,ReportFieldPrefix,gpionum[5],nil)
+    baro = require("baro")
+    baro.setup(4,ReportFieldPrefix,gpionum[14],gpionum[12]) 
+    dalas1 = require("dalas")
+    dalas1.setup(5,ReportFieldPrefix,gpionum[4])
+    dalas2 = require("dalas")
+    dalas2.setup(5,ReportFieldPrefix,gpionum[15])
 
 -- Spustim odesilac, bez casovace primo
     LedSend = gpionum[2]
-    dofile("send.lc") -- pouziva casovac 3
+    dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
     gpionum = nil
