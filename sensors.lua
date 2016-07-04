@@ -37,6 +37,8 @@ local p
 local taddr
 local tsnimacu
 local tcount
+local tsnimacu2
+local dataok 
 
 -------------------------------------------------------------------------------
 -- Local used modules
@@ -72,10 +74,14 @@ end
 
 local function FinishDIST()
     -- zpracovat data
-    t = t + (taddr:byte(1) - 45)
+    if (dataok == 1) then
+        t = t + (taddr:byte(1) - 45)
+        tsnimacu2 = tsnimacu2 + 1 -- pocitam pouze korektni hodnoty
+    end
 
-    if EnDist < tcount then
+    if EnDist > tcount then
         tmr.alarm(1, 20, 0, function() StartDIST() end)        
+        return
     end
     
     -- zrusit handler
@@ -88,13 +94,15 @@ local function FinishDIST()
 
     -- export
     if tsnimacu > 0 then Data[Prefix.."delka"] = p/tsnimacu end
-    Data[Prefix.."teplota_d"] = t/tcount
+    Data[Prefix.."cnt_d"] = tsnimacu
+    if tsnimacu2 > 0 then Data[Prefix.."teplota_d"] = t/tcount end
+    Data[Prefix.."cnt_t"] = tsnimacu2
     tcount = nil
     
     -- debug print
     if Debug == 1 then 
-        if tsnimacu > 0 then print("m>sound l="..p) end
-        print("m>soudn t="..t)
+        if tsnimacu > 0 then print("m>sound l="..(p/tsnimacu).." ("..tsnimacu..")") end
+        if tsnimacu2 > 0 then print("m>sound t="..(t/tsnimacu2).." ("..tsnimacu2..")") end
     end
     
     Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces    
@@ -104,14 +112,18 @@ local function ProcessDIST()
     -- zpracovat data (vzdalenost v milimetrech)
     local delka = (taddr:byte(1) * 256 + taddr:byte(2))
     -- tady neni osetreno kdyby to nemelo data
-    if delka < 10000 then -- nepocitam hodnoty nad 5 metru
+    if (dataok == 1) and (delka < 10000) then -- nepocitam hodnoty nad 5 metru
         p = p + delka
         tsnimacu = tsnimacu + 1 -- pocitam pouze korektni hodnoty
     end
     -- nastavit handler prijmu
     taddr = nil    
-    uart.on("data", 1, function(data) taddr = data end, 0)
+    uart.on("data", 1, function(data) 
+                           taddr = data
+                           dataok = 1
+                       end, 0)
     -- poslat 0x50
+    dataok = 0
     uart.write(0, 0x50)
     -- nacasovat vycteni teploty
     tmr.alarm(1, 10, 0, function() FinishDIST() end)        
@@ -120,10 +132,14 @@ end
 function StartDIST()
         -- nastavit handler prijmu
         taddr = nil
-        uart.on("data", 2, function(data) taddr = data end, 0)
+        uart.on("data", 2, function(data)
+                               taddr = data
+                               dataok = 1
+                           end, 0)
         -- citac 
         tcount = tcount + 1
         -- poslat 0x55
+        dataok = 0
         uart.write(0, 0x55)
         -- nacasovat vycteni delky
         tmr.alarm(1, 120, 0, function() ProcessDIST() end)
@@ -157,8 +173,8 @@ local function finishBARO()
         -- nastavit rychlost 9600 a vypnout interpret
         uart.setup(0, 9600, 8, uart.PARITY_NONE, uart.STOPBITS_1, 0)
         -- nacasovat dalsi veci
-        tcount,p,t,tsnimacu = 0,0,0,0
-        tmr.alarm(1, 20, 0, function() StartDIST() end)        
+        tcount,p,t,tsnimacu,tsnimacu2 = 0,0,0,0,0
+        tmr.alarm(Casovac, 20, 0, function() StartDIST() end)        
     else
         Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
     end

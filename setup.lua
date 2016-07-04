@@ -43,7 +43,7 @@
     -- kompost
     --sensors.setup(2,ReportFieldPrefix,gpionum[5],nil,gpionum[4],gpionum[14],gpionum[12],0) 
     -- nadrz
-    sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,10) 
+    sensors.setup(2,ReportFieldPrefix,nil,nil,nil,nil,nil,15) 
 
 -- Spustim odesilac, bez casovace primo
     LedSend = gpionum[2]
