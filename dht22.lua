@@ -56,7 +56,7 @@ local function measureDHT()
         end
         result,T,H = nil
         Counter = Counter - 1
-        tmr.alarm(Casovac, math.random(10,50), 0,  function() measureDHT() end)
+        tmr.alarm(Casovac, 300, 0,  function() measureDHT() end)
         return
     end
     -- zpracujeme vysledky a neni dobre delit nulou
@@ -71,6 +71,7 @@ local function measureDHT()
         
         Data[Prefix.."t22"] = Tavr
         Data[Prefix.."h22"] = Havr
+        Data[Prefix.."c22"] = Cnt
         Data[Prefix.."dht_ok"] = 1
     else
         if Debug == 1 then 
@@ -95,20 +96,22 @@ local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin)
     Casovac = _casovac or 3
     Prefix = _prefix or "" 
     PinDHT = _dhtpin
-    PinDHTpower = _dhtpiwerpin
+    PinDHTpower = _dhtpowerpin
     Data = {}
     Finished = 0
     if (nil ~= PinDHT) then
-        Counter = 20
+        Counter = 8 -- hodnota 8 znameana ze mereni bude tesne pod 4 sekundy a zmeri se to 4x
+        -- pro suprerychle luatory je potreba pocet opakovani zmensit treba na 6 mozna 5, proste 
+        -- cas kde se zarukou projdou 3 mereni.
         Tavr,Havr,Cnt = 0,0,0
         -- a zacina mereni, jen se nacasuje, pro pripad ze by byl pouzit napajeci pin je dobre pockat 
         if PinDHTpower ~= nil then
             gpio.mode(PinDHTpower,gpio.OUTPUT)
             gpio.write(PinDHTpower,gpio.HIGH) 
             -- vypinani DHT behem sleepu usetri kolem 10uA ale nefunguje to moc dobre
-            tmr.alarm(Casovac, 200, 0,  function() measureDHT() end)
+            tmr.alarm(Casovac, 100, 0,  function() measureDHT() end)
         else
-            tmr.alarm(Casovac, 25, 0,  function() measureDHT() end)
+            tmr.alarm(Casovac, 10, 0,  function() measureDHT() end)
         end
     end
     return Casovac

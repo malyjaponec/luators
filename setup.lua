@@ -16,7 +16,7 @@
     ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji node 3
+    ReportNode = "3" -- bateriove merici systemy zmer a vypni pouzivaji n    3
     ReportFieldPrefix = IDIn36(node.chipid()).."_"
     file.open("apikey.ini", "r") -- soubor tam musi byt a ze neni neosetruji
         ReportApiKey = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
@@ -29,25 +29,24 @@
 -- Spustim procesy nastavujici sit
 --    local network -- musi byt local protoze globalni promenna s necim koliduje
     network = require("network")
-    network.setup(1, gpionum[0]) -- casovace 0 pro sit
+    network.setup(1, gpionum[2]) -- casovace 0 pro sit
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
--- to je misto kde si proces odesilajici vycte data
     battery = require("battery")
     battery.setup(2) -- casovac 1 se pouziva pro mereni baterie
 
 -- Spustim proces merici senzoru
     dht22 = require("dht22")
-    dht22.setup(3,ReportFieldPrefix,gpionum[5],nil)
-    dalas1 = require("dalas")
-    dalas1.setup(5,ReportFieldPrefix,gpionum[4])
-    dalas2 = require("dalas1")
-    dalas2.setup(6,ReportFieldPrefix,gpionum[15])
-    baro = require("baro")
-    baro.setup(4,ReportFieldPrefix,gpionum[14],gpionum[12]) 
+    dht22.setup(3,ReportFieldPrefix,gpionum[5],gpionum[13])
+--    dalas1 = require("dalas")
+--    dalas1.setup(5,ReportFieldPrefix,gpionum[4])
+--    dalas2 = require("dalas1")
+--    dalas2.setup(6,ReportFieldPrefix,gpionum[15])
+--    baro = require("baro")
+--    baro.setup(4,ReportFieldPrefix,gpionum[14],gpionum[12]) 
 
 -- Spustim odesilac, bez casovace primo
-    LedSend = gpionum[2]
+    LedSend = nil
     dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid

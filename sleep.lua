@@ -4,6 +4,9 @@
     tmr.stop(1)
     tmr.stop(2)
     tmr.stop(3)
+    tmr.stop(4)
+    tmr.stop(5)
+    tmr.stop(6)
 
     -- vypocet casu
     local RI = ReportInterval
@@ -17,7 +20,7 @@
     
 
 --print(node.heap())
---node.dsleep(time, 1)
+node.dsleep(time, 1)
 -- 2 bez kalibrace RF
 -- 1 s kalibraci RF
 -- 0 zalezi na bajtu 108, nevim co to znamena

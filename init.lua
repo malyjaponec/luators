@@ -9,5 +9,5 @@
     print(" . ")
     print(" . ")
 
-  tmr.alarm(0, 100, 0,  function() dofile("setup.lc") end)
+  tmr.alarm(0, 10, 0,  function() dofile("setup.lc") end)
   -- dofile("setup.lc")

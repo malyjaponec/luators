@@ -42,6 +42,7 @@ local ApWasFound
 -------------------------------------------------------------------------------
 
 local function led(_stav)
+    if LedIO == nil then return end
     -- Je potreba poznamenat, ze led se rozsveci logickou 0, proto to muze vypadat zmatene
     gpio.mode(LedIO, gpio.OUTPUT) 
     if 1 == _stav then
@@ -105,7 +106,7 @@ local function check_new_ip()
         if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         Counter = Counter - 1
         if (Counter > 0) then
-            tmr.alarm(0, 100, 0, function() check_new_ip() end)
+            tmr.alarm(Casovac, 100, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("ip> PANIC, not IP assigned, end")
@@ -177,7 +178,7 @@ local function check_ip()
         if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         Counter = Counter - 1
         if (Counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 100, 0, function() check_ip() end)
+            tmr.alarm(Casovac, 100, 0, function() check_ip() end)
         else
             if Debug == 1 then print("ip> connect failed, status:"..wifi.sta.status()) end
             change_apn()
@@ -189,7 +190,7 @@ local function setup(_casovac,_led)
 
     Finished = 0
     Casovac = _casovac or 0 -- pokud to neuvedu 
-    LedIO = _led or 3 -- polud nezadam led pouziju GPIO0
+    LedIO = _led -- polud nezadam led pouziju GPIO0
     led(0)
     
     Counter = 200 -- po 100ms to je 20s
