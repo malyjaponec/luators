@@ -51,13 +51,12 @@ local function finishBARO()
     end
     p,t = p/tcount, t/tcount -- nepocitam s tim ze by se mereni nepovedlo, vlastne to vzdy neco vycet
     if Debug == 1 then 
-        print ("m>P="..p)
-        print ("m>T(B)="..t)
+        print (Casovac..">P="..p)
+        print (Casovac..">T(B)="..t)
     end
     Data[Prefix.."tlak"] = p
     Data[Prefix.."teplota_b"] = t
     p,t = nil,nil
-    end
     Prefix,Casovac = nil,nil
     Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
 end

@@ -17,7 +17,7 @@
     
 
 --print(node.heap())
-node.dsleep(time, 1)
+--node.dsleep(time, 1)
 -- 2 bez kalibrace RF
 -- 1 s kalibraci RF
 -- 0 zalezi na bajtu 108, nevim co to znamena

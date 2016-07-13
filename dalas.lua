@@ -52,7 +52,7 @@ local function AddressInHex(IN)
     return out
 end
 
-local function celanupDALAS()
+local function cleanupDALAS()
     taddr,t = nil,nil
     ds18b20 = nil
     package.loaded["ds18b20"] = nil
@@ -69,7 +69,7 @@ local function readoutDALAS()
         value = value/10000 -- teplotu to vraci v desitkach milicelsiu
         Data[Prefix.."t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
         if Debug == 1 then 
-            print("t"..textaddr.." = "..value)
+            print(Casovac..">t"..textaddr.." = "..value)
         end
     end
     textaddr,value = nil,nil
@@ -98,13 +98,10 @@ function measureDALAS2()
     measureDALAS()
 end
 
-local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_baroB) 
-    Casovac = _casovac or 4 
-    Prefix = _prefix or ""
-    PinDALAS = _dalaspin
-    Data = {}
-    Finished = 0
-    -- pro mensi pocet funkci zacnu s merenim primo v setupu
+local function startDALAS()
+    if Debug == 1 then 
+        print(Casovac..">dalas")
+    end 
     if PinDALAS ~= nil then
         t = require("ds18b20")
         t.setup(PinDALAS)
@@ -115,14 +112,25 @@ local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin,_dalaspin,_baroA,_bar
         else
             tsnimacu = 0
         end
-        if Debug == 1 then  print("m>temp sensors: "..tsnimacu) end -- pocet senzoru 
+        if Debug == 1 then 
+            print(Casovac..">temp sensors: "..tsnimacu) -- pocet senzoru 
+        end 
         if tsnimacu > 0 then -- jsou nalezeny snimace
             tcount = 1
             tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
         else
-            tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end
+            tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
         end
     end
+end
+
+local function setup(_casovac,_prefix,_dalaspin) 
+    Casovac = _casovac or 4 
+    Prefix = _prefix or ""
+    PinDALAS = _dalaspin
+    Data = {}
+    Finished = 0
+    tmr.alarm(Casovac, 25, 0,  function() startDALAS() end)
     return Casovac
 end
 M.setup = setup

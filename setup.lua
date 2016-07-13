@@ -33,20 +33,18 @@
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
 -- to je misto kde si proces odesilajici vycte data
---    local battery
     battery = require("battery")
     battery.setup(2) -- casovac 1 se pouziva pro mereni baterie
 
 -- Spustim proces merici senzoru
---    local sensors
-    dht = require("dht")
-    dht.setup(3,ReportFieldPrefix,gpionum[5],nil)
-    baro = require("baro")
-    baro.setup(4,ReportFieldPrefix,gpionum[14],gpionum[12]) 
+    dht22 = require("dht22")
+    dht22.setup(3,ReportFieldPrefix,gpionum[5],nil)
     dalas1 = require("dalas")
     dalas1.setup(5,ReportFieldPrefix,gpionum[4])
-    dalas2 = require("dalas")
-    dalas2.setup(5,ReportFieldPrefix,gpionum[15])
+    dalas2 = require("dalas1")
+    dalas2.setup(6,ReportFieldPrefix,gpionum[15])
+    baro = require("baro")
+    baro.setup(4,ReportFieldPrefix,gpionum[14],gpionum[12]) 
 
 -- Spustim odesilac, bez casovace primo
     LedSend = gpionum[2]
@@ -55,6 +53,3 @@
 -- Uklid
     gpionum = nil
         
-
-
-
