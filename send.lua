@@ -38,8 +38,7 @@ local function KontrolaOdeslani()
 
     if  network.status() <= 0 or
         (dht22 ~= nil and dht22.status() == 0) or
-        (dalas1 ~= nil and dalas1.status() == 0) or
-        (dalas2 ~= nil and dalas2.status() == 0) or
+        (dalas ~= nil and dalas.status() == 0) or
         (baro ~= nil and baro.status() == 0) or
         (dist ~= nil and dist.status() == 0)
         then -- stale cekame na odeslani

@@ -57,15 +57,16 @@ local function cleanupDALAS()
     tsnimacu = nil
     if PinDALAS2 ~= nil then
         PinDALAS,PinDALAS2 = PinDALAS2,nil
-        tmr.alarm(Casovac, 10, 0,  function() startDALAS2() end)        
-        return
+        taddr = nil
+        tmr.alarm(Casovac, 10, 0,  function() startDALAS2() end)       
+    else
+        taddr,t = nil,nil
+        ds18b20 = nil
+        package.loaded["ds18b20"] = nil
+        Data["t_cnt"] = sensors
+        Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
+        Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
     end
-    taddr,t = nil,nil
-    ds18b20 = nil
-    package.loaded["ds18b20"] = nil
-    Data["t_cnt"] = sensors
-    Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
-    Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
 end
 
 local function readoutDALAS()
