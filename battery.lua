@@ -20,13 +20,13 @@ local Counter
 -- Local used modules
 --------------------------------------------------------------------------------
 -- String module
---local adc = adc
---local tmr = tmr
---local math = math
---local Debug = Debug
+local adc = adc
+local tmr = tmr
+local math = math
+local Debug = Debug
 
 -- Limited to local environment
---setfenv(1,M)
+setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Implementation
 --------------------------------------------------------------------------------

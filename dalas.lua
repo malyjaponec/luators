@@ -17,10 +17,10 @@ _G[modname] = M
 -- Local used variables
 --------------------------------------------------------------------------------
 local Casovac
-local Prefix
 local Data
-local PinDALAS
-local Finished = 0
+local PinDALAS,PinDALAS2
+local Name
+local Finished,sensors = 0,0
 local t,taddr,tsnimacu,tcount
 -------------------------------------------------------------------------------
 -- Local used modules
@@ -53,10 +53,18 @@ local function AddressInHex(IN)
 end
 
 local function cleanupDALAS()
+    sensors = sensors + tsnimacu
+    tsnimacu = nil
+    if PinDALAS2 ~= nil then
+        PinDALAS,PinDALAS2 = PinDALAS2,nil
+        tmr.alarm(Casovac, 10, 0,  function() startDALAS2() end)        
+        return
+    end
     taddr,t = nil,nil
     ds18b20 = nil
     package.loaded["ds18b20"] = nil
-    Casovac,Prefix,PinDALAS = nil,nil,nil
+    Data["t_cnt"] = sensors
+    Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
     Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
 end
 
@@ -67,7 +75,7 @@ local function readoutDALAS()
     addr = nil
     if (value ~= nil) then -- a ted pouze pokud se vycteni povedlo
         value = value/10000 -- teplotu to vraci v desitkach milicelsiu
-        Data[Prefix.."t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
+        Data["t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
         if Debug == 1 then 
             print(Casovac..">t"..textaddr.." = "..value)
         end
@@ -79,7 +87,7 @@ end
 
 local function measureDALAS()
     if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni
-        tmr.alarm(Casovac, 25, 0,  function() prepareBARO() end)
+        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
     else
         local addr = taddr[tcount] -- vezmu adresu z pole
         if addr ~= nil then -- bezpecnostni ochrana kdyby to vratilo nil
@@ -94,26 +102,23 @@ local function measureDALAS()
     end
 end
 
-function measureDALAS2()
+function measureDALAS2() -- kvuli volani z horni casti kodu kde lokalni funkce jeste neexistuji
     measureDALAS()
 end
 
 local function startDALAS()
-    if Debug == 1 then 
-        print(Casovac..">dalas")
-    end 
-    if PinDALAS ~= nil then
-        t = require("ds18b20")
+    if PinDALAS == nil then
+        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+    else    
         t.setup(PinDALAS)
         taddr = t.addrs() -- nacte adresy vsechn dalasu na sbernici
         if (taddr ~= nil) then
             tsnimacu = table.getn(taddr)
-            Data[Prefix.."t_cnt"] = tsnimacu
         else
             tsnimacu = 0
         end
         if Debug == 1 then 
-            print(Casovac..">temp sensors: "..tsnimacu) -- pocet senzoru 
+            print(Casovac..">sens: "..tsnimacu) -- pocet senzoru 
         end 
         if tsnimacu > 0 then -- jsou nalezeny snimace
             tcount = 1
@@ -124,13 +129,22 @@ local function startDALAS()
     end
 end
 
-local function setup(_casovac,_prefix,_dalaspin) 
+function startDALAS2() -- kvuli volani z horni casti kodu kde lokalni funkce jeste neexistuji
+    startDALAS()
+end
+
+local function setup(_casovac,_dalaspin,_dalaspin2) 
     Casovac = _casovac or 4 
-    Prefix = _prefix or ""
-    PinDALAS = _dalaspin
+    PinDALAS, PinDALAS2 = _dalaspin,_dalaspin2
     Data = {}
     Finished = 0
-    tmr.alarm(Casovac, 25, 0,  function() startDALAS() end)
+    tmr.alarm(Casovac, 25, 0,  function() 
+        if Debug == 1 then 
+            print(Casovac..">dalas")
+        end 
+        t = require("ds18b20")
+        startDALAS()
+    end)
     return Casovac
 end
 M.setup = setup

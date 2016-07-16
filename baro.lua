@@ -17,7 +17,6 @@ _G[modname] = M
 -- Local used variables
 --------------------------------------------------------------------------------
 local Casovac
-local Prefix
 local Data
 local Finished = 0
 local p,t,tcount
@@ -26,15 +25,9 @@ local p,t,tcount
 --------------------------------------------------------------------------------
 --local tmr = tmr
 --local math = math
---local dht = dht
 --local bmp085 = bmp085
---local gpio = gpio
 --local print = print
---local require = require
 --local Debug = Debug
---local package = package
---local table = table
---local string = string
 
 -- Limited to local environment
 --setfenv(1,M)
@@ -54,24 +47,20 @@ local function finishBARO()
         print (Casovac..">P="..p)
         print (Casovac..">T(B)="..t)
     end
-    Data[Prefix.."tlak"] = p
-    Data[Prefix.."teplota_b"] = t
-    p,t = nil,nil
-    Prefix,Casovac = nil,nil
+    Data["tlak"] = p
+    Data["teplota_b"] = t
+    p,t,Prefix,Casovac = nil,nil,nil,nil
     Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces
 end
 
-local function setup(_casovac,_prefix,_baroA,_baroB) 
+local function setup(_casovac,_baroA,_baroB) 
     Casovac = _casovac or 5
-    Prefix = _prefix or ""
     Data = {}
     Finished = 0
     -- startuji mereni
     if _baroA ~= nil and _baroB ~= nil then
         bmp085.init(_baroA,_baroB)
-        PinBaro = nil
-        p,t = 0,0 -- nuluji prumery resp. soucty
-        tcount = 0 -- pocitadlo poctu mereni
+        PinBaro,p,t,tcount = nil,0,0,0 -- nuluji prumery resp. soucty, pocitadlo poctu mereni
         tmr.alarm(Casovac, 25, 0,  function() finishBARO() end)
     end
     return Casovac

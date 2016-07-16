@@ -30,14 +30,9 @@ local Tavr,Havr,Cnt
 --local tmr = tmr
 --local math = math
 --local dht = dht
---local bmp085 = bmp085
 --local gpio = gpio
 --local print = print
---local require = require
 --local Debug = Debug
---local package = package
---local table = table
---local string = string
 
 -- Limited to local environment
 --setfenv(1,M)
@@ -65,21 +60,22 @@ local function measureDHT()
         Havr = Havr / Cnt;
 
         if Debug == 1 then 
-            print ("m>22Temp: "..Tavr)
-            print ("m>22Humi: "..Havr)
+            print (Casovac..">22Temp: "..Tavr)
+            print (Casovac..">22Humi: "..Havr)
         end
         
-        Data[Prefix.."t22"] = Tavr
-        Data[Prefix.."h22"] = Havr
-        Data[Prefix.."c22"] = Cnt
-        Data[Prefix.."dht_ok"] = 1
+        Data["t22"] = Tavr
+        Data["h22"] = Havr
+        Data["c22"] = Cnt
+        Data["dht_ok"] = 1
     else
         if Debug == 1 then 
-            print("m>DHT not found") 
+            print(Casovac..">DHT not found") 
         end
-        Data[Prefix.."dht_ok"] = 0
+        Data["c22"] = 0
+        Data["dht_ok"] = 0
     end
-    Counter,Tavr,Havr,Cnt = nil,nil,nil,nil
+    Counter,Tavr,Havr,Cnt,Casovac = nil,nil,nil,nil,nil
     -- vypnu na nulu datovy vodic
         gpio.mode(PinDHT,gpio.OUTPUT)
         gpio.write(PinDHT,gpio.LOW)
@@ -92,27 +88,29 @@ local function measureDHT()
     Finished = (tmr.now()+1) -- ukonci mereni a da echo odesilaci a tim konci tento proces
 end
 
-local function setup(_casovac,_prefix,_dhtpin,_dhtpowerpin) 
+local function setup(_casovac,_dhtpin,_dhtpowerpin) 
     Casovac = _casovac or 3
-    Prefix = _prefix or "" 
     PinDHT = _dhtpin
     PinDHTpower = _dhtpowerpin
     Data = {}
     Finished = 0
     if (nil ~= PinDHT) then
-        Counter = 8 -- hodnota 8 znameana ze mereni bude tesne pod 4 sekundy a zmeri se to 4x
+        Counter = 6
+        -- hodnota 8 znameana ze mereni bude tesne pod 4 sekundy a zmeri se to 4x
         -- pro suprerychle luatory je potreba pocet opakovani zmensit treba na 6 mozna 5, proste 
-        -- cas kde se zarukou projdou 3 mereni.
+        -- cas kde se zarukou projdou 3 mereni, nejak nechapu proc ty mereni tak trvaji
+        -- drive to udelao do sekundy 10 vycteni
         Tavr,Havr,Cnt = 0,0,0
         -- a zacina mereni, jen se nacasuje, pro pripad ze by byl pouzit napajeci pin je dobre pockat 
         if PinDHTpower ~= nil then
             gpio.mode(PinDHTpower,gpio.OUTPUT)
             gpio.write(PinDHTpower,gpio.HIGH) 
             -- vypinani DHT behem sleepu usetri kolem 10uA ale nefunguje to moc dobre
-            tmr.alarm(Casovac, 100, 0,  function() measureDHT() end)
-        else
-            tmr.alarm(Casovac, 10, 0,  function() measureDHT() end)
         end
+        tmr.alarm(Casovac, 100, 0,  function() measureDHT() end)
+        -- puvodne jsem zde rozlisoval zda se pripojuje napajeni nebo ne, a cekal jen 10ms
+        -- ale vzhledem k tomu ze nove sdk asi meri dht skoro sekundu je to jedno, zvlast
+        -- kdyz chci delat nekolik mereni
     end
     return Casovac
 end

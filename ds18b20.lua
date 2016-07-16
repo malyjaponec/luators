@@ -16,9 +16,6 @@ _G[modname] = M
 -- DS18B20 dq pin
 local pin = nil
 local res = nil
--- DS18B20 default pin
-local defaultPin = 9
-local defaultResolution = 3
 --------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -42,14 +39,8 @@ K = 2
 -- dres - rozliseni mereni (prvni udaj zmeri tim co v teplomeru je a pak to prenastavi)
 --  moznosti 0 - 9 bitu, 1 - 10 bitu, 2 - 11 bitu, 3 (default) - 12 bitu
 function setup(dq, dr)
-  pin = dq
-  if (pin == nil) then
-    pin = defaultPin
-  end
-  res = dr
-  if (res == nil) then
-    res = defaultResolution
-  end
+  pin = dq or 9
+  res = dr or 3
   ow.setup(pin)
 end
 

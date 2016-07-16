@@ -8,21 +8,17 @@
     tmr.stop(5)
     tmr.stop(6)
 
-    -- vypocet casu
+-- vypocet casu
     local RI = ReportInterval
     if ReportFast == 1 then RI = ReportIntervalFast end
-    
     local time = (RI * 1000*1000) - tmr.now()
-    -- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval
+-- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval
     if time < ((RI-30) * 1000*1000) then time = ((RI-30) *1000*1000) end
-    -- kontrolni tisk vzdy i kdyz je debug vypnuty
-    print("Sleeping for "..(time/1000000).." s") 
-    
 
---print(node.heap())
-node.dsleep(time, 1)
--- 2 bez kalibrace RF
--- 1 s kalibraci RF
--- 0 zalezi na bajtu 108, nevim co to znamena
--- 4 RF po startu vypnute
-
+-- usnuti nebo jen konec    
+    if file.open("init.lua", "r") == nil then -- soubor neexistuje, rucni start, nespime, ladime kod
+        print("END ("..(time/1000000).."s)")
+    else
+        print("Sleeping for "..(time/1000000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
+        node.dsleep(time, 1)
+    end

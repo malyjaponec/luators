@@ -13,21 +13,24 @@ end
 
 --------------------------------------------------------------------------------
 local function Konec(code, data)
+     -- indikacni led zhasnu
+     if LedSend ~= nil then 
+        gpio.mode(LedSend, gpio.INPUT) 
+        gpio.write(LedSend, gpio.HIGH)
+     end
+
     if (code == nil) then
         code = -100
     end
+
     if (code > 0) then
         if Debug == 1 then print("s>odeslano/" .. code) end
     else
         if Debug == 1 then print("s>chyba/".. code) end
     end
-
-     -- druhou led zhasnu
-     if LedSend ~= nil then 
-        gpio.write(LedSend, gpio.HIGH)
-     end
-     
-    dofile("sleep.lua")
+    code = nil
+    data = nil
+    tmr.alarm(0, 10, 0,  function() dofile("sleep.lua") end)
 end
 
 --------------------------------------------------------------------------------
@@ -50,10 +53,10 @@ local function KontrolaOdeslani()
     end
 
     if Debug == 1 then
-        print("s>sedning..."..node.heap())
+        print("s>sending..."..node.heap())
     end
     
-    -- rozsvitim druhou led 
+    -- rozsvitim indikacni led 
     if LedSend ~= nil then
         gpio.mode(LedSend, gpio.OUTPUT) 
         gpio.write(LedSend, gpio.LOW)
@@ -68,36 +71,28 @@ local function KontrolaOdeslani()
         t =  dht22.status()/1000000
         Rdat[ReportFieldPrefix.."t_dht"] = t
         if t > tm then tm = t end
-        for k,v in pairs(dht22.getvalues()) do Rdat[k] = v end
+        for k,v in pairs(dht22.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        dht22 = nil
+        package.loaded["dht22"] = nil
     end
-    dht22 = nil
-    package.loaded["dht22"] = nil
     
-    if dalas1 ~= nil then
-        t =  dalas1.status()/1000000
-        Rdat[ReportFieldPrefix.."t_d1"] = t
+    if dalas ~= nil then
+        t =  dalas.status()/1000000
+        Rdat[ReportFieldPrefix.."t_d"] = t
         if t > tm then tm = t end
-        for k,v in pairs(dalas1.getvalues()) do Rdat[k] = v end
+        for k,v in pairs(dalas.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        dalas = nil
+        package.loaded["dalas"] = nil
     end
-    dalas1 = nil
-    
-    if dalas2 ~= nil then
-        t =  dalas2.status()/1000000
-        Rdat[ReportFieldPrefix.."t_d2"] = t
-        if t > tm then tm = t end
-        for k,v in pairs(dalas2.getvalues()) do Rdat[k] = v end
-    end
-    dalas2 = nil
-    package.loaded["dalas"] = nil
-    
+   
     if baro ~= nil then
         t =  baro.status()/1000000
         Rdat[ReportFieldPrefix.."t_b"] = t
         if t > tm then tm = t end
-        for k,v in pairs(baro.getvalues()) do Rdat[k] = v end
+        for k,v in pairs(baro.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        baro = nil
+        package.loaded["baro"] = nil
     end
-    baro = nil
-    package.loaded["baro"] = nil
     
     if dist ~= nil then
         -- sem dodelat vzdalenost
