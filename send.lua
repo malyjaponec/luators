@@ -83,7 +83,7 @@ local function KontrolaOdeslani()
         dalas = nil
         package.loaded["dalas"] = nil
     end
-   
+
     if baro ~= nil then
         t =  baro.status()/1000000
         Rdat[ReportFieldPrefix.."t_b"] = t
@@ -114,6 +114,9 @@ local function KontrolaOdeslani()
     Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
     network = nil
     package.loaded["network"]=nil
+
+    -- postprocessing, na miru jednotlivym systemum a pritom ostatni to nenarusi, dane adresou dalasu
+    PostProcessing(Rdat)
     
     -- doplnkova data
     Rdat[ReportFieldPrefix.."cnt"] = Rcnt

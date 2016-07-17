@@ -13,6 +13,22 @@
         return out
     end
 
+    -- post processing funkce, kterou si odesilac pred odeslanim zavola
+    function PostProcessing(_datove_pole)
+        -- teplota kourovou v garazi
+        if _datove_pole["6GJTY_t281E1308000080F4"] ~= nil then -- je dostupna teplota kourovodu
+            if _datove_pole["6GJTY_t281E1308000080F4"] > 30 then -- teplota je pres 30 stupnu
+                ReportFast = 1 -- zrychlene reportovani
+            end
+        end
+--        -- zkusebni cidlo 
+--        if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
+--            if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
+--                ReportFast = 1 -- zrychlene reportovani
+--            end
+--        end
+    end
+
 -- konstanty pro reportovani
     ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
@@ -44,9 +60,9 @@
         dht22 = require("dht22")
         dht22.setup(3,gpionum[5],nil)
         dalas = require("dalas")
-        dalas.setup(5,gpionum[4],gpionum[13])
-        baro = require("baro")
-        baro.setup(4,gpionum[14],gpionum[12]) 
+        dalas.setup(5,gpionum[12],nil)
+--        baro = require("baro")
+--        baro.setup(4,gpionum[14],gpionum[12]) 
 
 -- Spustim odesilac, bez casovace primo
         LedSend = nil
