@@ -1,14 +1,55 @@
 -- prelozeni souboru dalas a mozna casem dalsich
+local name
 
-file.remove("dalas.lc")
-file.remove("dalas1.lc")
-node.compile("dalas.lua")
-file.rename("dalas.lc","dalas1.lc")
-node.compile("dalas.lua")
+name = "baro"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
 
+name = "battery"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
 
-file.remove("ds18b20.lc")
-file.remove("ds18b201.lc")
-node.compile("ds18b20.lua")
-file.rename("ds18b20.lc","ds18b201.lc")
-node.compile("ds18b20.lua")
+name = "dalas"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+name = "dht22"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+name = "ds18b20"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+name = "network"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+name = "send"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+name = "setup"
+file.remove(name..".lc")
+node.compile(name..".lua")
+if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+file.close()
+
+-- "sleep" - se nepreklada, pred deepsleepem me uz na nejake pametove narocnosti nesejde
+-- "init" - se preklada ale pak se prejmenuje na lua, to delam rucne
+
+name = nil

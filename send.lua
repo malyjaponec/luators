@@ -102,13 +102,20 @@ local function KontrolaOdeslani()
     Rdat[ReportFieldPrefix.."tm"] = tm
     t,tm,k,v = nil,nil,nil,nil
     
-    -- bateriova data
-    min,max,cnt = battery.getvalues()
-    battery = nil
-    package.loaded["battery"]=nil
+    -- bateriova data (analogovy prevodnik)
+    local min,max,cnt = battery.getvalues()
     Rdat[ReportFieldPrefix.."bmin"] = min
     Rdat[ReportFieldPrefix.."bmax"] = max
     Rdat[ReportFieldPrefix.."bcnt"] = cnt
+    min,max,cnt = nil
+    -- svetlo (sdileny analogovy prevodnik s baterii)
+    local lightlevel = battery.getlight()
+    if lightlevel > -1 then -- mereni je povolene/nakonfigurovane
+        Rdat[ReportFieldPrefix.."light"] = lightlevel
+    end;
+    lightlevel = nil
+    battery = nil
+    package.loaded["battery"]=nil
     
     -- sitova data
     Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000

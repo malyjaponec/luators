@@ -49,13 +49,14 @@
 -- Spustim procesy nastavujici sit
         -- local network -- musi byt local protoze globalni promenna s necim koliduje
         network = require("network")
-        network.setup(1, nil) -- casovace 0 pro sit
+        network.setup(1, nil)
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
         local battery
         battery = require("battery")
-        battery.setup(2) -- casovac 1 se pouziva pro mereni baterie
-
+--        battery.setup(2,nil) -- bez mereni svetla
+        battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
+         
 -- Spustim proces merici senzoru
         dht22 = require("dht22")
         dht22.setup(3,gpionum[5],nil)
