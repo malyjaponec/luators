@@ -53,10 +53,10 @@ local function setup(_casovac,_lightpin)
     Maximum = 0
     Counter = 0
     adc.read(0) -- nekdy prvni prevod vrati nesmysl
-    if LightPin ~= nil then -- je definovan pin pro mereni svetla
+    if LightPIN ~= nil then -- je definovan pin pro mereni svetla
         -- musim ho prepnout na high aby neovlivnoval mereni baterie
-        gpio.mode(Lightpin,gpio.OUTPUT)
-        gpio.write(Lightpin,gpio.HIGH) 
+        gpio.mode(LightPIN,gpio.OUTPUT)
+        gpio.write(LightPIN,gpio.HIGH) 
     end
     tmr.alarm(Casovac, math.random(5,15), 0,  function() mesureanalog() end)
     return Casovac
@@ -74,6 +74,7 @@ local function getlight()
     tmr.stop(Casovac)
     gpio.write(LightPIN,gpio.LOW) -- prijim fotoodpor na zem, cimz se pripravim na mereni svetla misto baterie
     local light = 0
+    adc.read(0)
     for q = 1,10,1 do
        light = light + adc.read(0)
     end

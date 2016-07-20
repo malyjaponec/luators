@@ -60,8 +60,8 @@
 -- Spustim proces merici senzoru
         dht22 = require("dht22")
         dht22.setup(3,gpionum[5],nil)
-        dalas = require("dalas")
-        dalas.setup(5,gpionum[12],nil)
+--        dalas = require("dalas")
+        --dalas.setup(5,gpionum[12],nil)
 --        baro = require("baro")
 --        baro.setup(4,gpionum[14],gpionum[12]) 
 
