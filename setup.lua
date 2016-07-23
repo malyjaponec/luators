@@ -59,7 +59,8 @@
          
 -- Spustim proces merici senzoru
         dht22 = require("dht22")
-        dht22.setup(3,gpionum[5],nil)
+--        dht22.setup(3,gpionum[5],nil) -- bezni luatori
+        dht22.setup(3,gpionum[5],gpionum[13]) -- pouze pareniste... melo by se to pouzivat vice, protoze to ocividne funguje
 --        dalas = require("dalas")
         --dalas.setup(5,gpionum[12],nil)
 --        baro = require("baro")
