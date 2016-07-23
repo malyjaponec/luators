@@ -54,8 +54,8 @@
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
         local battery
         battery = require("battery")
---        battery.setup(2,nil) -- bez mereni svetla
-        battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
+        battery.setup(2,nil) -- bez mereni svetla
+--        battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
          
 -- Spustim proces merici senzoru
         dht22 = require("dht22")
