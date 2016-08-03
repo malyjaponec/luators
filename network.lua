@@ -62,7 +62,7 @@ end
 
 local function ap_select(t)
     if nil == t then 
-        if Debug_IP == 1 then print ("ip> Scan returned empty list.") end
+        if Debug == 1 then print ("ip> Scan returned empty list.") end
         ApWasFound = 0
         return
     end
