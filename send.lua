@@ -94,11 +94,14 @@ local function KontrolaOdeslani()
     end
     
     if dist ~= nil then
-        -- sem dodelat vzdalenost
+        t =  dist.status()/1000000
+        Rdat[ReportFieldPrefix.."t_l"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(dist.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        dist = nil
+        package.loaded["distance"] = nil
     end
-    dist = nil
-    package.loaded["disk"] = nil
-            
+               
     Rdat[ReportFieldPrefix.."tm"] = tm
     t,tm,k,v = nil,nil,nil,nil
     
