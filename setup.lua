@@ -16,8 +16,8 @@
     -- post processing funkce, kterou si odesilac pred odeslanim zavola
     function PostProcessing(_datove_pole)
         -- teplota kourovou v garazi
-        if _datove_pole["6GJTY_t281E1308000080F4"] ~= nil then -- je dostupna teplota kourovodu
-            if _datove_pole["6GJTY_t281E1308000080F4"] > 30 then -- teplota je pres 30 stupnu
+        if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
+            if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
                 ReportFast = 1 -- zrychlene reportovani
             end
         end
@@ -30,7 +30,7 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 2*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
+    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
@@ -58,15 +58,15 @@
 --        battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
          
 -- Spustim proces merici senzoru
---        dht22 = require("dht22")
+        dht22 = require("dht22")
 --        dht22.setup(3,gpionum[5],nil) -- bezni luatori
---        dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
---        dalas = require("dalas")
-        --dalas.setup(5,gpionum[12],nil)
+        dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
+        dalas = require("dalas")
+        dalas.setup(5,gpionum[12],nil)
 --        baro = require("baro")
 --        baro.setup(4,gpionum[14],gpionum[12]) 
-        dist = require("distance")
-        dist.setup(3,20) 
+--        dist = require("distance")
+--        dist.setup(3,20) 
 
 -- Spustim odesilac, bez casovace primo
         LedSend = nil
