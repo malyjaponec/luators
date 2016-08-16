@@ -1,6 +1,6 @@
 --setup.lua
 
-    local gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
+    gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -29,9 +29,25 @@
 --        end
     end
 
+    -- inicializuje veskere merici mechanizmy, je to v globalni funkci protoze pri 
+    -- periodickem reportovani se to vola znova a znova
+    function MeasureInit()
+        -- Spustim proces merici senzoru
+                dht22 = require("dht22")
+                --dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
+                dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
+                --dalas = require("dalas")
+                --dalas.setup(5,gpionum[12],nil)
+                --baro = require("baro")
+                --baro.setup(4,gpionum[14],gpionum[12]) 
+                --dist = require("distance")
+                --dist.setup(3,20) 
+    end
+    
 -- konstanty pro reportovani
-    ReportInterval = 1*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
-    ReportIntervalFast = 1*60 -- rychlost rychlych reportu
+    ReportInterval = 11 
+    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+    PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -52,21 +68,13 @@
         network.setup(1, nil)
 
 -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        local battery
-        battery = require("battery")
-        battery.setup(2,nil) -- bez mereni svetla
---        battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
-         
--- Spustim proces merici senzoru
-        dht22 = require("dht22")
---        dht22.setup(3,gpionum[5],nil) -- bezni luatori
-        dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
---        dalas = require("dalas")
---        dalas.setup(5,gpionum[12],nil)
---        baro = require("baro")
---        baro.setup(4,gpionum[14],gpionum[12]) 
---        dist = require("distance")
---        dist.setup(3,20) 
+        -- local battery
+        --battery = require("battery")
+        --battery.setup(2,nil) -- bez mereni svetla
+        --battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
+
+-- Spustim mereni
+        MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
         LedSend = nil
@@ -74,4 +82,4 @@
     
 -- Uklid
     end
-    gpionum = nil
+    --gpionum = nil

@@ -10,17 +10,20 @@
 
 -- vypocet casu
     local RI = ReportInterval
-    if ReportFast == 1 then RI = ReportIntervalFast end
+    if (ReportFast == 1) and (ReportIntervalFast ~= nil) then
+        RI = ReportIntervalFast 
+    end
     local time = (RI * 1000*1000) - tmr.now()
--- kontrola zda cas neni delsi nez je report interval, vzdy musi byt mensi, pokud je vetsi nastavi se report interval
-    if time < ((RI-30) * 1000*1000) then time = ((RI-30) *1000*1000) end
+    
+    -- pokud cela operace trva dele nez je report intevral, tak to bude kratke spani
+    if time < 100000 then time = 100000 end -- 100ms
 
 -- usnuti nebo jen konec    
     if file.open("init.lua", "r") == nil then -- soubor neexistuje, rucni start, nespime, ladime kod
         print("END ("..(time/1000000).."s)")
     else
 --        print("Restart in "..(time/1000000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
---      tmr.alarm(0, time/1000, 0,  function() node.restart() end)
+--        tmr.alarm(0, time/1000, 0,  function() node.restart() end)
         print("Sleeping for "..(time/1000000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
         node.dsleep(time, 0)
     end

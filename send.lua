@@ -30,7 +30,11 @@ local function Konec(code, data)
     end
     code = nil
     data = nil
-    tmr.alarm(0, 10, 0,  function() dofile("sleep.lua") end)
+    if PeriodicReport ~= nil then -- je pozadovano reportovat pravodelne
+        dofile("reload.lc")
+    else
+        dofile("sleep.lua")
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -44,7 +48,11 @@ local function KontrolaOdeslani()
         then -- stale cekame na odeslani
 
         if network.status() == -1 then
-            dofile("sleep.lua")
+            if PeriodicReport ~= nil then -- je pozadovano reportovat pravidelne
+                dofile("restart.lua")
+            else
+                dofile("sleep.lua")
+            end
         else
             tmr.alarm(0, 31, 0,  function() KontrolaOdeslani() end)
         end
@@ -106,19 +114,21 @@ local function KontrolaOdeslani()
     t,tm,k,v = nil,nil,nil,nil
     
     -- bateriova data (analogovy prevodnik)
-    local min,max,cnt = battery.getvalues()
-    Rdat[ReportFieldPrefix.."bmin"] = min
-    Rdat[ReportFieldPrefix.."bmax"] = max
-    Rdat[ReportFieldPrefix.."bcnt"] = cnt
-    min,max,cnt = nil
-    -- svetlo (sdileny analogovy prevodnik s baterii)
-    local lightlevel = battery.getlight()
-    if lightlevel > -1 then -- mereni je povolene/nakonfigurovane
-        Rdat[ReportFieldPrefix.."light"] = lightlevel
-    end;
-    lightlevel = nil
-    battery = nil
-    package.loaded["battery"]=nil
+    if battery ~= nil then
+        local min,max,cnt = battery.getvalues()
+        Rdat[ReportFieldPrefix.."bmin"] = min
+        Rdat[ReportFieldPrefix.."bmax"] = max
+        Rdat[ReportFieldPrefix.."bcnt"] = cnt
+        min,max,cnt = nil
+        -- svetlo (sdileny analogovy prevodnik s baterii)
+        local lightlevel = battery.getlight()
+        if lightlevel > -1 then -- mereni je povolene/nakonfigurovane
+            Rdat[ReportFieldPrefix.."light"] = lightlevel
+        end;
+        lightlevel = nil
+        battery = nil
+        package.loaded["battery"]=nil
+    end
     
     -- sitova data
     Rdat[ReportFieldPrefix.."ti"] = network.status()/1000000
@@ -141,7 +151,12 @@ local function KontrolaOdeslani()
     Rdat = nil -- data smazu explicitne
     http.get(url, nil, function(code,data) Konec(code,data) end )
     url = nil -- url uz taky mazu
-    tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) -- nacasuji kontrolu pokud nezavola callback a zasekne se to
+    -- nacasuji kontrolu pokud nezavola callback a zasekne se to, tak se to bud uspi nebo restartuje   
+    if PeriodicReport ~= nil then
+        tmr.alarm(0, 15000, 0, function() dofile("restart.lua") end) 
+    else
+        tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) 
+    end
 end
 
 --------------------------------------------------------------------------------
