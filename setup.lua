@@ -30,7 +30,7 @@
     end
 
 -- konstanty pro reportovani
-    ReportInterval = 10*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
+    ReportInterval = 1*60 -- sekund a nesmi byt kratsi nez 31s, jinak se musi predelat sleep.lua!!!
     ReportIntervalFast = 1*60 -- rychlost rychlych reportu
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
@@ -61,8 +61,8 @@
         dht22 = require("dht22")
 --        dht22.setup(3,gpionum[5],nil) -- bezni luatori
         dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
-        dalas = require("dalas")
-        dalas.setup(5,gpionum[12],nil)
+--        dalas = require("dalas")
+--        dalas.setup(5,gpionum[12],nil)
 --        baro = require("baro")
 --        baro.setup(4,gpionum[14],gpionum[12]) 
 --        dist = require("distance")
