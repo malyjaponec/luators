@@ -1,6 +1,10 @@
 --setup.lua
+--
+-- to co je mezi radkami hvezdicek ************ je misto kam by mel uzivatel sahnout kdyz chce neco nastavit
 
-    gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
+    --gpionum = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
+    -- uspora pameti,nevyuzivane piny nejsou v definici
+    gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -15,6 +19,7 @@
 
     -- post processing funkce, kterou si odesilac pred odeslanim zavola
     function PostProcessing(_datove_pole)
+        -- *************************
         -- teplota kourovou v garazi
         if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
             if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
@@ -27,29 +32,41 @@
 --                ReportFast = 1 -- zrychlene reportovani
 --            end
 --        end
+        -- *************************
     end
-
+    
     -- inicializuje veskere merici mechanizmy, je to v globalni funkci protoze pri 
     -- periodickem reportovani se to vola znova a znova
     function MeasureInit()
+        -- *************************
+
+        -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
+        battery = require("battery")
+        battery.setup(2,nil) -- bez mereni svetla
+        --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
+
         -- Spustim proces merici senzoru
-                dht22 = require("dht22")
-                --dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
-                dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
-                --dalas = require("dalas")
-                --dalas.setup(5,gpionum[12],nil)
-                --baro = require("baro")
-                --baro.setup(4,gpionum[14],gpionum[12]) 
-                --dist = require("distance")
-                --dist.setup(3,20) 
+        dht22 = require("dht22")
+        --dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
+        dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
+        --dalas = require("dalas")
+        --dalas.setup(5,gpionum[12],nil)
+        --baro = require("baro")
+        --baro.setup(4,gpionum[14],gpionum[12]) 
+        --dist = require("distance")
+        --dist.setup(3,20) 
+        -- *************************
     end
     
 -- konstanty pro reportovani
-    ReportInterval = 11 
+-- *************************
+    ReportInterval = 15 
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+-- *************************
+    
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
     IDIn36 = nil -- rusim funkci uz ji nebudu nikdy potrebovat
     -- apikey se nacita ze souboru
@@ -67,13 +84,7 @@
         network = require("network")
         network.setup(1, nil)
 
--- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        -- local battery
-        --battery = require("battery")
-        --battery.setup(2,nil) -- bez mereni svetla
-        --battery.setup(2,gpionum[14]) -- s merenim svetla - foliovnil
-
--- Spustim mereni
+-- Spustim mereni, co se spusti je definovane vyse
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
@@ -82,4 +93,7 @@
     
 -- Uklid
     end
-    --gpionum = nil
+    if PeriodicReport == nil then -- pokud nepouzivam periodicky reporting 
+        gpionum = nil -- definici pinu uz nebudu potrebovat
+        MeasureInit = nil -- funkci spoustejici mereni uz nikdy nezavolam
+    end

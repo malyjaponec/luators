@@ -117,7 +117,10 @@ local function check_new_ip()
     else 
         if Debug == 1 then print("Reconfig done, IP is "..wifi.sta.getip()) end
         led(0)
-        Finished = tmr.now()+1
+        local time = (tmr.now() - (TimeStartLast*1000 or 0))
+        if time <= 0 then time = 1 end
+        Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+        time = nil
     end
 end
 
@@ -173,7 +176,10 @@ local function check_ip()
     if nil ~= wifi.sta.getip() then 
         if Debug == 1 then print("ip> IP is "..wifi.sta.getip()) end
         led(0)
-        Finished = tmr.now()+1
+        local time = (tmr.now() - (TimeStartLast*1000 or 0))
+        if time <= 0 then time = 1 end
+        Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+        time = nil
     else
         if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         Counter = Counter - 1

@@ -92,7 +92,11 @@ local function FinishDIST()
     end
 
     adelka,cntdelka,ateplota,cntteplota = nil,nil,nil,nil
-    Finished = tmr.now()+1 -- ukonci mereni a da echo odesilaci a tim konci tento proces    
+    local time = (tmr.now() - (TimeStartLast*1000 or 0))
+    if time <= 0 then time = 1 end
+    Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+    time = nil
+
 end
 
 local function ProcessDIST()

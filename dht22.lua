@@ -85,7 +85,10 @@ local function measureDHT()
             gpio.write(PinDHTpower,gpio.LOW)
         PinDHTpower = nil
     end
-    Finished = (tmr.now()+1) -- ukonci mereni a da echo odesilaci a tim konci tento proces
+    local time = (tmr.now() - (TimeStartLast*1000 or 0))
+    if time <= 0 then time = 1 end
+    Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+    time = nil
 end
 
 local function setup(_casovac,_dhtpin,_dhtpowerpin) 

@@ -141,7 +141,11 @@ local function KontrolaOdeslani()
     -- doplnkova data
     Rdat[ReportFieldPrefix.."cnt"] = Rcnt
     Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
-    Rdat[ReportFieldPrefix.."ts"] = tmr.now()/1000000
+    -- cas odeslani, slozity to vypocet :)
+        local time = (tmr.now() - (TimeStartLast*1000 or 0))
+        if time <= 0 then time = 1 end
+        Rdat[ReportFieldPrefix.."ts"] = time / 1000000
+        time = nil
     Rdat[ReportFieldPrefix.."hp2"] = node.heap() 
     
     -- prevedu na URL
