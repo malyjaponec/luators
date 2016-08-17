@@ -64,7 +64,9 @@
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+    --ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+    ReportNode = "5" -- merici systemy s rychym update pouzivaji 5
+    -- pro solar a vytapeni je vyhrazena 2 a pro elektromery 4
 -- *************************
     
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
