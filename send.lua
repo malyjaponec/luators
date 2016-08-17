@@ -142,7 +142,7 @@ local function KontrolaOdeslani()
     Rdat[ReportFieldPrefix.."cnt"] = Rcnt
     Rdat[ReportFieldPrefix.."x"..Get_AP_MAC()] = 1
     -- cas odeslani, slozity to vypocet :)
-        local time = (tmr.now() - (TimeStartLast*1000 or 0))
+        local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
         Rdat[ReportFieldPrefix.."ts"] = time / 1000000
         time = nil

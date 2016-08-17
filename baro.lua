@@ -50,7 +50,7 @@ local function finishBARO()
     Data["tlak"] = p
     Data["teplota_b"] = t
     p,t,Prefix,Casovac = nil,nil,nil,nil
-    local time = (tmr.now() - (TimeStartLast*1000 or 0))
+    local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
     if time <= 0 then time = 1 end
     Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
     time = nil
