@@ -50,7 +50,7 @@
         --dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
         dalas = require("dalas")
-        dalas.setup(5,gpionum[12],nil)
+        dalas.setup(5,gpionum[4],nil)
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
