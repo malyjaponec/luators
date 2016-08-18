@@ -23,9 +23,6 @@
     tmr.alarm(0, time, 0, function() 
         TimeStartLast = tmr.now() / 1000
         
-        network = require("network")
-        network.setup(1, nil) -- TODO vyresit jak tady nemit parametry, globalni promenna jako u send?
-
         MeasureInit()
         dofile("send.lc")
      end) 

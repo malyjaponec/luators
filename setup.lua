@@ -40,9 +40,13 @@
     function MeasureInit()
         -- *************************
 
+        -- Spustim procesy nastavujici sit
+        network = require("network")
+        network.setup(1, gpionum[5])
+
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        battery = require("battery")
-        battery.setup(2,nil) -- bez mereni svetla
+        --battery = require("battery")
+        --battery.setup(2,nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
@@ -81,16 +85,11 @@
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
       
--- Spustim procesy nastavujici sit
-        -- local network -- musi byt local protoze globalni promenna s necim koliduje
-        network = require("network")
-        network.setup(1, nil)
-
 -- Spustim mereni, co se spusti je definovane vyse
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = nil
+        LedSend = gpionum[0]
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
