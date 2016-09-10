@@ -22,8 +22,6 @@
     if file.open("init.lua", "r") == nil then -- soubor neexistuje, rucni start, nespime, ladime kod
         print("END ("..(time/1000000).."s)")
     else
---        print("Restart in "..(time/1000000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
---        tmr.alarm(0, time/1000, 0,  function() node.restart() end)
         print("Sleeping for "..(time/1000000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
         node.dsleep(time, 0)
     end
