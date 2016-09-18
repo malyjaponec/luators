@@ -47,12 +47,12 @@
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
         battery = require("battery")
         battery.setup(2,nil) -- bez mereni svetla
-        battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
+        --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
         dht22 = require("dht22")
-        dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
-        dht22.setup(3,gpionum[5],gpionum[13]) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
+        -- dht22.setup(3,gpionum[5],nil) -- luatori s trvale napajenym DHT
+        dht22.setup(3,gpionum[5],gpionum[13],4) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
         --dalas = require("dalas")
         --dalas.setup(5,gpionum[4],nil)
         --baro = require("baro")
@@ -68,8 +68,8 @@
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    --ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
-    ReportNode = "5" -- merici systemy s rychym update pouzivaji 5
+    ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+    --ReportNode = "5" -- merici systemy s rychym update pouzivaji 5
     -- pro solar a vytapeni je vyhrazena 2 a pro elektromery 4
 -- *************************
     

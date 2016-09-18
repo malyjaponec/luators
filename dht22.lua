@@ -22,6 +22,7 @@ local Data
 local PinDHT
 local PinDHTpower
 local Counter
+local Averaging
 local Finished = 0
 local Tavr,Havr,Cnt
 -------------------------------------------------------------------------------
@@ -41,17 +42,18 @@ local Tavr,Havr,Cnt
 --------------------------------------------------------------------------------
 local function measureDHT()
     -- zde probiha mereni a casovani opakovani
-    if (Counter > 0) then
+    if (Counter > 0) and (Averaging > 0) then
         local result,T,H
-        result, T, H = dht.read(PinDHT)
-        if (result == 0) then
+        result, T, H = dht.readxx(PinDHT)
+        if (result == dht.OK) then
             Cnt = Cnt + 1
             Tavr = Tavr + T
             Havr = Havr + H
+            Averaging = Averaging - 1 -- odcitam pouze pokud se povede mereni
         end
         result,T,H = nil
         Counter = Counter - 1
-        tmr.alarm(Casovac, 300, 0,  function() measureDHT() end)
+        tmr.alarm(Casovac, 400, 0,  function() measureDHT() end)
         return
     end
     -- zpracujeme vysledky a neni dobre delit nulou
@@ -60,13 +62,15 @@ local function measureDHT()
         Havr = Havr / Cnt;
 
         if Debug == 1 then 
-            print (Casovac..">22Temp: "..Tavr)
-            print (Casovac..">22Humi: "..Havr)
+            print (">22 T: "..Tavr)
+            print (">22 H: "..Havr)
+            print (">22 Cnt/Cou: "..Cnt.."/"..(75-Counter))
         end
         
         Data["t22"] = Tavr
         Data["h22"] = Havr
         Data["c22"] = Cnt
+        Data["r22"] = 20 - Counter -- pri zmene maximalniho poctu pokusu nezapomenou zmenit i zde
         Data["dht_ok"] = 1
     else
         if Debug == 1 then 
@@ -88,21 +92,17 @@ local function measureDHT()
     local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
     if time <= 0 then time = 1 end
     Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
-    time = nil
 end
 
-local function setup(_casovac,_dhtpin,_dhtpowerpin) 
+local function setup(_casovac,_dhtpin,_dhtpowerpin,_averaging) 
     Casovac = _casovac or 3
     PinDHT = _dhtpin
     PinDHTpower = _dhtpowerpin
+    Averaging = _averaging or 1
     Data = {}
     Finished = 0
     if (nil ~= PinDHT) then
-        Counter = 6
-        -- hodnota 8 znameana ze mereni bude tesne pod 4 sekundy a zmeri se to 4x
-        -- pro suprerychle luatory je potreba pocet opakovani zmensit treba na 6 mozna 5, proste 
-        -- cas kde se zarukou projdou 3 mereni, nejak nechapu proc ty mereni tak trvaji
-        -- drive to udelao do sekundy 10 vycteni
+        Counter = 75 -- maximalni pocet pokusu o zmereni DHT, dela to 30s, pri zmene zmenit i vypocet v odesilani dat!!!
         Tavr,Havr,Cnt = 0,0,0
         -- a zacina mereni, jen se nacasuje, pro pripad ze by byl pouzit napajeci pin je dobre pockat 
         if PinDHTpower ~= nil then
@@ -110,7 +110,7 @@ local function setup(_casovac,_dhtpin,_dhtpowerpin)
             gpio.write(PinDHTpower,gpio.HIGH) 
             -- vypinani DHT behem sleepu usetri kolem 10uA ale nefunguje to moc dobre
         end
-        tmr.alarm(Casovac, 100, 0,  function() measureDHT() end)
+        tmr.alarm(Casovac, 400, 0,  function() measureDHT() end)
         -- puvodne jsem zde rozlisoval zda se pripojuje napajeni nebo ne, a cekal jen 10ms
         -- ale vzhledem k tomu ze nove sdk asi meri dht skoro sekundu je to jedno, zvlast
         -- kdyz chci delat nekolik mereni
