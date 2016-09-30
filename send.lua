@@ -162,6 +162,7 @@ local function KontrolaOdeslani()
     end
 
     if Fail_Send > 20 then -- uz se po sobe X krat nepodarilo predat
+        Fail_Send = 0 -- tento chybejici prikaz psuoboval to, ze pri vypadku serveru se vsechny elektromery zasekli
         ReinicializujSit()
         return
     end        
