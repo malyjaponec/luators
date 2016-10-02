@@ -110,6 +110,15 @@ local function KontrolaOdeslani()
         package.loaded["distance"] = nil
     end
                
+    if analog ~= nil then
+        t =  analog.status()/1000000
+        Rdat[ReportFieldPrefix.."t_a"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(analog.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        analog = nil
+        package.loaded["analog"] = nil
+    end
+
     Rdat[ReportFieldPrefix.."tm"] = tm
     t,tm,k,v = nil,nil,nil,nil
     
