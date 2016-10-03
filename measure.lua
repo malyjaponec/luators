@@ -1,10 +1,9 @@
 --[[ measure.lua
-    Tento kod nespocita vykon drive nez dostane 2 pulzy. Z jednoho pulzu si to neovodi a ceka dokud neprijde druhy
-    To mi prislo blbe, kdyz se zapne system na 0 spotrebe a proto je zde podmika, ktera rika ze pokud je klid 
-    dobu delsi nez odpovida spotrebe MinmalPower tak se na cloud zacne posilat nula, hodnota se definuje nize.
-    Nijak to neovlivni minimalni mozny zmereny vykon, ten muze byt klidne 0,01W pokud ovsem behem mereni nedojde
-    k pretoceni casovace coz je asi 40 minut pak kdo vi co se zacne dit, ne vzdy vyjde zaporne cislo, ktere se 
-    samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
+    Plán:
+    1. hledat minimum a maximum (prumerne min a max)
+    2. vymezit zakázaný prostor
+    3. detekovat vzestupne hrany pres zakazany prostor
+    4. vycteni dat (pulzy,min,max,sirka zakazaneho pasma,kalribtrace ok
 --]]
     tmr.stop(1)
     local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
