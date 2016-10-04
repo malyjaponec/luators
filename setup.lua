@@ -50,8 +50,8 @@
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        --dht22 = require("dht22")
-        --dht22.setup(3,gpionum[5],nil,4) -- luatori s trvale napajenym DHT
+        dht22 = require("dht22")
+        dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[13],4) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
@@ -60,8 +60,8 @@
              a jsou i luatory ktere vubec nezmeri nebo s urcitou pravdepodobnosti nezmeri, novy sw
              opakuje pokusy 30s to potom jdou baterky rychle do kytek, takze se vracim na trvale napajeni
              ]]--
-        dalas = require("dalas")
-        dalas.setup(5,gpionum[4],nil)
+        --dalas = require("dalas")
+        --dalas.setup(5,gpionum[4],nil)
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
@@ -73,11 +73,11 @@
     
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 10
+    ReportInterval = 10*60
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-    PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+    --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "1" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+    ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
     --ReportNode = "5" -- merici systemy s rychym update pouzivaji 5
     -- pro solar a vytapeni je vyhrazena 2 a pro elektromery 4
 -- *************************
