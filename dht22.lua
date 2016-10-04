@@ -70,7 +70,7 @@ local function measureDHT()
         Data["t22"] = Tavr
         Data["h22"] = Havr
         Data["c22"] = Cnt
-        Data["r22"] = 20 - Counter -- pri zmene maximalniho poctu pokusu nezapomenou zmenit i zde
+        Data["r22"] = 75 - Counter -- pri zmene maximalniho poctu pokusu nezapomenou zmenit i zde
         Data["dht_ok"] = 1
     else
         if Debug == 1 then 
