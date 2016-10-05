@@ -15,6 +15,7 @@
         return out
     end
     Rpref = IDIn36(node.chipid()).."_"
+	IDIn36 = nil -- funkci po tom co ji pouziju zrusim
 
 -- nastavi knihovnu pro RGB
     rgb = require("rgb")
@@ -29,8 +30,8 @@
     end
 
 -- konstanty pro reportovani
-    Rcnt = 0
-    Rnod = "4" -- vsechny elektromery jsou 4
+    Rcnt = 0 -- citac poctu reportu od zapnuti
+    Rnod = "6" -- plynomery jsou pod node 6
     if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
@@ -43,25 +44,24 @@
 -- vycisteni RTC ram pameti, pouziva se pro nahodne restarty a ne pro ochranu pred 
 -- zapnutim napajeni, ale jak poznam, ze je to zapnuti systemu? podle kontrolniho souctu
 -- energii, ktery zapisuji vzdy pri zmene energi
-    local sum,value1,value2,value3
-    sum,value1,value2,value3 = rtcmem.read32(0,4)
-    if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
+    local sum,minimum,maximum,energy
+    sum,minimum,maximum,energy = rtcmem.read32(0,4)
+    if sum ~= (minimum+maximum+energy) then -- nesouhlasi kontrolni soucet
         rtcmem.write32(0, 0,0,0,0,0,0,0)
     end
+	sum,minimum,maximum,energy = nil,nil,nil,nil
 
 
 -- Spustim procesy nastavujici sit a merici data
     Network_Ready = 0 -- sit neni inicialozvana
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 
-    -- sjednocene elektromery, GP[2] se nesmi pouzit, zpusobuje to zaseknuti po restartu
-    Measure_Faze = { GP[4], GP[5], GP[14] } -- definice pinu ktere se ctou, prestal jsem pouzivat pin 2 zasekaval system
-    Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
-    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+    Energy = {0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
+    Power = {-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
 		-- minimalni cas aby to co nejdrive zacalo merit
 
-    -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
+    -- odesilac nepotrebuje zadne hlobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
     tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
 
 -- uklid toho co uz nepotrebujem 
