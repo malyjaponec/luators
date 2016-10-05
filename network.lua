@@ -1,9 +1,14 @@
+-- bylo by dobre preklopit na kod shodny s telomery, az na ty ledky \
+-- ktere maji jinak, takze to zatim nechavam jak to je, byt je to slozitejsi
+-- udrzovat prevzal sem tam neco co zkrati cas nalezeni IP (zkouma se to
+-- po 100ms misto po 2s... ale asi to neni potreba pro plynomer
+
 local counter
 local ap_was_found
 
 local function ap_select(t)
     if nil == t then 
-        if Debug_IP == 1 then print ("ip> Scan returned empty list.") end
+        if Debug == 1 then print ("ip> Scan returned empty list.") end
         ap_was_found = 0
         return
     end
@@ -44,10 +49,10 @@ end
 local function check_new_ip()
     rgb.set("red")
     if nil == wifi.sta.getip() then 
-        if Debug == 1 then print("ip> Waiting for IP...") end
+        if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(0, 2000, 0, function() check_new_ip() end)
+            tmr.alarm(0, 100, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("ip> PANIC, not IP assigned, end")
@@ -63,7 +68,7 @@ end
 
 local function reset_apn_result()
     if ap_was_found == 1 then -- nalezeno, konfiguruji
-        counter = 10 -- opet cekam 20s na IP
+        counter = 200 -- opet cekam 20s na IP
         tmr.alarm(0, 2000, 0, function() check_new_ip() end) -- zacnu cekat na IP
         return
     end
@@ -112,9 +117,9 @@ local function check_ip()
         if Debug == 1 then print("ip> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 2000, 0, function() check_ip() end)
+            tmr.alarm(0, 100, 0, function() check_ip() end)
         else
-            if Debug == 1 then print("ip> status:"..wifi.sta.status()) end
+            if Debug == 1 then print("ip> connect failed, status:"..wifi.sta.status()) end
             change_apn()
         end
     end
@@ -123,5 +128,5 @@ end
 -- start.lua
 
 Network_Ready = 0 -- toto se sice nastavuje vnejsem pri volani ze setupu ale kdyz to budu volat z sendu tak at si to nastavi samo
-counter = 10 -- prilizne 20 sekund cekam na pripojeni pak neco zacnu resit
-tmr.alarm(0, 100, 0, function() check_ip() end)
+counter = 200 -- prilizne 20 sekund cekam na pripojeni pak neco zacnu resit
+tmr.alarm(0, 1000, 0, function() check_ip() end)
