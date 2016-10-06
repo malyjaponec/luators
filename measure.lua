@@ -13,6 +13,18 @@
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
     local Time_Rotation = 0 -- pro detekci pretoceni
+	
+	local Average_Counter
+	local Average_Data = {}
+	local Average
+	
+	local Digitize_Minimum = 1024
+	local Digitize_Maximum = 0
+	
+	-- Defajny
+	local Digitize_MinimalSpan = 200
+	local Digitize_Sticky = 0.01
+
 
 -- Generalizovana citaci funkce
     local function CitacInterni(_kanal)
@@ -127,24 +139,75 @@
         timedif = nil
         i = nil
     end
-      
--- Nastaveni pinu na preruseni
-    if Measure_Faze[1] ~= nil then
-        gpio.mode(Measure_Faze[1], gpio.INPUT, gpioPULLUP)
-        gpio.mode(Measure_Faze[1], gpio.INT, gpioPULLUP) 
-        gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
-    end
-    if Measure_Faze[2] ~= nil then
-        gpio.mode(Measure_Faze[2], gpio.INPUT, gpioPULLUP)
-        gpio.mode(Measure_Faze[2], gpio.INT, gpioPULLUP) 
-        gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
-    end
-    if Measure_Faze[3] ~= nil then
-        gpio.mode(Measure_Faze[3], gpio.INPUT, gpioPULLUP)
-        gpio.mode(Measure_Faze[3], gpio.INT, gpioPULLUP) 
-        gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
-    end
+	
+	local function ProcessPoint(_value)
+		if (Digitize_Maximum - Digitize_Minimum) < Digitize_MinimalSpan then 
+			--[[ Vzdalenost minima a maxima neni pripravena pro provoz, v tomto rezimu pouze 
+			vyhledavam maximum a minimum z namerenych bodu a cekam az se od sebe vzdali dostatecne daleo
+			toto je nabehovy rezim, do kteho by se mohl system vratit za provozu pouze tak, ze by
+			se hodnoty v horni a dolni polovine rozsahu priblizili pod tuto mez, coz by ale znamenalo
+			nejakou zavadu ve snimani a tudis by to bylo vlastne koser ]]--
+			if _value > Digitize_Maximum then Digitize_Maximum = _value end	
+			if _value < Digitize_Minimum then Digitize_Minimum = _value end
+		else 
+		--[[ Provozni rezim je ustanoven. V tomto rezimu si rozdeluji rozsah mezi hodnotami 
+		na dve poloviny, pokud jsem v dolni polovine tak bud minimum snizim na uroven hodnoty
+		ktera je pod nim a nebo pokud je nad nim, tak minimum posunu o kousek nahoru. Opacne
+		se deje v horni polovine. Takze maximum a minimum se neustale snazi dostat do stredu 
+		ale zaroven je hodnotami srazeno dolu a nahoru. ]]--
+		local Center = (Digitize_Maximum + Digitize_Minimum) / 2 -- prumerna stredni hodnota
+		if _value < Digitize_Minimum then Digitize_Minimum = _value end
+		
+		if _value > Center then -- hodnota se nachazi v horni polovine
+			if _value > Digitize_Maximum then -- hodnota utekla za maximum
+				Digitize_Maximum = _value 
+			else -- hodnota se nachazi mezi maximem a stredem
+				local Distance = Digitize_Maximum - _value -- vzdalenost mezi maximem a hodnotou
+				Digitize_Maximum = Digitize_Maximum - Distance * Digitize_Sticky -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+				Distance = nil
+			end
+		else -- hodnota se nachazi v dolni polovine (nebo na stredu)
+			if _value < Digitize_Minimum then -- hodnota utekla pod minimum
+				Digitize_Minimum = _value 
+			else -- hodnota se nachaz9 mezi mininimem a stredem
+				local Distance = _value - Digitze_Minimum -- vzdalenos mezi hodnotou a minimem
+				Digitize_Minimum = Digitize_Minimum + Distance * Digitize_Sticky -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+				Distance = nil
+			end
+		end
+		Center = nil
+		
+		-- a nyni znova kontrola spanu, a pokud stale ok tak se zpracuje bod do vysledne digitalni hodnoty
+		
+	end
+	
+	
+	local function CaptureAnalog()
+		Average_Data[Average_Counter] = adc.read(0)
+		Average_Counter = Average_Counter + 1
+		if Average_Counter <= 10 then -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan
+			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog() end)
+		else -- nacteno dost dat provedu ocisteni
+			-- tady to mam v poli a muzu si s tim delat cokoliv 
+			-- ale zatim s tim udelam jen prumerne
+			local Sum = 0
+			for q = 1,10,1 do
+				Sum = Sum + Average_Data[q]
+			ProcessPoint(Sum / 10)
+			Sum = nil
+		end
+	end
+	
+	
+	local function StartAnalog()
+		Average_Counter = 1
+		Average_Data = {}
+		tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog() end)
+	end
+	
+  
     
 -- Nacasu prvni odeslani
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
+    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- pousti se opakovane
+	tmr.alarm(3, 100, 1,  function() StartAnalog() end) -- pousti se opakovane
     --collectgarbage()

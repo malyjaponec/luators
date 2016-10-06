@@ -52,17 +52,21 @@
 	sum,minimum,maximum,energy = nil,nil,nil,nil
 
 
--- Spustim procesy nastavujici sit a merici data
+	-- Spustim připojení k síti
     Network_Ready = 0 -- sit neni inicialozvana
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
-
+	-- casovac nula
+	
+	-- Spusteni metod prepocitavajicich analogove hodnoty na pulzy a pocitani casu mezi pulzy
     Energy = {0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
     Power = {-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
-		-- minimalni cas aby to co nejdrive zacalo merit
+	-- casovac 1,3,4
 
+	-- Nakonec se spusti odesílač na cloud
     -- odesilac nepotrebuje zadne hlobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
     tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
+	-- casovac 250
 
 -- uklid toho co uz nepotrebujem 
     print("run")

@@ -37,8 +37,18 @@ setfenv(1,M)
 --------------------------------------------------------------------------------
 -- Implementation
 --------------------------------------------------------------------------------
+local function setup(_casovac1,_casovac2)
+    Casovac = _casovac or 2
+    Minimum,Maximum = rtcmem.read32(0,2) -- vyctu si z pameti predchozi hodnoty
+    adc.read(0) -- nekdy prvni prevod vrati nesmysl
+    tmr.alarm(Casovac, math.random(100), 1,  function() mesureanalog() end)
+    return Casovac
+end
+M.setup = setup
+
 local function mesureanalog()
-    local AnalogValue = adc.read(0)
+    local Value = adc.read(0)
+	// 
     if (AnalogValue > Maximum) then 
         Maximum = AnalogValue
     end
@@ -49,23 +59,6 @@ local function mesureanalog()
     tmr.alarm(Casovac, math.random(5,15), 0,  function() mesureanalog() end)
     return 1
 end  
-
-local function setup(_casovac,_lightpin)
-    Casovac = _casovac or 2
-    LightPIN = _lightpin
-    Minimum = 1024
-    Maximum = 0
-    Counter = 0
-    adc.read(0) -- nekdy prvni prevod vrati nesmysl
-    if LightPIN ~= nil then -- je definovan pin pro mereni svetla
-        -- musim ho prepnout na high aby neovlivnoval mereni baterie
-        gpio.mode(LightPIN,gpio.OUTPUT)
-        gpio.write(LightPIN,gpio.HIGH) 
-    end
-    tmr.alarm(Casovac, math.random(5,15), 0,  function() mesureanalog() end)
-    return Casovac
-end
-M.setup = setup
 
 local function getvalues()
     tmr.stop(Casovac)
