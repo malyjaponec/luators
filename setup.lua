@@ -31,7 +31,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0 -- citac poctu reportu od zapnuti
-    Rnod = "6" -- plynomery jsou pod node 6
+    Rnod = "1" -- plynomery a elektromery jsou pod node 4
     if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
@@ -44,13 +44,19 @@
 -- vycisteni RTC ram pameti, pouziva se pro nahodne restarty a ne pro ochranu pred 
 -- zapnutim napajeni, ale jak poznam, ze je to zapnuti systemu? podle kontrolniho souctu
 -- energii, ktery zapisuji vzdy pri zmene energi
-    local sum,minimum,maximum,energy
-    sum,minimum,maximum,energy = rtcmem.read32(0,4)
-    if sum ~= (minimum+maximum+energy) then -- nesouhlasi kontrolni soucet
-        rtcmem.write32(0, 0,0,0,0,0,0,0)
-    end
-	sum,minimum,maximum,energy = nil,nil,nil,nil
 
+--[[ zde je mapa pameti 
+	0 - kontrolni soucet
+	1,2,3 - pocet pulzu ktere se nepovedlo poslat na server
+	4,5,6 - posledni vykon na dane fazi, zaloha pro obnoveni hodnoty po restartu
+	7,8 - posedni hodnoty minima a maxima analogoveho scanneru
+	Kontrolni soucet se pocita pouze z prvnich 3 hodnot (nepredana data na server)
+	]]
+    local sum,value1,value2,value3
+    sum,value1,value2,value3 = rtcmem.read32(0,4)
+    if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
+       rtcmem.write32(0, 0, 0,0,0, 0,0,0, 0,0)
+    end
 
 	-- Spustim připojení k síti
     Network_Ready = 0 -- sit neni inicialozvana
@@ -58,15 +64,16 @@
 	-- casovac nula
 	
 	-- Spusteni metod prepocitavajicich analogove hodnoty na pulzy a pocitani casu mezi pulzy
-    Energy = {0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
-    Power = {-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
+    Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
+    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
+	Iluminate = {GP[0]}
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
 	-- casovac 1,3,4
 
 	-- Nakonec se spusti odesílač na cloud
     -- odesilac nepotrebuje zadne hlobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
     tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
-	-- casovac 250
+	-- casovac 2
 
 -- uklid toho co uz nepotrebujem 
     print("run")

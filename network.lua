@@ -8,7 +8,7 @@ local ap_was_found
 
 local function ap_select(t)
     if nil == t then 
-        if Debug == 1 then print ("ip> Scan returned empty list.") end
+        if Debug == 1 then print ("IP> Scan returned empty list.") end
         ap_was_found = 0
         return
     end
@@ -24,14 +24,14 @@ local function ap_select(t)
     local line
     
     for ssid in pairs(t) do
-        if Debug == 1 then print ("ip> Searching password for AP "..ssid) end
+        if Debug == 1 then print ("IP> Searching password for AP "..ssid) end
         file.seek("set") -- jdu na zacatek souboru hesel
         repeat
             line = file.readline();
             if line ~= nil then
                 cfg_ssid, cfg_pass = string.match(line, '([^|]+)|([^|]+)|')           
                 if ssid == cfg_ssid then
-                    if Debug == 1 then print ("ip> Known ssid "..ssid..", password "..cfg_pass) end
+                    if Debug == 1 then print ("IP> Known ssid "..ssid..", password "..cfg_pass) end
                     ap_was_found = 1
                     file.close()
                     wifi.sta.config(cfg_ssid,cfg_pass)
@@ -49,13 +49,13 @@ end
 local function check_new_ip()
     rgb.set("red")
     if nil == wifi.sta.getip() then 
-        if Debug == 1 and Counter % 10 == 0 then print("ip> Connecting AP...") end
+        if Debug == 1 and counter % 10 == 0 then print("IP> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) then
             tmr.alarm(0, 100, 0, function() check_new_ip() end)
         else
             print(wifi.sta.status())
-            print("ip> PANIC, not IP assigned, end")
+            print("IP> PANIC, not IP assigned, end")
             Network_Ready = -2
         end
     else 
@@ -73,23 +73,23 @@ local function reset_apn_result()
         return
     end
     if ap_was_found == 3 then -- neni soubor, jiz nastavena ch
-        print ("ip> PANIC: file passwd.ini missing")
+        print ("IP> PANIC: file passwd.ini missing")
         Network_Ready = -9
         return
     end      
     if ap_was_found == -1 then -- zatim neni dohledano, jen kvuli debugu 
-        if Debug == 1 then print("ip> AP search timeout") end
+        if Debug == 1 then print("IP> AP search timeout") end
     end      
     -- vse ostatni nejspis 0
     if (counter > 0) then
-        if Debug == 1 then print("ip> Scan unsucessful, trying again...") end
+        if Debug == 1 then print("IP> Scan unsucessful, trying again...") end
         counter = counter - 1
         ap_was_found = -1 -- nastavim si ze nevim jestli neco nebo nic
-        if Debug == 1 then print("ip> Scanning APs...") end
+        if Debug == 1 then print("IP> Scanning APs...") end
         wifi.sta.getap(ap_select) -- spoustim hledani
         tmr.alarm(0, 3000, 0, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
     else
-        print("ip> PANIC, not wifi coverage, end")
+        print("IP> PANIC, not wifi coverage, end")
         wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
         Network_Ready = -1
     end
@@ -114,7 +114,7 @@ local function check_ip()
         rgb.set()
         Network_Ready = 1
     else
-        if Debug == 1 then print("ip> Connecting AP...") end
+        if Debug == 1 and counter % 10 == 0 then print("IP> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
             tmr.alarm(0, 100, 0, function() check_ip() end)

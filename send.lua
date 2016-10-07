@@ -35,13 +35,13 @@ local function Konec(code, data)
     end
     if (code > 0) then
         rgb.set()
-        if Debug == 1 then print("s>odeslano/" .. code) end
+        if Debug == 1 then print("S> odeslano/" .. code) end
         Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
         Fail_Wifi = 0 -- kdyz se to preneslo tak bude wifi asi v poradku, nuluju, jinde se to nedela
         rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
     else
         rgb.set("blue")
-        if Debug == 1 then print("s>chyba/".. code) end
+        if Debug == 1 then print("S> chyba /".. code) end
         Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
     end
     tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
@@ -68,7 +68,9 @@ local function Start()
         rtcmem.write32(i, SentEnergy_Faze[i])-- zapisu si hodnoty do RTC memory
         suma = suma + SentEnergy_Faze[i] -- scitam si kontrolni soucet
         Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
-        --if Debug == 1 then print("e:" .. SentEnergy_Faze[i]) end
+		if Debug == 1 and SentEnergy_Faze[i] > 0 then
+			print("S> pulse["..i.."]="..SentEnergy_Faze[i])
+		end
     end
     
     rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti
@@ -76,10 +78,9 @@ local function Start()
         -- zpracovani vykonu k odeslani
         if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
             Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
+			if Debug == 1 then print("S> power["..i.."]="..Power_Faze[i]) end
         end
-        --if Debug == 1 then print("p:" .. Power_Faze[i]) end
 	end    
-    if Debug == 1 then print("s>p1:"..Power_Faze[1]) end 
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
