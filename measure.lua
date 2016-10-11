@@ -1,13 +1,20 @@
---[[ measure.lua
-    Plán:
-    1. hledat minimum a maximum (prumerne min a max)
-    2. vymezit zakázaný prostor
-    3. detekovat vzestupne hrany pres zakazany prostor
-    4. vycteni dat (pulzy,min,max,sirka zakazaneho pasma,kalribtrace ok
---]]
-    tmr.stop(1)
-    local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
-    local MaximalPower = 16000 -- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+-- measure.lua
+    
+	tmr.stop(1)
+	tmr.stop(3)
+	tmr.stop(4)
+    local MinimalPower = 1 -- pro 1 pulz = 10 litru - to je 10 litru / hodinu
+					       -- mensi hodnoty jsou problem protoze se pak nikdy nedosahne nula
+						   -- jeden pulz za hodinu me prijde dostatecne malo abych tomu rikal nula
+						   -- pokud se za hodinu neotoci kolecko, je jasne ze spotreba neni zadna
+						   -- minimalni spotreba kotle je kolem 400 litru za hodinu, pro vareni
+						   -- je to mene ale furt jsou to desitky litru za hodinu, cili pod 10 
+						   -- litru se to da povazovat za zadny odber
+    local MaximalPower = 1000 -- pro 1 pulz = 10 litr - je to 10m3 / hodinu, vic nez dostatecne,
+							  -- nejvyssi zaznamenana spotreba je 2.1 kubiku za hodinu pri 16kW kotli
+							  -- pokud bych pridal cely sporak, ktery ma asi 12kW tak se nedostavam
+							  -- pres 4 kubiky za hodinu, takze limit je dostatecne volny a pritom 
+							  -- omezi nesmysly
 
 -- citace, casovace a akumulatory
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
@@ -19,17 +26,16 @@
 	local Average = 0
 	
 -- promenne pro digitalizaci analogoveho signalu	
-	local Digitize_Minimum = 1024
-	local Digitize_Maximum = 0
+	-- Digitize_Minimum a Digitize_Maximum jsou globalni protoze si je cde odesilac a posila je ven
 	local Digitize_LastValue = -1
 	local Digitize_TimeFilter = 0
 	
 	-- Defajny nastavujici parametry skenovani analogoveho vstupu
-	local DIGITIZE_MINIMAL_SPAN = 200 -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
-	local DIGITIZE_STICKY = 0.01 -- priblizovani limitu k namerene hodnote, pokud tato neni extremni
+	local DIGITIZE_MINIMAL_SPAN = 180 -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
+	local DIGITIZE_STICKY = 0.0001 -- priblizovani limitu k namerene hodnote, pokud tato neni extremni
 	local DIGITIZE_TIME = 2 -- casova filtrace na digitalni urovni
 	local POCET_MERENI = 5 -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan
-	local ANALOG_CAPTURE_DELAY = 100 -- v milisekundach perioda mereni analogoveho vstupu
+	local ANALOG_CAPTURE_PERIOD = 100 -- v milisekundach perioda mereni analogoveho vstupu
 
 -- Generalizovana citaci funkce
     local function CitacInterni(_kanal)
@@ -146,8 +152,10 @@
 				Digitize_TimeFilter = Digitize_TimeFilter + 1 -- pouze zvysuji casovy citac
 				if Digitize_TimeFilter >= DIGITIZE_TIME then -- jestlize zvysenim o 1 doslo k dosazeni limitu
 					if _digivalue == 1 then -- a jsme v logicke jednotce
-						if Debug == 1 then print("M> pulz @ "..(tmr.now()/1000000)) end
+						if Debug == 1 then print("M> up @ "..(tmr.now()/1000000)) end
 						CitacInterni(1) -- zavolam zpracovani na faze (pouziva dale kod elektromeru)
+					else
+						if Debug == 1 then print("M> down @ "..(tmr.now()/1000000)) end
 					end
 				end
 			end
@@ -171,6 +179,7 @@
 			if _value < Digitize_Minimum then
 				Digitize_Minimum = _value
 			end
+			Digitize_Status = 3
 		else 
 		--[[ Provozni rezim je ustanoven. V tomto rezimu si rozdeluji rozsah mezi hodnotami 
 		na dve poloviny, pokud jsem v dolni polovine tak bud minimum snizim na uroven hodnoty
@@ -189,22 +198,36 @@
 				ProcessDigital(1)
 				if _value > Digitize_Maximum then -- hodnota utekla za maximum
 					Digitize_Maximum = _value 
+					rtcmem.write32(8, Digitize_Maximum);
 				else -- hodnota se nachazi mezi maximem a stredem
 					local Distance = Digitize_Maximum - _value -- vzdalenost mezi maximem a hodnotou
-					Digitize_Maximum = Digitize_Maximum - Distance * DIGITIZE_STICKY -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+					Digitize_Maximum = Digitize_Maximum - (Distance * DIGITIZE_STICKY) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+					rtcmem.write32(8, Digitize_Maximum);
 					Distance = nil
 				end
+				Digitize_Status = 1
 			else 
 				if _value < LowZone then -- hodnota se nachazi v dolni polovine (nebo na stredu)
 					--if Debug == 1 then print("M> log:LOW") end
 					ProcessDigital(0)
 					if _value < Digitize_Minimum then -- hodnota utekla pod minimum
 						Digitize_Minimum = _value 
+						rtcmem.write32(7, Digitize_Minimum)
 					else -- hodnota se nachaz9 mezi mininimem a stredem
 						local Distance = _value - Digitize_Minimum -- vzdalenos mezi hodnotou a minimem
-						Digitize_Minimum = Digitize_Minimum + Distance * DIGITIZE_STICKY -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+						Digitize_Minimum = Digitize_Minimum + (Distance * DIGITIZE_STICKY) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+						rtcmem.write32(7, Digitize_Minimum)
 						Distance = nil
 					end
+					Digitize_Status = 0
+				else -- pozice je v zakazane oblasti ze ktere se to musi casem taky mit moznost dostat a to tak ze se zuzuje obema smery
+					local Distance = _value - Digitize_Minimum -- vzdalenos mezi hodnotou a minimem
+					Digitize_Minimum = Digitize_Minimum + (Distance * DIGITIZE_STICKY) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+					Distance = Digitize_Maximum - _value -- vzdalenost mezi maximem a hodnotou
+					Digitize_Maximum = Digitize_Maximum - (Distance * DIGITIZE_STICKY) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+					rtcmem.write32(7, Digitize_Minimum,Digitize_Minimum)
+					Distance = nil
+					Digitize_Status = 2
 				end
 			end
 			Center,LowZone,HighZone = nil,nil,nil
@@ -248,6 +271,6 @@
 -- Nacasu prvni odeslani
 	Digitize_Minimum, Digitize_Maximum = rtcmem.read32(7,2) -- nactu si pamet 7 a 8
 
-	tmr.alarm(3, ANALOG_CAPTURE_DELAY, 1,  function() StartAnalog() end) -- pousti se opakovane
+	tmr.alarm(3, ANALOG_CAPTURE_PERIOD, 1,  function() StartAnalog() end) -- pousti se opakovane
 
     tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- pousti se opakovane

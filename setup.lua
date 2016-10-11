@@ -31,7 +31,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0 -- citac poctu reportu od zapnuti
-    Rnod = "1" -- plynomery a elektromery jsou pod node 4
+    Rnod = "1" -- plynomery maji vyhrazeny node 1
     if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
@@ -55,7 +55,7 @@
     local sum,value1,value2,value3
     sum,value1,value2,value3 = rtcmem.read32(0,4)
     if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
-       rtcmem.write32(0, 0, 0,0,0, 0,0,0, 0,0)
+       rtcmem.write32(0, 0, 0,0,0, 0,0,0, 1024,0)
     end
 
 	-- Spustim připojení k síti
@@ -66,7 +66,10 @@
 	-- Spusteni metod prepocitavajicich analogove hodnoty na pulzy a pocitani casu mezi pulzy
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
-	Iluminate = {GP[0]}
+	Iluminate = {GP[5]}
+	Digitize_Minimum = 1024 -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
+	Digitize_Maximum = 0
+	Digitize_Status = 5 -- hodnota 5 se nepouziva
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
 	-- casovac 1,3,4
 

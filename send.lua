@@ -84,8 +84,10 @@ local function Start()
     -- pridam si nektera technologicka data, ktera predavam na cloud
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
-    Rdat[Rpref.."an"] = adc.read(0) -- mereni svetla nebo neceho takoveho
-    -- nektere moduly me davaji 65k takze tohle se musi kdyz tak odkomentovat
+    Rdat[Rpref.."an"] = adc.read(0) -- vycte si aktualni hodnotu analogoveho vstupu, informacni udaj pro analyzu analogoveho zpracovani dat
+	Rdat[Rpref.."min"] = Digitize_Minimum -- udaje pro analyzu kde se pohybuje vstupni signal
+	Rdat[Rpref.."max"] = Digitize_Maximum 
+	Rdat[Rpref.."sta"] = Digitize_Status
     Rdat[Rpref.."x"..Get_AP_MAC()] = 1
     Rdat[Rpref.."fc"] = Fail_Send   
     Rdat[Rpref.."et"] = tmr.now()/1000000
