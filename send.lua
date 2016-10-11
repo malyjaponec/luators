@@ -25,6 +25,10 @@ local function KonecAbnormal()
     -- beh, je to jeji problem, mela do 10s skoncit 
     state = 4 -- fejkuju stav 4 - konec prenosu
     result = 0 -- stejne tak nastavuji vysledek na nepreneseno a o zbytek se postaraji standardni mechanizmy
+	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
+	
+	
+	
     tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
@@ -44,6 +48,10 @@ local function Konec(code, data)
         if Debug == 1 then print("S> chyba /".. code) end
         Fail_Send = Fail_Send + 1 -- zvysuji citac chyb prenosu
     end
+	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
+	
+	
+	
     tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
@@ -55,7 +63,7 @@ local function Start()
     local Rdat = {}
     local i,energy
     local suma = 0
-    for i=1,3 do 
+    for i=1,3 do -- predzpracovani enedgetickych dat s vyctenim a ulozenim do RTC memory
     
         -- pocatek kriticke sekce
             -- prepise si hodnoty energie k odeslani a v merici smaze na 0
@@ -67,31 +75,47 @@ local function Start()
         SentEnergy_Faze[i] = SentEnergy_Faze[i] + energy -- prictu aktualni citace za posledni periodu
         rtcmem.write32(i, SentEnergy_Faze[i])-- zapisu si hodnoty do RTC memory
         suma = suma + SentEnergy_Faze[i] -- scitam si kontrolni soucet
-        Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- hodnotu pridam do odesilanych dat
-		if Debug == 1 and SentEnergy_Faze[i] > 0 then
-			print("S> pulse["..i.."]="..SentEnergy_Faze[i])
 		end
     end
-    
-    rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti
+    rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti, co nejdrive po zapisu novych hodnot
+	
     for i=1,3 do 
-        -- zpracovani vykonu k odeslani
+		-- zpracovani energie odesilaneho tvaru
+        Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- pocty pulzu do odesilanych dat
+
+		-- zpracovani vykonu k odeslani
         if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
             Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
 			if Debug == 1 then print("S> power["..i.."]="..Power_Faze[i]) end
         end
-	end    
-    -- pridam si nektera technologicka data, ktera predavam na cloud
+		
+		-- dalsi analyticka data pro analyzu zpracovani analogovych signalu, ridi se globalni promennou
+		if AnalyticReport ~= nil then
+			Rdat[Rpref.."an"..i]= Digitize_Average[i]
+			Rdat[Rpref.."mi"..i] = Digitize_Minimum[i]
+			Rdat[Rpref.."ma"..i] = Digitize_Maximum[i]
+			Rdat[Rpref.."st"..i] = Digitize_Status[i]
+		end
+		
+		-- debug vypisy 
+		if Debug == 1 and SentEnergy_Faze[i] > 0 then
+			print("S> pulse["..i.."]="..SentEnergy_Faze[i])
+		end
+		
+	end
+	
+    -- pridam si nektera technologicka data, ktera predavam na cloud, nejdou vypnout
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
-    Rdat[Rpref.."an"] = adc.read(0) -- vycte si aktualni hodnotu analogoveho vstupu, informacni udaj pro analyzu analogoveho zpracovani dat
-	Rdat[Rpref.."min"] = Digitize_Minimum -- udaje pro analyzu kde se pohybuje vstupni signal
-	Rdat[Rpref.."max"] = Digitize_Maximum 
-	Rdat[Rpref.."sta"] = Digitize_Status
     Rdat[Rpref.."x"..Get_AP_MAC()] = 1
     Rdat[Rpref.."fc"] = Fail_Send   
     Rdat[Rpref.."et"] = tmr.now()/1000000
     Rdat[Rpref.."hp"] = node.heap() 
+	
+	-- zde zkontroluji zda je dokonceno mereni DS18B20, vyctu z nej data
+	
+	
+	
 
     -- prevedu na URL
     local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 
@@ -109,7 +133,7 @@ end
 --------------------------------------------------------------------------------
 local function ReinicializujSit()
     rgb.set("cyan")
-    if Debug == 1 then print("s>network failure") end
+    if Debug == 1 then print("S>network failure") end
     wifi.sta.disconnect()    
     wifi.sta.connect()
     wifi.sta.autoconnect(1)
@@ -141,7 +165,7 @@ local function KontrolaOdeslani()
             local timedif = tmr.now() - SendTime
             if (timedif > 5000000) or (timedif < -5000000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
                 SendTime = tmr.now() -- Zapisu si cas ted tak aby perioda byla neovlivnena tim jak dlouho se to prenasi
-                if Debug == 1 then print("s>odesilam,cas:"..timedif/1000000) end
+                if Debug == 1 then print("S> odesilam,cas:"..timedif/1000000) end
                 tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
             end

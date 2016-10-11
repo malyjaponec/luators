@@ -19,7 +19,7 @@
 -- citace, casovace a akumulatory
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
-    local Time_Rotation = 0 -- pro detekci pretoceni
+    local Time_Rotation = {0,0,0} -- pro detekci pretoceni
 	
 	local Average_Counter = 0
 	local Average_Data = {}
@@ -27,14 +27,14 @@
 	
 -- promenne pro digitalizaci analogoveho signalu	
 	-- Digitize_Minimum a Digitize_Maximum jsou globalni protoze si je cde odesilac a posila je ven
-	local Digitize_LastValue = -1
-	local Digitize_TimeFilter = 0
+	local Digitize_LastValue = {-1,-1,-1}
+	local Digitize_TimeFilter = {0,0,0}
 	
 	-- Defajny nastavujici parametry skenovani analogoveho vstupu
-	local DIGITIZE_MINIMAL_SPAN = 180 -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
-	local DIGITIZE_STICKY = 0.0001 -- priblizovani limitu k namerene hodnote, pokud tato neni extremni
-	local DIGITIZE_TIME = 2 -- casova filtrace na digitalni urovni
-	local POCET_MERENI = 5 -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan
+	local DIGITIZE_MINIMAL_SPAN = {180,180,180} -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
+	local DIGITIZE_STICKY = {0.0001,0.0001,0.0001} -- priblizovani limitu k namerene hodnote, pokud tato neni extremni
+	local DIGITIZE_TIME = {2,2,2} -- casova filtrace na digitalni urovni
+	local POCET_MERENI[_kanal] = {5,5,5} -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan
 	local ANALOG_CAPTURE_PERIOD = 100 -- v milisekundach perioda mereni analogoveho vstupu
 
 -- Generalizovana citaci funkce
@@ -126,7 +126,7 @@
                         -- v dalsim pruchodu se aktualizuje i hodnota v pameti
                     end
                     if (power < MinimalPower) then -- pokud stale nebyl predan vykon,
-                        -- a dosahli jsme casem rozumne nizke hodnoty, zacnu ji predavat
+                        -- a dosahli jsme casem rozumne nizke hodnoty, zacnu tu nizkou hodnotu predavat
                         Power_Faze[i] = power
                     end
                 end
@@ -141,45 +141,46 @@
     end
 	
 -- Zpracovani digitalni hotnoty - casova filtrace	
-	local function ProcessDigital(_digivalue)
-		if Digitize_LastValue == -1 then -- startujeme prvni pruchod
-			Digitize_LastValue = _digivalue -- zapiseme si stav a nic nedelame, cekame na prvni zmenu
-			Digitize_TimeFilter = DIGITIZE_TIME+1 -- nastavim filtracni jako kdyz uz na te hodnote stoji dlouho
+	local function ProcessDigital(_digivalue,_kanal)
+		if Digitize_LastValue[_kanal] == -1 then -- startujeme prvni pruchod
+			Digitize_LastValue[_kanal] = _digivalue -- zapiseme si stav a nic nedelame, cekame na prvni zmenu
+			Digitize_TimeFilter[_kanal] = DIGITIZE_TIME[_kanal]+1 -- nastavim filtracni jako kdyz uz na te hodnote stoji dlouho
 			return
 		end
-		if _digivalue == Digitize_LastValue then -- pokud se hodnota od posledniho scanu nezmenila
-			if Digitize_TimeFilter < DIGITIZE_TIME then -- pokud je to tesne po zmene 
-				Digitize_TimeFilter = Digitize_TimeFilter + 1 -- pouze zvysuji casovy citac
-				if Digitize_TimeFilter >= DIGITIZE_TIME then -- jestlize zvysenim o 1 doslo k dosazeni limitu
+		if _digivalue == Digitize_LastValue[_kanal] then -- pokud se hodnota od posledniho scanu nezmenila
+			if Digitize_TimeFilter[_kanal] < DIGITIZE_TIME[_kanal] then -- pokud je to tesne po zmene 
+				Digitize_TimeFilter[_kanal] = Digitize_TimeFilter[_kanal] + 1 -- pouze zvysuji casovy citac
+				if Digitize_TimeFilter[_kanal] >= DIGITIZE_TIME[_kanal] then -- jestlize zvysenim o 1 doslo k dosazeni limitu
 					if _digivalue == 1 then -- a jsme v logicke jednotce
-						if Debug == 1 then print("M> up @ "..(tmr.now()/1000000)) end
-						CitacInterni(1) -- zavolam zpracovani na faze (pouziva dale kod elektromeru)
+						if Debug == 1 then print("M> ".._kanal..":up @ "..(tmr.now()/1000000)) end
+						CitacInterni(_kanal) -- zavolam zpracovani na faze (pouziva dale kod elektromeru)
 					else
-						if Debug == 1 then print("M> down @ "..(tmr.now()/1000000)) end
+						if Debug == 1 then print("M> ".._kanal..":down @ "..(tmr.now()/1000000)) end
 					end
 				end
 			end
 		else -- hodnota se zmenila
-			Digitize_LastValue = _digivalue -- ulozim si novou hodnotu
-			Digitize_TimeFilter = 0 -- vynuluju filtracni citac
+			Digitize_LastValue[_kanal] = _digivalue -- ulozim si novou hodnotu
+			Digitize_TimeFilter[_kanal] = 0 -- vynuluju filtracni citac
 		end	
 	end
 	
 -- Zpracovani analogove hodnoty a prevod na digitalni
-	local function ProcessPoint(_value)
-		if (Digitize_Maximum - Digitize_Minimum) < DIGITIZE_MINIMAL_SPAN then 
+	local function ProcessPoint(_kanal)
+		local _value = Digitize_Average[_kanal] -- vyctu si z globalni promenne
+		if (Digitize_Maximum[_kanal] - Digitize_Minimum[_kanal]) < DIGITIZE_MINIMAL_SPAN[_kanal] then 
 			--[[ Vzdalenost minima a maxima neni pripravena pro provoz, v tomto rezimu pouze 
 			vyhledavam maximum a minimum z namerenych bodu a cekam az se od sebe vzdali dostatecne daleo
 			toto je nabehovy rezim, do kteho by se mohl system vratit za provozu pouze tak, ze by
 			se hodnoty v horni a dolni polovine rozsahu priblizili pod tuto mez, coz by ale znamenalo
 			nejakou zavadu ve snimani a tudis by to bylo vlastne koser ]]--
-			if _value > Digitize_Maximum then 
-				Digitize_Maximum = _value
+			if _value > Digitize_Maximum[_kanal] then 
+				Digitize_Maximum[_kanal] = _value
 			end	
-			if _value < Digitize_Minimum then
-				Digitize_Minimum = _value
+			if _value < Digitize_Minimum[_kanal] then
+				Digitize_Minimum[_kanal] = _value
 			end
-			Digitize_Status = 3
+			Digitize_Status[_kanal] = 3
 		else 
 		--[[ Provozni rezim je ustanoven. V tomto rezimu si rozdeluji rozsah mezi hodnotami 
 		na dve poloviny, pokud jsem v dolni polovine tak bud minimum snizim na uroven hodnoty
@@ -189,45 +190,46 @@
 		Taky se tu jako prvni zpracuje hodnota na to zda je to logicka nula nebo jednicka a 
 		zavola zpracovani digitalni hodnoty ]]--
 		
-			local LowZone = Digitize_Minimum + ((Digitize_Maximum - Digitize_Minimum) / 3) -- hranice dolni zony
-			local HighZone = Digitize_Maximum - ((Digitize_Maximum - Digitize_Minimum) / 3) -- hranice horni zony
-			local Center = (Digitize_Maximum + Digitize_Minimum) / 2 -- prumerna stredni hodnota
+			local LowZone = Digitize_Minimum[_kanal] + ((Digitize_Maximum[_kanal] - Digitize_Minimum[_kanal]) / 3) -- hranice dolni zony
+			local HighZone = Digitize_Maximum[_kanal] - ((Digitize_Maximum[_kanal] - Digitize_Minimum[_kanal]) / 3) -- hranice horni zony
+			local Center = (Digitize_Maximum[_kanal] + Digitize_Minimum[_kanal]) / 2 -- prumerna stredni hodnota
 		
 			if _value > HighZone then -- hodnota se nachazi v horni polovine
 				--if Debug == 1 then print("M> log:HIGH") end
-				ProcessDigital(1)
-				if _value > Digitize_Maximum then -- hodnota utekla za maximum
-					Digitize_Maximum = _value 
-					rtcmem.write32(8, Digitize_Maximum);
+				ProcessDigital(1,_kanal)
+				if _value > Digitize_Maximum[_kanal] then -- hodnota utekla za maximum
+					Digitize_Maximum[_kanal] = _value 
+					rtcmem.write32(10+_kanal-1, Digitize_Maximum[_kanal])
 				else -- hodnota se nachazi mezi maximem a stredem
-					local Distance = Digitize_Maximum - _value -- vzdalenost mezi maximem a hodnotou
-					Digitize_Maximum = Digitize_Maximum - (Distance * DIGITIZE_STICKY) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
-					rtcmem.write32(8, Digitize_Maximum);
+					local Distance = Digitize_Maximum[_kanal] - _value -- vzdalenost mezi maximem a hodnotou
+					Digitize_Maximum[_kanal] = Digitize_Maximum[_kanal] - (Distance * DIGITIZE_STICKY[_kanal]) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+					rtcmem.write32(10+_kanal-1, Digitize_Maximum[_kanal])
 					Distance = nil
 				end
-				Digitize_Status = 1
+				Digitize_Status[_kanal] = 1
 			else 
 				if _value < LowZone then -- hodnota se nachazi v dolni polovine (nebo na stredu)
 					--if Debug == 1 then print("M> log:LOW") end
-					ProcessDigital(0)
-					if _value < Digitize_Minimum then -- hodnota utekla pod minimum
-						Digitize_Minimum = _value 
-						rtcmem.write32(7, Digitize_Minimum)
+					ProcessDigital(0,_kanal)
+					if _value < Digitize_Minimum[_kanal] then -- hodnota utekla pod minimum
+						Digitize_Minimum[_kanal] = _value 
+						rtcmem.write32(7+_kanal-1, Digitize_Minimum[_kanal])
 					else -- hodnota se nachaz9 mezi mininimem a stredem
-						local Distance = _value - Digitize_Minimum -- vzdalenos mezi hodnotou a minimem
-						Digitize_Minimum = Digitize_Minimum + (Distance * DIGITIZE_STICKY) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
-						rtcmem.write32(7, Digitize_Minimum)
+						local Distance = _value - Digitize_Minimum[_kanal] -- vzdalenos mezi hodnotou a minimem
+						Digitize_Minimum[_kanal] = Digitize_Minimum[_kanal] + (Distance * DIGITIZE_STICKY[_kanal]) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+						rtcmem.write32(7+_kanal-1, Digitize_Minimum[_kanal])
 						Distance = nil
 					end
-					Digitize_Status = 0
+					Digitize_Status[_kanal] = 0
 				else -- pozice je v zakazane oblasti ze ktere se to musi casem taky mit moznost dostat a to tak ze se zuzuje obema smery
-					local Distance = _value - Digitize_Minimum -- vzdalenos mezi hodnotou a minimem
-					Digitize_Minimum = Digitize_Minimum + (Distance * DIGITIZE_STICKY) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
-					Distance = Digitize_Maximum - _value -- vzdalenost mezi maximem a hodnotou
-					Digitize_Maximum = Digitize_Maximum - (Distance * DIGITIZE_STICKY) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
-					rtcmem.write32(7, Digitize_Minimum,Digitize_Minimum)
+					local Distance = _value - Digitize_Minimum[_kanal] -- vzdalenos mezi hodnotou a minimem
+					Digitize_Minimum[_kanal] = Digitize_Minimum[_kanal] + (Distance * DIGITIZE_STICKY[_kanal]) -- zvednu minimum o nejaky zlomek vzdalenosti od aktualni hodnoty
+					Distance = Digitize_Maximum[_kanal] - _value -- vzdalenost mezi maximem a hodnotou
+					Digitize_Maximum[_kanal] = Digitize_Maximum[_kanal] - (Distance * DIGITIZE_STICKY[_kanal]) -- přisunu maximum o zlomek vzdalenosti aktualni hodnoty
+					rtcmem.write32(7+_kanal-1, Digitize_Minimum[_kanal])
+					rtcmem.write32(10+_kanal-1, Digitize_Maximum[_kanal])
 					Distance = nil
-					Digitize_Status = 2
+					Digitize_Status[_kanal] = 2
 				end
 			end
 			Center,LowZone,HighZone = nil,nil,nil
@@ -235,37 +237,42 @@
 	end
 	
 -- Opakovane nasnimani analogove hodnoty a vytvoreni "prumeru"
-	local function CaptureAnalog()
+	local function CaptureAnalog(_channel)
 		Average_Data[Average_Counter] = adc.read(0)
 		Average_Counter = Average_Counter + 1
-		if Average_Counter <= POCET_MERENI then 
-			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog() end)
+		if Average_Counter <= POCET_MERENI[_kanal] then 
+			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog(_channel) end)
 		else -- nacteno dost dat provedu ocisteni
-			gpio.write(Iluminate[1],gpio.HIGH)  -- zhasnu led, uz nepotrebuju svitit na snimac
+			gpio.write(Iluminate[_channel],gpio.HIGH)  -- zhasnu led, uz nepotrebuju svitit na snimac
 			
 			-- tady to mam v poli a muzu si s tim delat cokoliv alezatim s tim udelam jen prumer
 			local Sum = 0
-			for q = 1,POCET_MERENI,1 do
+			for q = 1,POCET_MERENI[_kanal],1 do
 				Sum = Sum + Average_Data[q]
 			end
 			--if Debug == 1 then print("avr:"..(Sum/POCET_MERENI)) end
-			ProcessPoint(Sum / POCET_MERENI)
+			Digitize_Average[_channel] = Sum / POCET_MERENI[_kanal] -- ulozim si prumer pro dalsi zpracovani a taky pro odeslani na cloud
+			ProcessPoint(_channel)
 			Sum = nil
+			if Iluminate[_channel+1] ~= nil then -- jeste je definovan dalsi iluminat
+				StartAnalogG(_channel+1) -- tady volam funkci definovanou nize, musi byt tedy globalni
 		end
 	end
 	
 -- Opakovane spousteni zpracovani dat
-	local function StartAnalog()
-	
-		-- zde by mohlo byt multiplexovani pro vice analogovych vstupu tim ze se budou rozsvecet ruzne IR led
-		gpio.mode(Iluminate[1],gpio.OUTPUT)
-        gpio.write(Iluminate[1],gpio.LOW) 
-
+	local function StartAnalog(_kanal)
+		-- rozsvitim  IR kalanl
+		gpio.mode(Iluminate[_kanal],gpio.OUTPUT)
+        gpio.write(Iluminate[_kanal],gpio.LOW) 
+		-- spustim mereni na prvni kanale
 		Average_Counter = 1
 		Average_Data = {}
-		CaptureAnalog()
+		-- spustim mereni pres casovac aby se stihli rozsvitit IR led
+		tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog(_kanal) end)
 	end
-	
+	function StartAnalogG(_kanal)
+		StartAnalog(_kanal)
+	end
   
     
 -- Nacasu prvni odeslani

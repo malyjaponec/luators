@@ -55,7 +55,7 @@
     local sum,value1,value2,value3
     sum,value1,value2,value3 = rtcmem.read32(0,4)
     if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
-       rtcmem.write32(0, 0, 0,0,0, 0,0,0, 1024,0)
+       rtcmem.write32(0, 0, 0,0,0, 0,0,0, 1024,1024,1024,0,0,0)
     end
 
 	-- Spustim připojení k síti
@@ -63,18 +63,23 @@
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 	-- casovac nula
 	
+	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet, mohou byt 2 dratove, cte je to sekvencne
+	dalas = require("dalas")
+    dalas.setup(5,gpionum[3],nil) -- na gpio0 je idealni mit neco co ma pull up, protoze ten pin musi byt v 1 pro start modulu
+	
 	-- Spusteni metod prepocitavajicich analogove hodnoty na pulzy a pocitani casu mezi pulzy
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (v otackach kolecka za jednotku casu) na zaklade posledni delky pulzu
-	Iluminate = {GP[5]}
-	Digitize_Minimum = 1024 -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
-	Digitize_Maximum = 0
-	Digitize_Status = 5 -- hodnota 5 se nepouziva
+	Iluminate = {GP[5],GP[4]}
+	Digitize_Minimum = {1024,1024,1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
+	Digitize_Maximum = {0,0,0}
+	Digitize_Average = {0,0,0}
+	Digitize_Status = {5,5,5} -- hodnota 5 se nepouziva
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
 	-- casovac 1,3,4
 
 	-- Nakonec se spusti odesílač na cloud
-    -- odesilac nepotrebuje zadne hlobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
+	AnalyticReport = 1 -- pokud tato promenna neni null pak odesilac posila i udaje o prumeru maximu a minimu a stavu jednotlivych vstupu
     tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
 	-- casovac 2
 
