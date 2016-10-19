@@ -52,7 +52,9 @@
       
 -- Citaci funkce 1 2 a 3
     local function CitacPulzu1(_level)
-        CitacInterni(1)
+        if _level == gpio.LOW then
+            CitacInterni(1)
+        end
     end
     local function CitacPulzu2(_level)
         CitacInterni(2)
@@ -131,7 +133,7 @@
       
 -- Nastaveni pinu na preruseni
     if Measure_Faze[1] ~= nil then
-        gpio.mode(Measure_Faze[1], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[1], gpio.INPUT, gpio.FLOAT)
         gpio.mode(Measure_Faze[1], gpio.INT, gpioPULLUP) 
         gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
     end
