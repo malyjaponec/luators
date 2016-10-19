@@ -104,6 +104,16 @@ local function Start()
 		
 	end
 	
+	-- zde zkontroluji zda je dokonceno mereni DS18B20, vyctu z nej data
+    if dalas ~= nil then
+		if dalas.status() != 0 then
+			t =  dalas.status()/1000000
+			Rdat[ReportFieldPrefix.."t_d"] = t -- technologicke dato, kdy bylo dokonceno mereni dalase, asi nebude potreba u plymomeru
+			for k,v in pairs(dalas.getvalues()) do Rdat[Rpref..k] = v end
+			dalas_start()
+		end
+    end
+	
     -- pridam si nektera technologicka data, ktera predavam na cloud, nejdou vypnout
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
@@ -112,11 +122,6 @@ local function Start()
     Rdat[Rpref.."et"] = tmr.now()/1000000
     Rdat[Rpref.."hp"] = node.heap() 
 	
-	-- zde zkontroluji zda je dokonceno mereni DS18B20, vyctu z nej data
-	
-	
-	
-
     -- prevedu na URL
     local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 
                 "&json=" .. cjson.encode(Rdat) .. 

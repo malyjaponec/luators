@@ -65,7 +65,10 @@
 	
 	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet, mohou byt 2 dratove, cte je to sekvencne
 	dalas = require("dalas")
-    dalas.setup(5,gpionum[3],nil) -- na gpio0 je idealni mit neco co ma pull up, protoze ten pin musi byt v 1 pro start modulu
+	function dalas_start()
+		dalas.setup(5,gpionum[0],nil) -- na gpio0 je idealni mit neco co ma pull up, protoze ten pin musi byt v 1 pro start modulu
+	end
+	dalas_start()
 	
 	-- Spusteni metod prepocitavajicich analogove hodnoty na pulzy a pocitani casu mezi pulzy
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve otackech kolecka, prevod se musi udelat na cloudu)
