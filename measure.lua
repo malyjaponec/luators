@@ -57,10 +57,14 @@
         end
     end
     local function CitacPulzu2(_level)
-        CitacInterni(2)
+        if _level == gpio.LOW then
+			CitacInterni(2)
+		end
     end
     local function CitacPulzu3(_level)
-        CitacInterni(3)
+        if _level == gpio.LOW then
+			CitacInterni(3)
+		end
     end
 
 -- Uprava vykonu pokud se nic nedeje
@@ -138,12 +142,12 @@
         gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
     end
     if Measure_Faze[2] ~= nil then
-        gpio.mode(Measure_Faze[2], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.FLOAT)
         gpio.mode(Measure_Faze[2], gpio.INT, gpioPULLUP) 
         gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
     end
     if Measure_Faze[3] ~= nil then
-        gpio.mode(Measure_Faze[3], gpio.INPUT, gpioPULLUP)
+        gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.FLOAT)
         gpio.mode(Measure_Faze[3], gpio.INT, gpioPULLUP) 
         gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
     end

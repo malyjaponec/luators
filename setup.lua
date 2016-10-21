@@ -30,7 +30,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0
-    Rnod = "6" -- vsechny elektromery jsou 4
+    Rnod = "4" -- vsechny elektromery jsou 4
     if (file.open("apikey.ini", "r") ~= nil) then
         Rapik = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
@@ -55,7 +55,7 @@
     tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
 
     -- sjednocene elektromery, GP[2] se nesmi pouzit, zpusobuje to zaseknuti po restartu
-    Measure_Faze = { GP[4] } -- definice pinu ktere se ctou, prestal jsem pouzivat pin 2 zasekaval system
+    Measure_Faze = { GP[4], GP[5], GP[14] } -- definice pinu ktere se ctou, prestal jsem pouzivat pin 2 zasekaval system
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
     tmr.alarm(1, 10, 0,  function() dofile("measure.lc") end)
