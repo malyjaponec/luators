@@ -1,10 +1,11 @@
 --------------------------------------------------------------------------------
 -- Sensor measurement - DALAS
 -- 
--- setup(casovac,prefix,dalaspin) 
+-- setup(casovac,prefix,dalaspin,dalaspin2) 
 -- - nastavi casovac, ktery bude knihovna pouziva a spusti mereni
 -- - prefix pro identifikaci zarizeni v pripade ze vice zarizeni posila v jednom node
 -- - nastavi pin pro mereni dalasu
+-- - prvni pin vyzaduje napajeni 3 dratove, druhy pin respektuje phantom napajeni
 -- status() - vrati zda je mereni dokonceno nebo se jeste meri
 -- getvalues() - vrati pole hodnot s namerenym hodnotami
 -- 
@@ -20,8 +21,13 @@ local Casovac
 local Data
 local PinDALAS,PinDALAS2
 local Name
-local Finished,sensors = 0,0
-local t,taddr,tsnimacu,tcount
+local Finished,sensors,tsnimacu = 0,0,0
+local t,taddr,tcount
+-- Nastaveno pro 3 dratove napajeni, druhy kanal potom prehazi hodnoty tak
+-- aby to fungovalo s fantomovym napajenim
+local CommandDelay = 25
+local ReadoutDelay = 750
+
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -57,8 +63,9 @@ local function cleanupDALAS()
     tsnimacu = nil
     if PinDALAS2 ~= nil then
         PinDALAS,PinDALAS2 = PinDALAS2,nil
+		CommandDelay,ReadoutDelay = ReadoutDelay,CommandDelay -- vymenenim promennych zpusobim ze mezi prikazy se ceka dlouho a vycte se to pak bez cekani
         taddr = nil
-        tmr.alarm(Casovac, 10, 0,  function() startDALAS2() end)       
+        tmr.alarm(Casovac, 25, 0,  function() startDALAS2() end)       
     else
         taddr,t = nil,nil
         ds18b20 = nil
@@ -73,46 +80,48 @@ local function cleanupDALAS()
 end
 
 local function readoutDALAS()
-    local addr = taddr[tcount] -- vezmu adresu z pole
-    local value = t.readNumber(addr) -- vyctu si zmerenou teplotu
-    local textaddr = AddressInHex(addr) -- prevod adresy na gex
-    addr = nil
-    if (value ~= nil) then -- a ted pouze pokud se vycteni povedlo
-        value = value/10000 -- teplotu to vraci v desitkach milicelsiu
-        Data["t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
-        if Debug == 1 then 
-            print(Casovac..">t"..textaddr.." = "..value)
-        end
-    end
-    textaddr,value = nil,nil
-    tcount = tcount + 1
-    tmr.alarm(Casovac, 25, 0,  function() measureDALAS2() end)
+    if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni, cekam dlouhou dobu
+        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+	else
+		local addr = taddr[tcount] -- vezmu adresu z pole
+		local value = t.readNumber(addr) -- vyctu si zmerenou teplotu
+		local textaddr = AddressInHex(addr) -- prevod adresy na hex
+		addr = nil
+		if (value ~= nil) then -- a ted pouze pokud se vycteni povedlo
+			value = value/10000 -- teplotu to vraci v desitkach milicelsiu
+			Data["t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
+			if Debug == 1 then 
+				print(Casovac..">t"..textaddr.." = "..value)
+			end
+		end
+		textaddr,value = nil,nil
+		tcount = tcount + 1
+		tmr.alarm(Casovac, 25, 0,  function() readoutDALAS() end)
+	end
 end
 
 local function measureDALAS()
     if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni
-        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+		tcount = 1 -- vycitam zase poporade od prvniho
+        tmr.alarm(Casovac, ReadoutDelay, 0,  function() readoutDALAS() end)
     else
         local addr = taddr[tcount] -- vezmu adresu z pole
         if addr ~= nil then -- bezpecnostni ochrana kdyby to vratilo nil
             t.startMeasure(addr) -- pozadam dalas o mereni
             addr = nil
-            tmr.alarm(Casovac, 750, 0,  function() readoutDALAS() end)
+			tcount = tcount + 1
+            tmr.alarm(Casovac, CommandDelay, 0,  function() measureDALAS() end) -- cekam kratkou dobu a pustim dalsi mereni
         else
-            -- pokud to vrati nulouvou adresu, zkusim dalsi index
+            -- pokud to vrati nulouvou adresu, zkusim dalsi index, bez dlouheho cekani
             tcount = tcount + 1
             tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
         end
     end
 end
 
-function measureDALAS2() -- kvuli volani z horni casti kodu kde lokalni funkce jeste neexistuji
-    measureDALAS()
-end
-
 local function startDALAS()
     if PinDALAS == nil then
-        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end) -- pin1 nedefinovany, cleanup muze jeste pustint pin2
     else    
         t.setup(PinDALAS)
         taddr = t.addrs() -- nacte adresy vsechn dalasu na sbernici
