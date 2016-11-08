@@ -40,18 +40,18 @@
     function MeasureInit()
         -- *************************
 
-        -- Spustim procesy nastavujici sit
+        -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, gpionum[5])
+        network.setup(1, gpionum[13])
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        battery = require("battery")
-        battery.setup(2,nil) -- bez mereni svetla
+        --battery = require("battery")
+        --battery.setup(2,nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        dht22 = require("dht22")
-        dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
+        --dht22 = require("dht22")
+        --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[13],4) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
@@ -60,26 +60,29 @@
              a jsou i luatory ktere vubec nezmeri nebo s urcitou pravdepodobnosti nezmeri, novy sw
              opakuje pokusy 30s to potom jdou baterky rychle do kytek, takze se vracim na trvale napajeni
              ]]--
-        --dalas = require("dalas")
-        --dalas.setup(5,gpionum[4],nil)
+        dalas = require("dalas")
+        dalas.setup(5,gpionum[5],nil)
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
         --dist.setup(3,20) 
         --analog = require("analog")
-        --analog.setup(2,10)
+        --analog.setup(2,25)
+		--digital = require("digital")
+		--digital.capture(gpionum[4],gpionum[5])
         -- *************************
     end
     
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 10*60
+    ReportInterval = 5
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-    --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+    PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" -- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
-    --ReportNode = "5" -- merici systemy s rychym update pouzivaji 5
-    -- pro solar a vytapeni je vyhrazena 2 a pro elektromery 4
+    ReportNode = "6" 
+	-- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
+    -- merici systemy s rychym update pouzivaji 5
+    -- pro solar e vyhrazena 2 a pro elektromery 4 a pro plynomer a vytapeni 1
 -- *************************
     
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -90,6 +93,10 @@
     else
         ReportApiKey = file.readline() -- soubor nesmi obsahovat ukonceni radku, jen apikey!!!
         file.close()
+		
+-- Prenastaveni pinu, ktere nechci pouzivat, nekdy se rozsveci RGB ledka a podobne takze zde je prostor to rucne napsat
+		gpio.mode(gpionum[15], gpio.OUTPUT) 
+		gpio.write(gpionum[15], gpio.LOW)
 
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
@@ -98,7 +105,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = gpionum[0]
+        LedSend = gpionum[12] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid

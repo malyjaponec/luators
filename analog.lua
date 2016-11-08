@@ -81,7 +81,7 @@ local function setup(_casovac,_repeat)
     Data = {}
     Finished = 0
     adc.read(0) -- nekdy prvni prevod vrati nesmysl
-    tmr.alarm(Casovac, math.random(10), 0,  function() mesureanalog() end)
+    tmr.alarm(Casovac, math.random(10,20), 0,  function() mesureanalog() end)
     return Casovac
 end
 M.setup = setup

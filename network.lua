@@ -20,6 +20,7 @@ local Finished
 local Casovac
 local Counter
 local LedIO
+local LedNegative
 local ApWasFound 
 -------------------------------------------------------------------------------
 -- Local used modules
@@ -41,21 +42,35 @@ local ApWasFound
 -- Implementation
 -------------------------------------------------------------------------------
 
+local function writeled(_level)
+	-- Pokud je definovana promenna LedNegative otocim hodnotu
+	if  LedNegative ~= nil then
+		_level = 1 - _level
+	end
+	-- A nyni upravenou honotu poslu na gpio
+	if _level == 1 then
+        gpio.write(LedIO, gpio.HIGH)
+    else
+        gpio.write(LedIO, gpio.LOW)
+	end
+end 
+
 local function led(_stav)
     if LedIO == nil then return end
-    -- Je potreba poznamenat, ze led se rozsveci logickou 0, proto to muze vypadat zmatene
+    -- Kladne hodnoty GPIO vystupu zapinaji ledku do H, zatimco zaporna hodnota predpoklada ledku proti VCC a rozsveci ledku do L
     gpio.mode(LedIO, gpio.OUTPUT) 
     if 1 == _stav then
-        gpio.write(LedIO, gpio.LOW)
+		writeled(1)
     else
         if 2 == _stav then
+			-- zmena stavu se deje podle hodnoty ledky nezavisle na tom zda je negovana nebo ne
             if gpio.LOW == gpio.read(LedIO) then
                 gpio.write(LedIO, gpio.HIGH)
             else
                 gpio.write(LedIO, gpio.LOW)
             end 
         else
-            gpio.write(LedIO, gpio.HIGH)
+            writeled(0)
         end
     end
 end
@@ -196,7 +211,13 @@ local function setup(_casovac,_led)
 
     Finished = 0
     Casovac = _casovac or 0 -- pokud to neuvedu 
-    LedIO = _led -- polud nezadam led pouziju GPIO0
+	if _led < 0 then
+		LedIO = -_led 
+		LedNegative = 1
+	else
+		LedIO = _led
+		LedNegative = nil
+	end
     led(0)
     
     Counter = 200 -- po 100ms to je 20s

@@ -15,8 +15,13 @@ end
 local function Konec(code, data)
      -- indikacni led zhasnu
      if LedSend ~= nil then 
-        gpio.mode(LedSend, gpio.INPUT) 
-        gpio.write(LedSend, gpio.HIGH)
+        if LedSend > 0 then
+			gpio.mode(LedSend, gpio.INPUT)
+			gpio.write(LedSend, gpio.LOW)
+		else
+			gpio.mode(-LedSend, gpio.INPUT)
+			gpio.write(-LedSend, gpio.HIGH)
+		end
      end
 
     if (code == nil) then
@@ -44,7 +49,8 @@ local function KontrolaOdeslani()
         (dht22 ~= nil and dht22.status() == 0) or
         (dalas ~= nil and dalas.status() == 0) or
         (baro ~= nil and baro.status() == 0) or
-        (dist ~= nil and dist.status() == 0)
+        (dist ~= nil and dist.status() == 0) or
+		(analog ~= nil and analog.status() == 0)
         then -- stale cekame na odeslani
 
         if network.status() == -1 then
@@ -65,8 +71,13 @@ local function KontrolaOdeslani()
     
     -- rozsvitim indikacni led 
     if LedSend ~= nil then
-        gpio.mode(LedSend, gpio.OUTPUT) 
-        gpio.write(LedSend, gpio.LOW)
+		if LedSend > 0 then
+			gpio.mode(LedSend, gpio.INPUT)
+			gpio.write(LedSend, gpio.HIGH)
+		else
+			gpio.mode(-LedSend, gpio.INPUT)
+			gpio.write(-LedSend, gpio.LOW)
+		end
     end
     
     -- prekopiruju senzorova data
@@ -118,11 +129,17 @@ local function KontrolaOdeslani()
         analog = nil
         package.loaded["analog"] = nil
     end
+	
+	if digital ~= nil then
+		for k,v in pairs(digital.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+		digital = nil
+		package.loaded["digital"] = nil
+	end
 
     Rdat[ReportFieldPrefix.."tm"] = tm
     t,tm,k,v = nil,nil,nil,nil
     
-    -- bateriova data (analogovy prevodnik)
+    -- bateriova data (analogovy prevodnik), jako posledni, cim dele se meri tim lepe
     if battery ~= nil then
         local min,max,cnt = battery.getvalues()
         Rdat[ReportFieldPrefix.."bmin"] = min

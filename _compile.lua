@@ -55,6 +55,15 @@ if file.open(name..".lua", "r") ~= nil then
     file.close()
 end
 
+name = "digital"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
 name = "ds18b20"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
