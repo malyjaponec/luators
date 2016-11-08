@@ -16,12 +16,15 @@ local function Konec(code, data)
      -- indikacni led zhasnu
      if LedSend ~= nil then 
         if LedSend > 0 then
-			gpio.mode(LedSend, gpio.INPUT)
 			gpio.write(LedSend, gpio.LOW)
+			--gpio.mode(LedSend, gpio.INPUT, gpio.FLOAT) 
+			-- je celkem jedno jestli zustane out nebo in, v deepsleepu vsechny jak ledky proti gnd tak proti vcc prosvecuji
+			-- a jedina moznost jak dostahnout nizkou spotrebu je odpojit je, krome cervene RGB, ta nesviti nikdy?
 		else
-			gpio.mode(-LedSend, gpio.INPUT)
 			gpio.write(-LedSend, gpio.HIGH)
+			--gpio.mode(-LedSend, gpio.INPUT, gpio.FLOAT) 
 		end
+		
      end
 
     if (code == nil) then
@@ -77,10 +80,10 @@ local function KontrolaOdeslani()
     -- rozsvitim indikacni led 
     if LedSend ~= nil then
 		if LedSend > 0 then
-			gpio.mode(LedSend, gpio.INPUT)
+			gpio.mode(LedSend, gpio.OUTPUT)
 			gpio.write(LedSend, gpio.HIGH)
 		else
-			gpio.mode(-LedSend, gpio.INPUT)
+			gpio.mode(-LedSend, gpio.OUTPUT)
 			gpio.write(-LedSend, gpio.LOW)
 		end
     end

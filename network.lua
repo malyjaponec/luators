@@ -58,7 +58,7 @@ end
 local function led(_stav)
     if LedIO == nil then return end
     -- Kladne hodnoty GPIO vystupu zapinaji ledku do H, zatimco zaporna hodnota predpoklada ledku proti VCC a rozsveci ledku do L
-    gpio.mode(LedIO, gpio.OUTPUT) 
+    gpio.mode(LedIO, gpio.OUTPUT, gpio.FLOAT) 
     if 1 == _stav then
 		writeled(1)
     else
@@ -70,9 +70,11 @@ local function led(_stav)
                 gpio.write(LedIO, gpio.LOW)
             end 
         else
-            writeled(0)
+			writeled(0)
+			--gpio.mode(LedIO, gpio.INPUT, gpio.FLOAT) -- experimentalne krome nastavehi vystupu z toho udelam vstup
         end
     end
+	
 end
 
 local function ap_select(t)
