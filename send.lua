@@ -35,10 +35,15 @@ local function Konec(code, data)
     end
     code = nil
     data = nil
-    if PeriodicReport ~= nil then -- je pozadovano reportovat pravodelne
-        dofile("reload.lc")
-    else
-        dofile("sleep.lua")
+	
+	if GetFeeds ~= nil then
+		dofile("receive.lc")
+	else
+		if PeriodicReport ~= nil then -- je pozadovano reportovat pravodelne
+			dofile("reload.lc")
+		else
+			dofile("sleep.lua")
+		end
     end
 end
 
@@ -181,12 +186,17 @@ local function KontrolaOdeslani()
     Rdat = nil -- data smazu explicitne
     http.get(url, nil, function(code,data) Konec(code,data) end )
     url = nil -- url uz taky mazu
-    -- nacasuji kontrolu pokud nezavola callback a zasekne se to, tak se to bud uspi nebo restartuje   
-    if PeriodicReport ~= nil then
-        tmr.alarm(0, 15000, 0, function() dofile("restart.lua") end) 
-    else
-        tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) 
-    end
+    
+	-- nacasuji kontrolu pokud nezavola callback a zasekne se to, tak se to bud uspi nebo restartuje   
+	if GetFeeds ~= nil then
+		tmr.alarm(0, 15000, 0, function() dofile("receive.lc") end)
+	else
+		if PeriodicReport ~= nil then
+			tmr.alarm(0, 15000, 0, function() dofile("restart.lua") end) 
+		else
+			tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) 
+		end
+	end
 end
 
 --------------------------------------------------------------------------------

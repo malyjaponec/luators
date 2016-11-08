@@ -61,7 +61,7 @@
              opakuje pokusy 30s to potom jdou baterky rychle do kytek, takze se vracim na trvale napajeni
              ]]--
         dalas = require("dalas")
-        dalas.setup(5,gpionum[5],nil)
+        dalas.setup(5,gpionum[5])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
@@ -73,6 +73,7 @@
         -- *************************
     end
     
+-- *************************
 -- konstanty pro reportovani
 -- *************************
     ReportInterval = 5
@@ -83,8 +84,12 @@
 	-- bateriove long update merici systemy pouzivaji node 3, teda ja to tak pouzivam
     -- merici systemy s rychym update pouzivaji 5
     -- pro solar e vyhrazena 2 a pro elektromery 4 a pro plynomer a vytapeni 1
--- *************************
-    
+-- **********************************
+-- konstanty pro cteni dat ze serveru
+-- **********************************
+	GetFeeds = {[642]=gpionum[4],[640]=gpionum[15]}
+	
+-- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
     IDIn36 = nil -- rusim funkci uz ji nebudu nikdy potrebovat
     -- apikey se nacita ze souboru
