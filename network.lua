@@ -71,7 +71,11 @@ local function led(_stav)
             end 
         else
 			writeled(0)
-			--gpio.mode(LedIO, gpio.INPUT, gpio.FLOAT) -- experimentalne krome nastavehi vystupu z toho udelam vstup
+			--gpio.mode(LedIO, gpio.INPUT, gpio.FLOAT) 
+				-- experimentalne krome nastavehi vystupu do neaktivni pozice z toho udelam vstup
+				-- nema to vliv ledky v deep sleepu stale prosvecuji a nelze je pouzivat, tedy
+				-- to plati pro modrou a zelenou rgb, zvlastni je ze cervena co ma nejnizsi napeti
+				-- nesviti nikdy
         end
     end
 	
@@ -213,12 +217,16 @@ local function setup(_casovac,_led)
 
     Finished = 0
     Casovac = _casovac or 0 -- pokud to neuvedu 
-	if _led < 0 then
-		LedIO = -_led 
-		LedNegative = 1
+	if _led == nil then -- pokud neni led definovan
+		LedIO = nil
 	else
-		LedIO = _led
-		LedNegative = nil
+		if _led < 0 then
+			LedIO = -_led 
+			LedNegative = 1
+		else
+			LedIO = _led
+			LedNegative = nil
+		end
 	end
     led(0)
     
