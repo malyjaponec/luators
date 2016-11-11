@@ -73,6 +73,8 @@ local function FinishDIST()
     uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
     -- vratit seriovou linku na port 1 
     uart.alt(0)
+	-- info 
+	print("UART back for console")
     -- obnovit debug
     Debug,ZalohaDebug = ZalohaDebug,nil
     -- export
@@ -161,7 +163,8 @@ local function setup(_casovac,_averaging)
     Average = _averaging or 10
     Data = {}
     Finished = 0
-    tmr.alarm(Casovac, 10, 0,  function() PrepareDIST() end)
+    tmr.alarm(Casovac, 25, 0,  function() PrepareDIST() end)
+	print("UART dedicated to distance")
     return Casovac
 end
 M.setup = setup
