@@ -17,7 +17,8 @@
         return out
     end
 
-    -- post processing funkce, kterou si odesilac pred odeslanim zavola
+    -- post processing funkce, kterou si odesilac pred odeslanim zavola a ona muze neco upravit nebo hlavne 
+	-- slouzi k prepnuti rychlosti reportingu
     function PostProcessing(_datove_pole)
         -- *************************
         -- teplota kourovou v garazi
@@ -51,22 +52,26 @@
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        --dht22 = require("dht22")
+        dht22 = require("dht22")
         --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
-        --dht22.setup(3,gpionum[5],gpionum[14],4) -- pareniste a detsky pokoj a nove loznice protze bez toho dht prestavalo merit
+        dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
              jedno mereni pred vysilanim a to mu stacilo, nova implementace potrebuje opakovani
              kvuli presnosti a to pak dojde k tomu ze se zmeri az po ziskani IP a zdrzuje to 
              a jsou i luatory ktere vubec nezmeri nebo s urcitou pravdepodobnosti nezmeri, novy sw
              opakuje pokusy 30s to potom jdou baterky rychle do kytek, takze se vracim na trvale napajeni
+			 
+			 dodatek: nektere dht se na trvalem napajeni zasekavaji, nahodne zaden za 3 hodiny prestanou merit
+			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
+			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         --dalas = require("dalas")
         --dalas.setup(5,gpionum[5])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
-        dist = require("distance")
-        dist.setup(3,50) 
+        --dist = require("distance")
+        --dist.setup(3,50) 
         --analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
