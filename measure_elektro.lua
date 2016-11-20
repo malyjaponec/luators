@@ -99,12 +99,8 @@
 				ze nulovy vykon se misto toho ustali na urovni 1 pulz za 40 minut coz je 
 				neco v urovni watu a pravdepodobnost ze to nastane je nizka
 				]]--    
-				if DebugPower ~= nil then 
-					print("M>time dif["..i.."]="..timedif)
-					print("M>time now="..timenow)
-					print("M>time rotation="..Time_Rotation)
-					print("M>time faze["..i.."]="..Time_Faze[i])
-					print("M>time long["..i.."]="..Time_Long[i])
+				if DebugPower ~= nil and Debug == 1 then 
+					print("M> ["..i.."] now="..timenow.." rot="..Time_Rotation.." dif="..timedif.." faze"..Time_Faze[i].." lon="..Time_Long[i])
 				end
 				if (timedif <= 0) or 
 					-- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnoto casoveho rozdilu
@@ -131,9 +127,13 @@
 					end
 					if (Power_Faze[i] == -1) then -- pokud jeste nemam zadnou hodnotu vykonu, tohle se provede fakt jen na zacatku jednou
 						powermem = rtcmem.read32(3+i)/1000 -- prectu si hodnotu z pameti, pokud doslo k jejimu resetu bude tam 0
-						if DebugPower ~= nil then print("M>read power["..i.."]="..powermem) end 
+						if Debug == 1 then print("M> restored power="..powermem) end 
 						if powermem ~= 0 then -- pokud v pameti neco je, pak to pouziju, nulu budu ignorovat
 							Power_Faze[i] = powermem -- opravim si aktualni hodnotu na to co je v pameti
+							Time_Long[i] = 3600000000/powermem - timenow -- nastavim si virtualne long time aby odpovidal vykonu a ten se hnedka dale snizoval
+							-- vysledek je sice necelociselny, ale kdyz se udela math.floor vznikne z toho int 2,1 miliardy a to je malo pro vypocty co potrebujem
+							if Time_Long[i] < 0 then Time_Long[i] = 0 end -- pro pripad ze v pameti je neco extremniho a
+							-- nacetlo by se to hodne pozde a odectenim timenow by vznikl zaporny cas, je tady tato kontrola
 						end
 						if (power < MinimalPower) then -- pokud stale nebyl predan vykon,
 							-- a dosahli jsme casem rozumne nizke hodnoty, zacnu ji predavat
@@ -141,7 +141,7 @@
 						end
 					end
 				end
-				if DebugPower ~= nil then print("M>computed/reported power["..i.."]="..power.."/"..Power_Faze[i]) end 
+				if Debug == 1 then print(string.format("M> power[%d] in/out=%.3f / %.3f",i,power,Power_Faze[i])) end 
 			end
         end
         Time_Rotation = timenow -- zaznamenam si novy cas

@@ -31,7 +31,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0 -- citac poctu reportu od zapnuti
-    Rnod = "6"
+    Rnod = "4"
 	-- "1" plynomery maji vyhrazeny node 1
     -- "4" elektromery jsou node 4
     if (file.open("apikey.ini", "r") ~= nil) then
