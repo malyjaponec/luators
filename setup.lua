@@ -70,15 +70,18 @@
 	-- casovac nula
 	
 	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet
+	--[[
 	dalas = require("dalas")
 	function dalas_start()
 		TimeStartLast = tmr.now()/1000 -- zapisu si cas posledniho spuseni, ziskam tak presne cas za jak dlouho doslo ke zmereni cidel, ne cas od zapnuti procesoru
 		dalas.setup(5,GP[14],nil) -- na 14 je 3 dratovy rezim, nil na 2 dratovy rezim, ktery nepouzivame ted
 	end
 	dalas_start()
+	]]
 	
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
-    Measure_Faze = { GP[4], GP[5], nil } -- definice pinu ktere se ctou, prestal jsem pouzivat pin 2 zasekaval system
+    --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
+	Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
     tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
