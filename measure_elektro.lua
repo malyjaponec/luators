@@ -29,9 +29,7 @@
             Time_Long[_kanal] = 0
         else
             -- kontroluji zda casva diference dava smysl pro aktualizaci vykonu a kdyz jo aktualizuji
-            if timenow - Time_Faze[_kanal] < 0 then -- Nekontroluji timedif, protoze ten i pri pretoceni muze
-				-- byt kladny, kdyz je hodnota Time_Long vysoka, a proto pouziju pro rozhodovani rozdil bez 
-				-- zapocitani Time_Long
+            if timedif < 0 then -- kontrola zda hodnota neni zaporna, pokud jo jednorazove ji opravim, nema vliv na dlouhodobe snizovani
                 timedif = timedif + 2147483647 
             end
             Time_Faze[_kanal] = timenow
