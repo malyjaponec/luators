@@ -77,12 +77,12 @@
     local function ZpracujPauzu()
 
         -- snizeni vykonu kdyz se nic nedeje
-        local i,timedif,power,powermem
+        local i,power,powermem,timedif
         local timenow = tmr.now()
         for i=1,3 do 
 			if Measure_Faze[i] ~= nil then -- pro elektromery s mene fazema, nemam piny na to abych z nich cetl
 				-- standardnim zpusobem spocitam diferenci pro urceni vykonu
-				local timedif = timenow - Time_Faze[i] + Time_Long[i]
+				timedif = timenow - Time_Faze[i] + Time_Long[i]
 				--[[ kontrola na zaporny vysledek, tohle ale nebude dobre fungovat
 				pokud dojde k tomu ze timenow je nekde blizko 0, potom se stane to 
 				ze bude sakra mala pravdepodobnost ze behem 1s kdy se toto kontroluje
@@ -100,7 +100,7 @@
 				neco v urovni watu a pravdepodobnost ze to nastane je nizka
 				]]--    
 				if DebugPower ~= nil and Debug == 1 then 
-					print("M> ["..i.."] now="..timenow.." rot="..Time_Rotation.." dif="..timedif.." faze"..Time_Faze[i].." lon="..Time_Long[i])
+					print("M> ["..i.."] now="..timenow.." rot="..Time_Rotation.." dif="..timedif.." faze="..Time_Faze[i].." lon="..Time_Long[i])
 				end
 				if (timedif <= 0) or 
 					-- Pri pretoceni casovace jednou za 40 minut vyjde zaporna hodnoto casoveho rozdilu
@@ -113,8 +113,11 @@
 					-- a aby to po startu dobre ukazovalo nulovou spotrebu je tahle saskarna
 					if Time_Long[i] < (2147483647*100) then -- tak to uz je fakt moc dlouho bez pulzu, tak nebudu pricitat
 						Time_Long[i] = Time_Long[i] + 2147483647 -- zvysim aditivni hodnotu
+						-- timedif se zmenil, je nutne ho spocitat znova
+						timedif = timenow - Time_Faze[i] + Time_Long[i]
 					end
 				end
+				power = -1 -- protoze nasledujici blok nemusi teoreticky projit, debug vystup by zkolaboval, kdyby mel power nedefinovany
 				if (timedif > 0) then -- tohle je pro jistotu, nevim vubec jestli to cislo co pricitam je spravne
 					power = 3600000000/timedif -- hodnota ve watech pro pulz 1Wh, standardni vypocet jako nahore
 					if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, zde asi je jedno protoze nasleduje pouze snizovani ne zvysovani
@@ -148,7 +151,7 @@
 						end
 					end
 				end
-				if Debug == 1 then print(string.format("M> power[%d] in/out=%.3f / %.3f",i,power,Power_Faze[i])) end 
+				if Debug == 1 then print(string.format("M> [%d] power in/out=%.3f / %.3f",i,power,Power_Faze[i])) end 
 			end
         end
         Time_Rotation = timenow -- zaznamenam si novy cas
