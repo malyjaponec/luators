@@ -50,26 +50,26 @@
 
         -- zacatek kriticke sekce
             Energy_Faze[_kanal] = Energy_Faze[_kanal] + 1
-        -- konec kriticke sekcesekce
+        -- konec kriticke sekce
 
     end
       
 -- Citaci funkce 1 2 a 3
-    local function CitacPulzu1(_level)
-        if _level == gpio.LOW then
-            CitacInterni(1)
-        end
-    end
-    local function CitacPulzu2(_level)
-        if _level == gpio.LOW then
+	local function CitacPulzu1(_level)
+		if _level == gpio.LOW then
+			CitacInterni(1)
+		end
+	end
+	local function CitacPulzu2(_level)
+		if _level == gpio.LOW then
 			CitacInterni(2)
 		end
-    end
-    local function CitacPulzu3(_level)
+	end
+	local function CitacPulzu3(_level)
         if _level == gpio.LOW then
 			CitacInterni(3)
 		end
-    end
+	end
 
 -- Uprava vykonu pokud se nic nedeje
     local function ZpracujPauzu()

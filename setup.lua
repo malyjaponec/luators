@@ -81,19 +81,20 @@
 	
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
     --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
-	Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
+	--Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
+	--Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-    tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+    --tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
 		-- casovac 1
 	
-	-- dalsi hodnoty pro plynomer, pro elektromer se nemusi definovat
-	--Iluminate = {GP[5],GP[4]}
-	--Digitize_Minimum = {1024,1024,1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
-	--Digitize_Maximum = {0,0,0}
-	--Digitize_Average = {0,0,0}
-	--Digitize_Status = {5,5,5} -- hodnota 5 se nepouziva
-    --tmr.alarm(1, 10, 0,  function() dofile("measure_plyn.lc") end)
+	--dalsi hodnoty pro plynomer, pro elektromer se nemusi definovat
+	Measure_Faze = {GP[5],GP[4],nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
+	Digitize_Minimum = {1024,1024,1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
+	Digitize_Maximum = {0,0,0}
+	Digitize_Average = {0,0,0}
+	Digitize_Status = {5,5,5} -- hodnota 5 se nepouziva
+    tmr.alarm(1, 10, 0,  function() dofile("measure_plyn.lc") end)
 		-- casovac 1 pro standardni zpracovani dat a 3,4 pro analogove mereni 
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy

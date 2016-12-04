@@ -86,14 +86,17 @@ local function Start()
     rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti, co nejdrive po zapisu novych hodnot
 	
     for i=1,3 do 
-		-- zpracovani energie odesilaneho tvaru
-        Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- pocty pulzu do odesilanych dat
+		if (Measure_Faze[i] ~= nil) then
+		
+			-- zpracovani energie odesilaneho tvaru
+			Rdat[Rpref.."e"..i] = SentEnergy_Faze[i] -- pocty pulzu do odesilanych dat
 
-		-- zpracovani vykonu k odeslani
-        if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
-            Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
-			if Debug == 1 then print("S> power["..i.."]="..Power_Faze[i]) end
-        end
+			-- zpracovani vykonu k odeslani
+			if Power_Faze[i] >= 0 then -- zaporne hodnoty nepredavam zamerne
+				Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
+				if Debug == 1 then print("S> power["..i.."]="..Power_Faze[i]) end
+			end
+		end
 		
 		-- dalsi analyticka data pro analyzu zpracovani analogovych signalu, ridi se globalni promennou
 		if AnalyticReport ~= nil then
