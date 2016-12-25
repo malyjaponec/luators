@@ -104,6 +104,7 @@ local function Start()
 			Rdat[Rpref.."mi"..i] = Digitize_Minimum[i]
 			Rdat[Rpref.."ma"..i] = Digitize_Maximum[i]
 			Rdat[Rpref.."st"..i] = Digitize_Status[i]
+			Rdat[Rpref.."de"..i] = Digitize_Deviate[i]
 		end
 		
 		-- debug vypisy 
@@ -112,6 +113,12 @@ local function Start()
 		end
 		
 	end
+
+	-- analyticky report tez posla nekanalova data, spis dato
+	if AnalyticReport ~= nil then
+		Rdat[Rpref.."cap"] = Digitize_CaptureTime
+	end
+
 	
 	-- zde zkontroluji zda je dokonceno mereni DS18B20, vyctu z nej data
     if dalas ~= nil then
@@ -130,6 +137,7 @@ local function Start()
     Rdat[Rpref.."fc"] = Fail_Send   
     Rdat[Rpref.."et"] = tmr.now()/1000000
     Rdat[Rpref.."hp"] = node.heap() 
+	Rdat[Rpref.."ver"] = SW_VERSION
 	
     -- prevedu na URL
     local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 

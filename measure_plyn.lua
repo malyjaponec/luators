@@ -13,6 +13,8 @@
 	local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
 	local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
 	local Time_Rotation = 0 -- pro detekci pretoceni
+	local Time_Capture -- pro casovani opakovani mereni, nejde to udelat opakovacim casovacem, protoze pokud se neco zpozdi, tak by mohlo pristi 
+	-- mereni vletet do jeste probihajiciho predchoziho a potrebuju si merit cas kdy jsem mereni zahajil abych dodrzoval, pokud se stiha periodu
 	
 -- Debug
 	local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
@@ -31,7 +33,7 @@
 	local DIGITIZE_MINIMAL_SPAN = {180,180,180} -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
 	local DIGITIZE_STICKY = {0.0001,0.0001,0.0001} -- priblizovani limitu k namerene hodnote, pokud hodnota nezvysi limit
 	local DIGITIZE_TIME = {2,2,2} -- casova filtrace na digitalni urovni, pocet po sobe jdoucich 1 aby to byla 1
-	local POCET_MERENI = {5,5,5} -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan, tedy prumerovani
+	local POCET_MERENI = {3,3,3} -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan, tedy prumerovani
 	local ANALOG_CAPTURE_PERIOD = 100 -- v milisekundach perioda mereni analogoveho vstupu (jednoho cyklu vice vstupu)
 
 -- Generalizovana citaci funkce
@@ -262,32 +264,60 @@
 		if Average_Counter <= POCET_MERENI[_channel] then 
 			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog(_channel) end)
 		else -- nacteno dost dat provedu ocisteni
-			gpio.write(Measure_Faze[_channel],gpio.HIGH)  -- zhasnu led, uz nepotrebuju svitit na snimac
+			gpio.write(Measure_Faze[_channel],gpio.HIGH)  -- zhasnu led, uz nepotrebuju svitit na snimac, delam to jako prvni 
+			-- aby pokud mozno v dalsim kroku sekvence nedochazelo k dosvicovani predchoziho kanalu
 			
 			-- tady to mam v poli a muzu si s tim delat cokoliv alezatim s tim udelam jen prumer
 			local Sum = 0
+			local q
 			for q = 1,POCET_MERENI[_channel],1 do
 				Sum = Sum + Average_Data[q]
 			end
 			--if Debug == 1 then print("avr:"..(Sum/POCET_MERENI)) end
-			Digitize_Average[_channel] = Sum / POCET_MERENI[_channel] -- ulozim si prumer pro dalsi zpracovani a taky pro odeslani na cloud
+			Sum = Sum / POCET_MERENI[_channel] -- sum uz neni suma ale prumer
+			Digitize_Average[_channel] = Sum -- ulozim si prumer pro dalsi zpracovani a taky pro odeslani na cloud
+			-- vypocet odchlky
+			local Dev = 0
+			for q = 1,POCET_MERENI[_channel],1 do
+				Dev = Dev + ((Sum - Average_Data[q])^2)
+			end
+			Dev = Dev / POCET_MERENI[_channel] -- prumerna odchylka
+			Digitize_Deviate[_channel] = Dev
+			Dev, Sum, q = nil
+			-- konec vypoctu statistiky, nyni probehne zpracovani podle hodnot zapsanych v globalnich polich
 			ProcessPoint(_channel)
-			Sum = nil
 			if Measure_Faze[_channel+1] ~= nil then -- jeste je definovan dalsi iluminat
 				StartAnalogG(_channel+1) -- tady volam funkci definovanou nize, musi byt tedy globalni
+			else
+				-- vse je zmereno, je potreba nastavit cekani na dalsi mereni
+				local td = tmr.now() - Time_Capture -- spocitam jak dlouho me trvalo mereni
+				if td < 0 then -- stat se muze ze se pretoci casovac a pak to vyjde zaporne
+					td = td + 2147483647 -- vime do kolika casovac pocita takze se pretoceni da snadno eliminovat
+				end
+				td = td / 1000 -- lepsi bude to prevest na milisekundy, nez pracovat v mikrosekundach
+				Digitize_CaptureTime = td -- odlozim do globalni promenne pro analyticke reporty
+				td = ANALOG_CAPTURE_PERIOD - td -- spocitam kolik milisekund zbyva do pozadovane doby jedne periody opakovani mereni
+				if td <= 0 then -- kdybych nahodou nestihal
+					td = 1 -- tak nastavin casovac na jednu milisekundu, cili spoustit to co nejdrive jde
+				end
+				tmr.alarm(4, 5, 0,  function() StartAnalogG(1) end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
 			end
 		end
 	end
 	
 -- Opakovane spousteni zpracovani dat
 	local function StartAnalog(_kanal)
+		-- mereni casu
+		if _kanal == 1 then -- delam jen u prvniho kanalu ze sekvence
+			Time_Capture = tmr.now()
+		end
 		-- rozsvitim  IR kalanl
 		gpio.mode(Measure_Faze[_kanal],gpio.OUTPUT)
         gpio.write(Measure_Faze[_kanal],gpio.LOW) 
 		-- spustim mereni na prvni kanale
 		Average_Counter = 1
 		Average_Data = {}
-		-- spustim mereni pres casovac aby se stihli rozsvitit IR led
+		-- spustim mereni pres casovac aby se stihli rozsvitit IR led, tento cas zohlednuje to ze se IR led v detektoru rozsviti
 		tmr.alarm(4, 10, 0,  function() CaptureAnalog(_kanal) end)
 	end
 	function StartAnalogG(_kanal)
@@ -298,6 +328,7 @@
 -- Nacasu prvni odeslani
 	Digitize_Minimum[1], Digitize_Minimum[2], Digitize_Minimum[3], Digitize_Maximum[1], Digitize_Maximum[2], Digitize_Maximum[3] = rtcmem.read32(7,6) -- nactu si pamet 7 a 8
 
-	tmr.alarm(3, ANALOG_CAPTURE_PERIOD, 1,  function() StartAnalog(1) end) -- pousti se opakovane
+	--tmr.alarm(3, ANALOG_CAPTURE_PERIOD, 1,  function() StartAnalog(1) end) -- pousti se opakovane
+	tmr.alarm(3, 10, 0,  function() StartAnalog(1) end) -- odstartuji prvni mereni
 
     tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- pousti se opakovane
