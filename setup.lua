@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "1"
+	SW_VERSION = "2"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -34,7 +34,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0 -- citac poctu reportu od zapnuti
-    Rnod = "1"
+    Rnod = "4"
 	-- "1" plynomery maji vyhrazeny node 1
     -- "4" elektromery jsou node 4
     if (file.open("apikey.ini", "r") ~= nil) then
@@ -83,16 +83,21 @@
 	]]
 	
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
+	--
     --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
 	--Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
-	--Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1
+	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-    --tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+    tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+	--]]
 		-- casovac 1
 	
 	--dalsi hodnoty pro plynomer, pro elektromer se nemusi definovat
+	--[[
 	Measure_Faze = {GP[4],GP[5],nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
+    Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
 	Digitize_Minimum = {1024,1024,1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
 	Digitize_Maximum = {0,0,0}
 	Digitize_Average = {0,0,0}
@@ -101,10 +106,11 @@
 	Digitize_CaptureTime = 0
 	AnalyticReport = 1 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
     tmr.alarm(1, 10, 0,  function() dofile("measure_plyn.lc") end)
+	--]]
 		-- casovac 1 pro standardni zpracovani dat a 3,4 pro analogove mereni - neni pravda, casovace 3 byl eliminovan
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
-	--Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
+	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
     tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
 		-- casovac 2
 
