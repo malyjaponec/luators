@@ -21,7 +21,8 @@ local Casovac
 local Data
 local PinDALAS,PinDALAS2
 local Name
-local Finished,sensors,tsnimacu = 0,0,0
+local Finished = 0
+local sensors,tsnimacu
 local t,taddr,tcount
 -- Nastaveno pro 3 dratove napajeni, druhy kanal potom prehazi hodnoty tak
 -- aby to fungovalo s fantomovym napajenim
@@ -74,8 +75,12 @@ local function cleanupDALAS()
         Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
         local time = (tmr.now() -((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
+        if Debug == 1 then 
+			print("DS> end="..time)
+		end
         Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
-        time = nil
+		time = nil
+		
     end
 end
 
@@ -91,7 +96,7 @@ local function readoutDALAS()
 			value = value/10000 -- teplotu to vraci v desitkach milicelsiu
 			Data["t"..textaddr] = value -- data se zaradi do pole zmerenych hodnot
 			if Debug == 1 then 
-				print(Casovac..">t"..textaddr.." = "..value)
+				print("DS> "..textaddr.." = "..value)
 			end
 		end
 		textaddr,value = nil,nil
@@ -131,7 +136,7 @@ local function startDALAS()
             tsnimacu = 0
         end
         if Debug == 1 then 
-            print(Casovac..">sens: "..tsnimacu) -- pocet senzoru 
+            print("DS> sens: "..tsnimacu) -- pocet senzoru 
         end 
         if tsnimacu > 0 then -- jsou nalezeny snimace
             tcount = 1
@@ -150,10 +155,10 @@ local function setup(_casovac,_dalaspin,_dalaspin2)
     Casovac = _casovac or 4 
     PinDALAS, PinDALAS2 = _dalaspin,_dalaspin2
     Data = {}
-    Finished = 0
+    Finished,sensors,tsnimacu = 0,0,0
     tmr.alarm(Casovac, 25, 0,  function() 
         if Debug == 1 then 
-            print(Casovac..">dalas")
+            print("DS> start")
         end 
         t = require("ds18b20")
         startDALAS()
