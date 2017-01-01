@@ -4,6 +4,7 @@ local name
 name = "analog"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -13,6 +14,7 @@ end
 name = "baro"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -22,6 +24,7 @@ end
 name = "battery"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -31,6 +34,7 @@ end
 name = "dalas"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -40,6 +44,7 @@ end
 name = "dht22"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -49,6 +54,7 @@ end
 name = "distance"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -58,6 +64,7 @@ end
 name = "digital"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -73,9 +80,40 @@ if file.open(name..".lua", "r") ~= nil then
     file.close()
 end
 
+name = "measure"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "measure_elektro"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "measure_plyn"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
 name = "network"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -85,6 +123,7 @@ end
 name = "send"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -94,6 +133,7 @@ end
 name = "setup"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -103,6 +143,7 @@ end
 name = "restart"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -112,6 +153,7 @@ end
 name = "receive"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
@@ -121,6 +163,27 @@ end
 name = "reload"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "rgb"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "reset"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
     file.close()
     node.compile(name..".lua")
     if file.open(name..".lc", "r") == nil then print(name..".lua failed") end

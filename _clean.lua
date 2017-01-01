@@ -25,6 +25,15 @@ file.remove(name..".lc")
 name = "ds18b20"
 file.remove(name..".lc")
 
+name = "measure"
+file.remove(name..".lc")
+
+name = "measure_elektro"
+file.remove(name..".lc")
+
+name = "measure_plyn"
+file.remove(name..".lc")
+
 name = "network"
 file.remove(name..".lc")
 
@@ -41,6 +50,12 @@ name = "receive"
 file.remove(name..".lc")
 
 name = "reload"
+file.remove(name..".lc")
+
+name = "rgb"
+file.remove(name..".lc")
+
+name = "reset"
 file.remove(name..".lc")
 
 -- "sleep" - se nepreklada, pred deepsleepem me uz na nejake pametove narocnosti nesejde
