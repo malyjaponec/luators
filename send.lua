@@ -11,21 +11,23 @@ local function Get_AP_MAC()
     return "????"
 end
 
---------------------------------------------------------------------------------
-local function Konec(code, data)
-     -- indikacni led zhasnu
-     if LedSend ~= nil then 
+local function ZhasniLED()
+    if LedSend ~= nil then 
         if LedSend > 0 then
+			gpio.mode(LedSend, gpio.OUTPUT)
 			gpio.write(LedSend, gpio.LOW)
-			--gpio.mode(LedSend, gpio.INPUT, gpio.FLOAT) 
-			-- je celkem jedno jestli zustane out nebo in, v deepsleepu vsechny jak ledky proti gnd tak proti vcc prosvecuji
-			-- a jedina moznost jak dostahnout nizkou spotrebu je odpojit je, krome cervene RGB, ta nesviti nikdy?
 		else
+			gpio.mode(-LedSend, gpio.OUTPUT)
 			gpio.write(-LedSend, gpio.HIGH)
-			--gpio.mode(-LedSend, gpio.INPUT, gpio.FLOAT) 
 		end
 		
      end
+end
+
+--------------------------------------------------------------------------------
+local function Konec(code, data)
+     -- indikacni led zhasnu
+	ZhasniLED()
 
     if (code == nil) then
         code = -100
@@ -204,4 +206,4 @@ end
 
 --------------------------------------------------------------------------------
 tmr.alarm(0, 500, 0,  function() KontrolaOdeslani() end)  -- Na zacatku klidne muzu cekat dele
-
+ZhasniLED()
