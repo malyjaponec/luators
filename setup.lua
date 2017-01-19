@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "3"	
+	SW_VERSION = "4"	
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -21,15 +21,16 @@
     end
 
     -- post processing funkce, kterou si odesilac pred odeslanim zavola a ona muze neco upravit nebo hlavne 
-	-- slouzi k prepnuti rychlosti reportingu
+	-- slouzi k prepnuti rychlosti reportingu, coz ale nakonec nikde nepouzivame protoze se vsude nasadili
+	-- systemy napajene ze site, treba protoze krome reportu taky ovladaji rele
     function PostProcessing(_datove_pole)
         -- *************************
-        -- teplota kourovou v garazi
-        if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
-            if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
-                ReportFast = 1 -- zrychlene reportovani
-            end
-        end
+--        -- teplota kourovou v garazi
+--		if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
+--			if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
+--				ReportFast = 1 -- zrychlene reportovani
+--            end
+--        end
 --        -- zkusebni cidlo 
 --        if _datove_pole["6GJTY_t287820080000804F"] ~= nil then -- je dostupna teplota kourovodu
 --            if _datove_pole["6GJTY_t287820080000804F"] > 30 then -- teplota je pres 30 stupnu
@@ -46,17 +47,17 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, gpionum[15]) -- s ledkovym vystupem
-		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
+        --network.setup(1, gpionum[15]) -- s ledkovym vystupem
+		network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        --battery = require("battery")
-        --battery.setup(2, nil) -- bez mereni svetla
+        battery = require("battery")
+        battery.setup(2, nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        --dht22 = require("dht22")
-        --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
+        dht22 = require("dht22")
+        dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
@@ -69,14 +70,14 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        dalas = require("dalas")
-        dalas.setup(5,gpionum[14])
+        --dalas = require("dalas")
+        --dalas.setup(5,gpionum[14])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
         --dist.setup(3,50) 
-        analog = require("analog")
-        analog.setup(2,25)
+        --analog = require("analog")
+        --analog.setup(2,25)
 		--digital = require("digital")
 		--digital.capture(gpionum[4],gpionum[5])
         -- *************************
@@ -85,11 +86,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 5
+    ReportInterval = 10*60
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-    PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+    --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "5" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -102,7 +103,7 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	GetFeeds = {[639]=gpionum[4]}
+	--GetFeeds = {[639]=gpionum[4]}
 	
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -125,7 +126,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = gpionum[12] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
+        --LedSend = gpionum[12] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
