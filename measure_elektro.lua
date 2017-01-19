@@ -9,12 +9,16 @@
     tmr.stop(1)
     local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
     -- local MaximalPower = 16000 -- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
-    local MaximalPower = 80000 -- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    -- local MaximalPower = 80000 -- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+	local MaximalPower = 150000 -- pro vodomer 0,00002 m2 (20ml) na otacku je to 3 m3/hod, tedy 50 l/min, coz je mozna az moc... nejspis budou odbery dostahovat 20 l/min
 
 -- citace, casovace a akumulatory
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
     local Time_Rotation = 0 -- pro detekci pretoceni
+	
+	local level_old = 0
+	local level_older = 0
 	
 -- Debug
 	local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
@@ -163,19 +167,31 @@
 -- Nastaveni pinu na preruseni
     if Measure_Faze[1] ~= nil then
         gpio.mode(Measure_Faze[1], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[1], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
+--      gpio.mode(Measure_Faze[1], gpio.INT, gpio.PULLUP) 
+--      gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
     end
     if Measure_Faze[2] ~= nil then
-        gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[2], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
+        gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.PULLUP)
+--        gpio.mode(Measure_Faze[2], gpio.INT, gpio.PULLUP) 
+--        gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
     end
     if Measure_Faze[3] ~= nil then
-        gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[3], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
+        gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.PULLUP)
+--        gpio.mode(Measure_Faze[3], gpio.INT, gpio.PULLUP) 
+--        gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
     end
-    
+
+	local function SkenujVstupy()
+		local level = gpio.read(Measure_Faze[1])
+		if level_old ~= level_older and level == gpio.LOW and level_old == gpio.LOW then
+			CitacInterni(1)
+			
+		end
+		level_older = level_old
+		level_old = level
+	end
+	    
 -- Nacasu prvni odeslani
     tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
+	tmr.alarm(3, 10, 1, function() SkenujVstupy() end)
+	
