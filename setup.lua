@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "3"
+	SW_VERSION = "5"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -90,9 +90,21 @@
 	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+	--[[
     tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+		-- casovac 1 pro standardni zpracovani dat
+		--         3 pro velmi rychle cteni digitalnich vstupu pro vypocet "pulzu"
 	--]]
+	
+	-- [[
+	-- vodomery pouzivaji jiny mechanizmus snimani pomoci dvou snimacu aby se odstranilo kmitani a nikdy nebude vic vodomeru na jednom
+	-- presto zachovavam promenne z elektromeru a pouzije se jen prvni na druhou stranu je potreba mit vzdy 2 vstupy na jeden merici bod
+	-- proto je tu fazeB ktera definuje druhy vstup. Moznost mit 3 vodomery na jednom luatoru je zachovana i kdyz to asi nebude stihat
+	-- ani nemam misto kde bych to pouzil
+	Measure_FazeB = { GP[5], nil, nil }
+	tmr.alarm(1, 10, 0,  function() dofile("measure_voda.lc") end)
 		-- casovac 1
+	--]]
 	
 	--dalsi hodnoty pro plynomer, pro elektromer se nemusi definovat
 	--[[
@@ -108,7 +120,8 @@
 	AnalyticReport = 1 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
     tmr.alarm(1, 10, 0,  function() dofile("measure_plyn.lc") end)
 	--]]
-		-- casovac 1 pro standardni zpracovani dat a 3,4 pro analogove mereni - neni pravda, casovace 3 byl eliminovan
+		-- casovac 1 pro standardni zpracovani dat
+		--         3 pro analogove mereni
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
 	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace

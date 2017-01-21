@@ -28,6 +28,9 @@ file.remove(name..".lc")
 name = "measure_plyn"
 file.remove(name..".lc")
 
+name = "measure_voda"
+file.remove(name..".lc")
+
 name = "network"
 file.remove(name..".lc")
 

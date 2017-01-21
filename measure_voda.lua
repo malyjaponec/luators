@@ -1,16 +1,21 @@
 --[[ measure.lua
-    Tento kod nespocita vykon drive nez dostane 2 pulzy. Z jednoho pulzu si to neovodi a ceka dokud neprijde druhy
-    To mi prislo blbe, kdyz se zapne system na 0 spotrebe a proto je zde podmika, ktera rika ze pokud je klid 
-    dobu delsi nez odpovida spotrebe MinmalPower tak se na cloud zacne posilat nula, hodnota se definuje nize.
-    Nijak to neovlivni minimalni mozny zmereny vykon, ten muze byt klidne 0,01W pokud ovsem behem mereni nedojde
-    k pretoceni casovace coz je asi 40 minut pak kdo vi co se zacne dit, ne vzdy vyjde zaporne cislo, ktere se 
-    samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
+    zpracovani pulzu je zcela odvozeno z elektromeru a melo by se zachovat synchonni a neni potreba komentovat
+	
+	vyroba pulzu ale vznika jinak nez u elektromeru, pocita se filtraci ze dvou hall sond tak aby se omezil problem zachvevu vrtule,
+	ktera se nutne musi pohybovat lehce a pri sebemensi tlakove zmene v systemu se muze pohnout a pokud je hall sonda na hranici urovni
+	nutne zacne generovat pulzy proto se pulzy filtruji jednak na dobu trvani a jednak na pravidelne stridani dvou vstupu, pulzy z jednoho
+	vstupu bez toho aby mezi tim byl druhy se ignoruji. Je potreba zajistit aby snimace byly dost daleko a nedochazelo k prekryvani a
+	zaroven nesmi byt moc daleko kvuli tomu ze magnet ve vodomeru ma obvykle 2 shodne poly proti sobe, tedy optimalni pozice je 90 stupnu
+	s tim ze pokud se kolecko bude otacet o vic jak 90 stupnu nelze zarucit eliminaci problemu, pri pouziti zpetneho ventilu by k tomu 
+	dochazet nemelo a pohyb by mel byt pouze lehce dopredny, ale to nemam takze uvidime.
 --]]
     tmr.stop(1)
-    local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
-    -- local MaximalPower = 16000 -- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
-    local MaximalPower = 80000 -- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
-
+    local MinimalPower = 1
+	local MaximalPower = 200000
+	--[[ pro vodomer 20ml na otacku resp 10ml na jeden magneticky puls je to je
+		 10 ml/hod vs. 2 m3/hod, tedy 33 l/min
+	]]
+		 
 -- citace, casovace a akumulatory
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
@@ -37,7 +42,7 @@
             Time_Long[_kanal] = 0
             if timedif > 0 then -- Pro jistotu, kdyby mi pres predchozi upravy a podminky proslo zaporne cislo, tak ho zahodim 
 				-- a do vypoctu vykonu ho nezapocitam
-                local power = 3600000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
+                local power = 3600000000/timedif -- hodnota ve pulzech za hodinu
                 if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity
                     Power_Faze[_kanal] = power
                     rtcmem.write32(3+_kanal, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
@@ -54,24 +59,69 @@
         -- konec kriticke sekce
 
     end
-      
--- Citaci funkce 1 2 a 3
-	local function CitacPulzu1(_level)
-		if _level == gpio.LOW then
-			CitacInterni(1)
-		end
-	end
-	local function CitacPulzu2(_level)
-		if _level == gpio.LOW then
-			CitacInterni(2)
-		end
-	end
-	local function CitacPulzu3(_level)
-        if _level == gpio.LOW then
-			CitacInterni(3)
-		end
-	end
 
+-- Zpracovani dualnich vstupu
+	digi_filter = {}
+	digi_filter[1] = {0,0,0}
+	digi_filter[2] = {0,0,0}
+	digi_time = {}
+	digi_time[1] = {0,0,0}
+	digi_time[2] = {0,0,0}
+	digi_last = {}
+	digi_last[1] = {0,0,0}
+	digi_last[2] = {0,0,0}
+	digi_block = {0,0,0}
+	
+	local function SkenujVstupy()
+		for  i=1,3 do
+			local level = {}
+			if nil ~= Measure_Faze[i] then -- Pokud neni definovan vstup preskakujeme
+				-- pokud je vstup definovan, nactu si vstup A a B, uz nekontroluji zda je nadefinovan B, to musi zajistit uzivatel
+				level[1],level[2] = gpio.read(Measure_Faze[i]),gpio.read(Measure_FazeB[i])
+				for q=1,2 do
+					if level[q] == digi_filter[q][i] then -- hodnota je shodna s predchozi
+						if digi_time[q][i] < 10 then -- omezeni na zbytecne velka cisla
+							digi_time[q][i] = digi_time[q][i] + 1 -- pocitam si dobu setrvani v jedne ustali
+						end
+						if digi_time[q][i] == 2 then -- prave X shodne hodnoty po sobe muzu se zacit zabyvat tim zda je to platna zmena
+
+							gpio.mode(7,gpio.OUTPUT)
+							gpio.write(7,gpio.HIGH) 
+
+							if level[q] ~= digi_last[q][i] then -- 3 hodnoty maji opacnou uroven nez zapamatovana hodnota, to je platna zmena
+								digi_last[q][i] = level [q] -- zmenim si ji abych priste detekoval zmenu do opacne urovne
+								if level[q] == gpio.HIGH then -- logicka jednotka, pro pocitani puluzu beru jen prechod L->H
+									if q == 1 then -- obsluha primarniho vstupu
+										if digi_block[i] == 0 then -- prave pokud neni nastavena blokace 
+											digi_block[i] = 1 -- jako prvni nastavim blokaci
+											CitacInterni(i)
+										end -- pokud je nastavena blokace vubec me prechod L->H nezajima nedelam nich
+									else -- obsluha sekundarniho pulzu
+										digi_block[i] = 0 --[[ zrusim blokaci a proto je vhodne mit nastavene pulzy tak, aby se neprekryvali nebo mohou
+														  ale vzdalenost mezi tim kdy mohou vznikat nabezne hrany by mela byt maximalni tak aby se
+														  eliminovalo co nejversi otaceni kolecka, ktere neni spojene s odberem vody, to znamena v 
+														  mem pripade 90 stupnu a nastavit komparatory tak aby byla sirka 1 pulzu co nejuzsi a pritom 
+														  potom ale nema cenu delat tu filtraci 3 pulzu po sobe ... zakmity na prechodech se odstrani tim
+														  ze kmnita vzdy pouze jeden vstup, nastesti lze zmenou konstanty filtr uplne eliminovat ]]
+									end
+								end
+							end
+		
+							gpio.write(7,gpio.LOW) 
+							
+						end
+					else -- hodnota je jina nez posledne
+						digi_filter[q][i] = level[q] -- zapisu si novou hodnotu vstupu pro porovnani priste
+						digi_time[q][i] = 0 -- nuluji citac stejne hodnoty
+					end
+				end
+			end
+			level = nil
+		end
+		 
+        tmr.alarm(3, 5, 0, function() SkenujVstupy() end)
+	end
+	    
 -- Uprava vykonu pokud se nic nedeje
     local function ZpracujPauzu()
 
@@ -118,7 +168,7 @@
 				end
 				power = -1 -- protoze nasledujici blok nemusi teoreticky projit, debug vystup by zkolaboval, kdyby mel power nedefinovany
 				if (timedif > 0) then -- tohle je pro jistotu, nevim vubec jestli to cislo co pricitam je spravne
-					power = 3600000000/timedif -- hodnota ve watech pro pulz 1Wh, standardni vypocet jako nahore
+					power = 3600000000/timedif -- hodnota v puzech za hodinu, standardni vypocet jako nahore
 					if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, zde asi je jedno protoze nasleduje pouze snizovani ne zvysovani
 						if (power < Power_Faze[i]) then -- vypocteny vykon je nizsi nez predchozi, znamena to se ze se prodluzuji
 						-- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
@@ -160,22 +210,21 @@
         i = nil
     end
       
--- Nastaveni pinu na preruseni
+-- Nastaveni pinu na vstup z hall sond, pocitam s tim ze vstupy maji tvrdy vystup, cili zadne pull-up-down 
     if Measure_Faze[1] ~= nil then
         gpio.mode(Measure_Faze[1], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[1], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
+        gpio.mode(Measure_FazeB[1], gpio.INPUT, gpio.FLOAT)
     end
     if Measure_Faze[2] ~= nil then
-        gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[2], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[2], "down", CitacPulzu2)
+        gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.PULLUP)
+        gpio.mode(Measure_FazeB[2], gpio.INPUT, gpio.PULLUP)
     end
     if Measure_Faze[3] ~= nil then
-        gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.FLOAT)
-        gpio.mode(Measure_Faze[3], gpio.INT, gpio.PULLUP) 
-        gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
+        gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.PULLUP)
+        gpio.mode(Measure_FazeB[3], gpio.INPUT, gpio.PULLUP)
     end
-    
+
 -- Nacasu prvni odeslani
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
+    tmr.alarm(1, 1000, 1, function() ZpracujPauzu() end) 
+	tmr.alarm(3, 100, 0, function() SkenujVstupy() end)
+	
