@@ -7,10 +7,19 @@
     samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
 --]]
     tmr.stop(1)
-    local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
-    -- local MaximalPower = 16000 -- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
-    local MaximalPower = 80000 -- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    --local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
+    --local MaximalPower = 16000 
+		-- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    --local MaximalPower = 80000 
+		-- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    
+	local MinimalPower = 6
+	local MaximalPower = 200000
+		--[[ pro vodomer 20ml na otacku resp 10ml na jeden magneticky puls je to je
+			10 ml/hod vs. 2 m3/hod, tedy 33 l/min
+	]]
 
+		
 -- citace, casovace a akumulatory
     local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
     local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych

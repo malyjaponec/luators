@@ -22,7 +22,7 @@
     local Time_Rotation = 0 -- pro detekci pretoceni
 	
 -- Debug
-	local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
+	--local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
 
 -- Generalizovana citaci funkce
     local function CitacInterni(_kanal)
@@ -83,32 +83,35 @@
 						if digi_time[q][i] < 10 then -- omezeni na zbytecne velka cisla
 							digi_time[q][i] = digi_time[q][i] + 1 -- pocitam si dobu setrvani v jedne ustali
 						end
-						if digi_time[q][i] == 2 then -- prave X shodne hodnoty po sobe muzu se zacit zabyvat tim zda je to platna zmena
-
-							gpio.mode(7,gpio.OUTPUT)
-							gpio.write(7,gpio.HIGH) 
+						if digi_time[q][i] == 1 then -- prave X shodne hodnoty po sobe muzu se zacit zabyvat tim zda je to platna zmena
 
 							if level[q] ~= digi_last[q][i] then -- 3 hodnoty maji opacnou uroven nez zapamatovana hodnota, to je platna zmena
 								digi_last[q][i] = level [q] -- zmenim si ji abych priste detekoval zmenu do opacne urovne
 								if level[q] == gpio.HIGH then -- logicka jednotka, pro pocitani puluzu beru jen prechod L->H
-									if q == 1 then -- obsluha primarniho vstupu
-										if digi_block[i] == 0 then -- prave pokud neni nastavena blokace 
-											digi_block[i] = 1 -- jako prvni nastavim blokaci
+
+									gpio.mode(7,gpio.OUTPUT)
+									gpio.write(7,gpio.HIGH) 
+									
+									--if q == 1 then -- obsluha primarniho vstupu
+										--if digi_block[i] == 0 then -- prave pokud neni nastavena blokace 
+											--digi_block[i] = 1 -- jako prvni nastavim blokaci
 											CitacInterni(i)
-										end -- pokud je nastavena blokace vubec me prechod L->H nezajima nedelam nich
-									else -- obsluha sekundarniho pulzu
-										digi_block[i] = 0 --[[ zrusim blokaci a proto je vhodne mit nastavene pulzy tak, aby se neprekryvali nebo mohou
+										--end -- pokud je nastavena blokace vubec me prechod L->H nezajima nedelam nich
+									--else -- obsluha sekundarniho pulzu
+										--digi_block[i] = 0 
+														--[[ zrusim blokaci a proto je vhodne mit nastavene pulzy tak, aby se neprekryvali nebo mohou
 														  ale vzdalenost mezi tim kdy mohou vznikat nabezne hrany by mela byt maximalni tak aby se
 														  eliminovalo co nejversi otaceni kolecka, ktere neni spojene s odberem vody, to znamena v 
 														  mem pripade 90 stupnu a nastavit komparatory tak aby byla sirka 1 pulzu co nejuzsi a pritom 
 														  potom ale nema cenu delat tu filtraci 3 pulzu po sobe ... zakmity na prechodech se odstrani tim
 														  ze kmnita vzdy pouze jeden vstup, nastesti lze zmenou konstanty filtr uplne eliminovat ]]
-									end
+									--end
+									
+									gpio.write(7,gpio.LOW) 
+
 								end
 							end
-		
-							gpio.write(7,gpio.LOW) 
-							
+						
 						end
 					else -- hodnota je jina nez posledne
 						digi_filter[q][i] = level[q] -- zapisu si novou hodnotu vstupu pro porovnani priste

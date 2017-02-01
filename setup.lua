@@ -90,13 +90,13 @@
 	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-	--[[
+	-- [[
     tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro velmi rychle cteni digitalnich vstupu pro vypocet "pulzu"
 	--]]
 	
-	-- [[
+	--[[
 	-- vodomery pouzivaji jiny mechanizmus snimani pomoci dvou snimacu aby se odstranilo kmitani a nikdy nebude vic vodomeru na jednom
 	-- presto zachovavam promenne z elektromeru a pouzije se jen prvni na druhou stranu je potreba mit vzdy 2 vstupy na jeden merici bod
 	-- proto je tu fazeB ktera definuje druhy vstup. Moznost mit 3 vodomery na jednom luatoru je zachovana i kdyz to asi nebude stihat
