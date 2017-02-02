@@ -38,6 +38,15 @@ local function capture(...)
 end
 M.capture = capture
 
+local function pullup(...)
+    Data = {}
+    for i = 1, select("#",...) do
+       local gpionumber = select(i,...)
+	   gpio.mode(gpionumber,gpio.INPUT,gpio.PULLUP)
+    end
+end
+M.pullup = pullup
+
 local function getvalues()
     return Data
 end
