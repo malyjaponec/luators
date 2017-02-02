@@ -80,8 +80,7 @@
         analog.setup(2,25)
 
 		digital = require("digital")
-		digital.pullup(gpionum[4],gpionum[5],gpionum[16],gpionum[14])
-		digital.capture(gpionum[4],gpionum[5],gpionum[16],gpionum[14])
+		digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
 		
         -- *************************
     end

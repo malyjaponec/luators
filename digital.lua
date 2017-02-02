@@ -3,6 +3,8 @@
 -- 
 -- capture(seznam pinu) - precte digitalni piny
 -- getvalues() - vrati pole hodnot na pinech
+-- params: seznam pgio pinu, pokud se pricte 64, tak hodnotu vyctenou z pinu
+-- 		   logicky neguje a pokud se pricte 128, tak pred ctenim zapne pull up
 --
 --------------------------------------------------------------------------------
 -- Set module name as parameter of require
@@ -32,20 +34,20 @@ local Data
 local function capture(...)
     Data = {}
     for i = 1, select("#",...) do
-       local gpionumber = select(i,...)
-	   Data["io"..gpionumber] = gpio.read(gpionumber)
+        local gpionumber = select(i,...)
+	    if gpionumber >= 128 then -- je tam pozadavek na zapnuti pull upu
+			gpio.mode(gpionumber,gpio.INPUT,gpio.PULLUP)
+			gpionumber = gpionumber - 128
+		end
+		if gpionumber >= 64 then -- je pozadavek hodnotu negovat
+			gpionumber = gpionumber - 64
+			Data["io"..gpionumber] = 1 - gpio.read(gpionumber)
+		else
+			Data["io"..gpionumber] = gpio.read(gpionumber)
+		end
     end
 end
 M.capture = capture
-
-local function pullup(...)
-    Data = {}
-    for i = 1, select("#",...) do
-       local gpionumber = select(i,...)
-	   gpio.mode(gpionumber,gpio.INPUT,gpio.PULLUP)
-    end
-end
-M.pullup = pullup
 
 local function getvalues()
     return Data
