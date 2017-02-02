@@ -33,19 +33,33 @@ local Data
 --------------------------------------------------------------------------------
 local function capture(...)
     Data = {}
+    local value
     for i = 1, select("#",...) do
         local gpionumber = select(i,...)
+        local D_neg,D_pul = 0,0
 	    if gpionumber >= 128 then -- je tam pozadavek na zapnuti pull upu
-			gpio.mode(gpionumber,gpio.INPUT,gpio.PULLUP)
 			gpionumber = gpionumber - 128
+            D_pul = 1
 		end
 		if gpionumber >= 64 then -- je pozadavek hodnotu negovat
 			gpionumber = gpionumber - 64
-			Data["io"..gpionumber] = 1 - gpio.read(gpionumber)
+            D_neg = 1
+        end
+        if D_pul == 1 then
+            gpio.mode(gpionumber,gpio.INPUT,gpio.PULLUP)
+        end
+        if D_neg == 1 then
+			value = 1 - gpio.read(gpionumber)
 		else
-			Data["io"..gpionumber] = gpio.read(gpionumber)
+			value = gpio.read(gpionumber)
 		end
-    end
+        if Debug == 1 then 
+                print("DG> "..gpionumber.." = "..value.."("..D_neg..")")
+        end
+        D_neg,D_pu = nil,nil
+        Data["io"..gpionumber] = value
+   end
+    value = nil
 end
 M.capture = capture
 
