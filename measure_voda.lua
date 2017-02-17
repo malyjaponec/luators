@@ -60,71 +60,24 @@
 
     end
 
--- Zpracovani dualnich vstupu
-	digi_filter = {}
-	digi_filter[1] = {0,0,0}
-	digi_filter[2] = {0,0,0}
-	digi_time = {}
-	digi_time[1] = {0,0,0}
-	digi_time[2] = {0,0,0}
-	digi_last = {}
-	digi_last[1] = {0,0,0}
-	digi_last[2] = {0,0,0}
 	digi_block = {0,0,0}
-	
-	local function SkenujVstupy()
-		for  i=1,3 do
-			local level = {}
-			if nil ~= Measure_Faze[i] then -- Pokud neni definovan vstup preskakujeme
-				-- pokud je vstup definovan, nactu si vstup A a B, uz nekontroluji zda je nadefinovan B, to musi zajistit uzivatel
-				level[1],level[2] = gpio.read(Measure_Faze[i]),gpio.read(Measure_FazeB[i])
-				for q=1,2 do
-					if level[q] == digi_filter[q][i] then -- hodnota je shodna s predchozi
-						if digi_time[q][i] < 10 then -- omezeni na zbytecne velka cisla
-							digi_time[q][i] = digi_time[q][i] + 1 -- pocitam si dobu setrvani v jedne ustali
-						end
-						if digi_time[q][i] == 1 then -- prave X shodne hodnoty po sobe muzu se zacit zabyvat tim zda je to platna zmena
 
-							if level[q] ~= digi_last[q][i] then -- 3 hodnoty maji opacnou uroven nez zapamatovana hodnota, to je platna zmena
-								digi_last[q][i] = level [q] -- zmenim si ji abych priste detekoval zmenu do opacne urovne
-								if level[q] == gpio.HIGH then -- logicka jednotka, pro pocitani puluzu beru jen prechod L->H
-
-									gpio.mode(7,gpio.OUTPUT)
-									gpio.write(7,gpio.HIGH) 
-									
-									--if q == 1 then -- obsluha primarniho vstupu
-										--if digi_block[i] == 0 then -- prave pokud neni nastavena blokace 
-											--digi_block[i] = 1 -- jako prvni nastavim blokaci
-											CitacInterni(i)
-										--end -- pokud je nastavena blokace vubec me prechod L->H nezajima nedelam nich
-									--else -- obsluha sekundarniho pulzu
-										--digi_block[i] = 0 
-														--[[ zrusim blokaci a proto je vhodne mit nastavene pulzy tak, aby se neprekryvali nebo mohou
-														  ale vzdalenost mezi tim kdy mohou vznikat nabezne hrany by mela byt maximalni tak aby se
-														  eliminovalo co nejversi otaceni kolecka, ktere neni spojene s odberem vody, to znamena v 
-														  mem pripade 90 stupnu a nastavit komparatory tak aby byla sirka 1 pulzu co nejuzsi a pritom 
-														  potom ale nema cenu delat tu filtraci 3 pulzu po sobe ... zakmity na prechodech se odstrani tim
-														  ze kmnita vzdy pouze jeden vstup, nastesti lze zmenou konstanty filtr uplne eliminovat ]]
-									--end
-									
-									gpio.write(7,gpio.LOW) 
-
-								end
-							end
-						
-						end
-					else -- hodnota je jina nez posledne
-						digi_filter[q][i] = level[q] -- zapisu si novou hodnotu vstupu pro porovnani priste
-						digi_time[q][i] = 0 -- nuluji citac stejne hodnoty
-					end
-				end
+-- Zpracovani dualnich vstupu prerusenim
+	local function CitacPulzu1(_level) -- Primarni citac, ten vyvolava obsluhu pulzu
+		if _level == gpio.LOW then
+			if 0 == digi_block[1] then -- blokace neni
+				digi_block[1] = 1 -- blokaci nastavim
+				CitacInterni(1) -- Volam zpracovani pulzu
 			end
-			level = nil
 		end
-		 
-        tmr.alarm(3, 5, 0, function() SkenujVstupy() end)
 	end
-	    
+	local function CitacPulzu1B(_level) -- Sekundarni citac, nuluje blokaci
+		if _level == gpio.LOW then
+			digi_block[1] = 0 -- blokaci zrusim
+		end
+	end
+	-- zde chybi faze 2 a 3 ... kdybych mel 3 fazovej vodomer :)
+	
 -- Uprava vykonu pokud se nic nedeje
     local function ZpracujPauzu()
 
@@ -217,10 +170,15 @@
     if Measure_Faze[1] ~= nil then
         gpio.mode(Measure_Faze[1], gpio.INPUT, gpio.FLOAT)
         gpio.mode(Measure_FazeB[1], gpio.INPUT, gpio.FLOAT)
+        gpio.mode(Measure_Faze[1], gpio.INT, gpio.PULLUP) 
+        gpio.mode(Measure_FazeB[1], gpio.INT, gpio.PULLUP) 
+        gpio.trig(Measure_Faze[1], "down", CitacPulzu1)
+        gpio.trig(Measure_FazeB[1], "down", CitacPulzu1B)
     end
     if Measure_Faze[2] ~= nil then
         gpio.mode(Measure_Faze[2], gpio.INPUT, gpio.PULLUP)
         gpio.mode(Measure_FazeB[2], gpio.INPUT, gpio.PULLUP)
+		-- neni dodefinovano pro vice vodomeru, ale principielne by to melo jit
     end
     if Measure_Faze[3] ~= nil then
         gpio.mode(Measure_Faze[3], gpio.INPUT, gpio.PULLUP)
@@ -229,5 +187,4 @@
 
 -- Nacasu prvni odeslani
     tmr.alarm(1, 1000, 1, function() ZpracujPauzu() end) 
-	tmr.alarm(3, 100, 0, function() SkenujVstupy() end)
 	
