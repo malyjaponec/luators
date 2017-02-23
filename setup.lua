@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "5"	
+	SW_VERSION = "6"	
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -71,7 +71,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(5,gpionum[0])
+        dalas.setup(5,gpionum[14],nil,gpionum[16])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
@@ -80,7 +80,7 @@
         analog.setup(2,25)
 
 		digital = require("digital")
-		digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
+		digital.capture(gpionum[4],gpionum[5])
 		
         -- *************************
     end
@@ -119,7 +119,7 @@
 		
 -- Prenastaveni pinu, ktere nechci pouzivat, nekdy se rozsveci RGB ledka a podobne takze zde je prostor to rucne napsat
 	gpio.mode(gpionum[13], gpio.OUTPUT) 
-	gpio.write(gpionum[13], gpio.LOW)
+	gpio.write(gpionum[12], gpio.LOW)
 
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
