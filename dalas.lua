@@ -19,7 +19,7 @@ _G[modname] = M
 --------------------------------------------------------------------------------
 local Casovac
 local Data
-local PinDALAS,PinDALAS2
+local PinDALAS,PinDALAS2,PinPOWER
 local Name
 local Finished = 0
 local sensors,tsnimacu
@@ -73,6 +73,11 @@ local function cleanupDALAS()
         package.loaded["ds18b20"] = nil
         Data["t_cnt"] = sensors
         Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
+		if PinPOWER ~= nil then -- pokud je nadefinovan pin na napajeni
+			gpio.mode(PinPOWER,gpio.OUTPUT)
+			gpio.write(PinPOWER,gpio.LOW) -- prepnu na tvrdo, nepouziva se to na setreni ale na reset sbernice v systemech, kde je nejake ruseni co to rusi
+			PinPOWER = nil -- uklid
+		end
         local time = (tmr.now() -((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
         if Debug == 1 then 
@@ -151,18 +156,25 @@ function startDALAS2() -- kvuli volani z horni casti kodu kde lokalni funkce jes
     startDALAS()
 end
 
-local function setup(_casovac,_dalaspin,_dalaspin2) 
+local function setup(_casovac,_dalaspin,_dalaspin2,_dalaspower) 
     Casovac = _casovac or 4 
-    PinDALAS, PinDALAS2 = _dalaspin,_dalaspin2
+    PinDALAS, PinDALAS2, PinPOWER = _dalaspin,_dalaspin2,_dalaspower
     Data = {}
     Finished,sensors,tsnimacu = 0,0,0
-    tmr.alarm(Casovac, 25, 0,  function() 
+	local timestart = 25 -- meren se spusti neprodlene cili za 25ms
+	if PinPOWER ~= nil then -- pokud je nadefinovan pin na napajeni, prepnu ho do logicke 1
+        gpio.mode(PinPOWER,gpio.OUTPUT)
+        gpio.write(PinPOWER,gpio.HIGH) 
+		timestart = 100 -- mereni se odlozi o 100ms nez nabehne napajeni
+	end
+    tmr.alarm(Casovac, timestart, 0,  function() 
         if Debug == 1 then 
             print("DS> start")
         end 
         t = require("ds18b20")
         startDALAS()
     end)
+	timestart = nil
     return Casovac
 end
 M.setup = setup
