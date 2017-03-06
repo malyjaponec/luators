@@ -5,7 +5,6 @@
 --]]
 	tmr.stop(1)
 	tmr.stop(3)
-	tmr.stop(4)
 	local MinimalPower = 1 -- pro 1 pulz = 10 litru - to je 10 litru / hodinu
 	local MaximalPower = 1000 -- pro 1 pulz = 10 litr - je to 10m3 / hodinu, vic nez dostatecne,
 	
