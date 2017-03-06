@@ -83,6 +83,7 @@
 	dalas_start()
 	-- ]]
 	
+    --[[
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
 	--
     --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
@@ -90,23 +91,25 @@
 	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-	--[[
-    tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+	tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro velmi rychle cteni digitalnich vstupu pro vypocet "pulzu"
 	--]]
 	
-	-- [[
+	--[[
 	-- vodomery pouzivaji jiny mechanizmus snimani pomoci dvou snimacu aby se odstranilo kmitani a nikdy nebude vic vodomeru na jednom
 	-- presto zachovavam promenne z elektromeru a pouzije se jen prvni na druhou stranu je potreba mit vzdy 2 vstupy na jeden merici bod
 	-- proto je tu fazeB ktera definuje druhy vstup. Moznost mit 3 vodomery na jednom luatoru je zachovana i kdyz to asi nebude stihat
 	-- ani nemam misto kde bych to pouzil
-	Measure_FazeB = { GP[5], nil, nil }
+	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
+    Measure_FazeB = { GP[5], nil, nil }
+	Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
 	tmr.alarm(1, 10, 0,  function() dofile("measure_voda.lc") end)
 		-- casovac 1
 	--]]
 	
-	--dalsi hodnoty pro plynomer, pro elektromer se nemusi definovat
+	-- hodnoty pro plynomer
 	--[[
 	Measure_Faze = {GP[4],GP[5],nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
@@ -122,6 +125,32 @@
 	--]]
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro analogove mereni
+		
+	-- hodnoty pro dualne pracujici vodomeru
+	--  mereni energie (spotreby) probiha stejne jako u plynomeru  jen s rozdilem, ze se predpoklada se pouze 1 merena velicina 
+	--   (jeden vodomer) na jeden luator. Takze je zcela samostatny kod, ktery vychazi z plynomeru ale zjednodusuje se,
+	--   protoze odlisnost vypoctu a mereni vykonu by v plynomernem kodu jako "podminene" vykonavani vyrazne komplikovalo
+	--   a znepruhlednovali pochopeni funkce. Mechanicky je zde opticky reflexni senzor na jednom z jiz dost zprevodovanem kolecku
+	--   puvodni mechaniky vodomeru.
+	--  mereni vykonu (prutoku) probina digitalnim snimacem, ktery generuje pulzy. Mechanicky se zde vyuziva prvni kolecko
+	--   prevodu vodomeru, ktere je od vyrobce derovane a ke snimani se pouziva digitalni senzor z mysi
+	--  teoreticky ski zachovat 3 fazove mereni, ale kdyz uz to prepisuji tak proc to nezjednodusit
+	-- [[
+	Measure_Power = GP[4] -- zapojeni digitalniho snimace pro mereni vykonu, analog pro spotrebu je definovan tim ze je na ADC
+    Energy_Faze = {0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    Power_Faze = {-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+	Digitize_Minimum = {1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
+	Digitize_Maximum = {0}
+	Digitize_Average = {0}
+	Digitize_Deviate = {0}
+	Digitize_Status = {5} -- hodnota 5 se nepouziva
+	Digitize_CaptureTime = 0 -- pro reporty, generuje kod vodomeru
+	AnalyticReport = 1 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
+    tmr.alarm(1, 10, 0,  function() dofile("measure_vodadual.lc") end)
+	--]]
+		-- casovac 1 pro standardni zpracovani dat
+		--         3 pro analogove mereni
+		
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
 	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
