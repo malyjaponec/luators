@@ -38,11 +38,11 @@
 	local Digitize_TimeFilter = 0
 	
 -- Defajny nastavujici parametry skenovani analogoveho vstupu
-	local DIGITIZE_MINIMAL_SPAN = 100 -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
-	local DIGITIZE_STICKY = 0.0001 -- priblizovani limitu k namerene hodnote, pokud hodnota nezvysi limit
+	local DIGITIZE_MINIMAL_SPAN = 200 -- minimalni rozkmit maxima a minima aby se zacali zpracovavat data
+	local DIGITIZE_STICKY = 0.000001 -- priblizovani limitu k namerene hodnote, pokud hodnota nezvysi limit
 	local DIGITIZE_TIME = 2 -- casova filtrace na digitalni urovni, pocet po sobe jdoucich 1 aby to byla 1
 	local POCET_MERENI = 3 -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan, tedy prumerovani
-	local ANALOG_CAPTURE_PERIOD = 100 -- v milisekundach perioda mereni analogoveho vstupu (jednoho cyklu vice vstupu)
+	local ANALOG_CAPTURE_PERIOD =70 -- v milisekundach perioda mereni analogoveho vstupu (jednoho cyklu vice vstupu)
 
 -- Generalizovana citaci funkce
 	local function CitacPulzu(_level)
@@ -294,10 +294,15 @@
 			td = td / 1000 -- lepsi bude to prevest na milisekundy, nez pracovat v mikrosekundach
 			Digitize_CaptureTime = td -- odlozim do globalni promenne pro analyticke reporty
 			td = ANALOG_CAPTURE_PERIOD - td -- spocitam kolik milisekund zbyva do pozadovane doby jedne periody opakovani mereni
-			if td <= 0 then -- kdybych nahodou nestihal
-				td = 1 -- tak nastavin casovac na jednu milisekundu, cili spoustit to co nejdrive jde
-			end
-			tmr.alarm(4, 5, 0,  function() StartAnalogG() end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
+            if td < 15 then
+                if td <= 0 then -- kdybych nahodou nestihal
+                    print("M> time missed "..td)     
+                    td = 1 -- tak nastavin casovac na jednu milisekundu, cili spoustit to co nejdrive jde
+                else
+                    if Debug == 1 then print("M> time overload "..td) end      
+                end
+            end         
+ 			tmr.alarm(4, 5, 0,  function() StartAnalogG() end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
 		end
 	end
 	

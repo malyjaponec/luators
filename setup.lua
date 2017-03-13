@@ -22,7 +22,7 @@
 
 -- nastavi knihovnu pro RGB
     rgb = require("rgb")
-    rgb.setup() -- volam s defaultnim zapojeni RGB
+    rgb.setup(nil,GP[2],nil) -- volam s defaultnim zapojeni RGB
     rgb.set() -- volam bez parametru = cerna
 
 -- vice vypisu, temer se v nove vzniknutych kodech nepouziva, ale v sitove vrstve je pouzito
