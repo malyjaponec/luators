@@ -66,7 +66,7 @@
 					local power = 60000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
 					if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity
 						-- Primitivni prumerovani
-						Power_Faze = Power_Faze * 0,5 + power * 0,5
+						Power_Faze = Power_Faze * 0.75 + power * 0.25
 						rtcmem.write32(4, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
 					end
 					power = nil
