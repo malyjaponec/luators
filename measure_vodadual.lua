@@ -25,7 +25,7 @@
 	-- mereni vletet do jeste probihajiciho predchoziho a potrebuju si merit cas kdy jsem mereni zahajil abych dodrzoval, pokud se stiha periodu
 	
 -- Debug
-	local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
+	--local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
 
 -- Pro prumerovani (plynomer only)
 	local Average_Counter = 0
@@ -65,7 +65,8 @@
 					-- a do vypoctu vykonu ho nezapocitam
 					local power = 60000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
 					if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity
-						Power_Faze = power
+						-- Primitivni prumerovani
+						Power_Faze = Power_Faze * 0,5 + power * 0,5
 						rtcmem.write32(4, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
 					end
 					power = nil
