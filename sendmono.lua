@@ -94,11 +94,11 @@ local function Start()
 	
 	-- dalsi analyticka data pro analyzu zpracovani analogovych signalu, ridi se globalni promennou
 	if AnalyticReport ~= nil then
-		Rdat[Rpref.."an"..i]= Digitize_Average
-		Rdat[Rpref.."mi"..i] = Digitize_Minimum
-		Rdat[Rpref.."ma"..i] = Digitize_Maximum
-		Rdat[Rpref.."st"..i] = Digitize_Status
-		Rdat[Rpref.."de"..i] = Digitize_Deviate
+		Rdat[Rpref.."an"]= Digitize_Average
+		Rdat[Rpref.."mi"] = Digitize_Minimum
+		Rdat[Rpref.."ma"] = Digitize_Maximum
+		Rdat[Rpref.."st"] = Digitize_Status
+		Rdat[Rpref.."de"] = Digitize_Deviate
 	end
 	
 	-- debug vypisy 

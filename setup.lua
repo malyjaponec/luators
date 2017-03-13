@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "6"
+	SW_VERSION = "8"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -136,16 +136,17 @@
 	--   prevodu vodomeru, ktere je od vyrobce derovane a ke snimani se pouziva digitalni senzor z mysi
 	--  teoreticky ski zachovat 3 fazove mereni, ale kdyz uz to prepisuji tak proc to nezjednodusit
 	-- [[
-	Measure_Power = GP[4] -- zapojeni digitalniho snimace pro mereni vykonu, analog pro spotrebu je definovan tim ze je na ADC
-    Energy_Faze = {0} -- akumulace energie pro jednotlive vstupy (ve Wh)
-    Power_Faze = {-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-	Digitize_Minimum = {1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
-	Digitize_Maximum = {0}
-	Digitize_Average = {0}
-	Digitize_Deviate = {0}
-	Digitize_Status = {5} -- hodnota 5 se nepouziva
+	Measure_Power = GP[5] -- zapojeni digitalniho snimace pro mereni prutoku, analog pro spotrebu je definovan tim ze je na ADC
+    Energy_Faze = 0 -- akumulace spotreby vody 
+    Power_Faze = -1 -- ukladani posledniho prutoku na zaklade posledni delky pulzu
+	Digitize_Minimum = 1024 -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
+	Digitize_Maximum = 0
+	Digitize_Average = 0
+	Digitize_Deviate = 0
+	Digitize_Status = 5 -- hodnota 5 se nepouziva
 	Digitize_CaptureTime = 0 -- pro reporty, generuje kod vodomeru
-	AnalyticReport = 1 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
+	AnalyticReport = 2 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
+	
     tmr.alarm(1, 10, 0,  function() dofile("measure_vodadual.lc") end)
 	--]]
 		-- casovac 1 pro standardni zpracovani dat
@@ -154,7 +155,8 @@
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
 	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
-    tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
+    -- tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
+    tmr.alarm(2, 500, 0,  function() dofile("sendmono.lc") end)  -- verze pro odesilani pouze jednokanalovych dat
 		-- casovac 2
 
 -- uklid toho co uz nepotrebujem 
