@@ -22,7 +22,7 @@
 
 -- nastavi knihovnu pro RGB
     rgb = require("rgb")
-    rgb.setup(nil,GP[2],nil) -- volam s defaultnim zapojeni RGB
+    rgb.setup() -- volam s defaultnim zapojeni RGB
     rgb.set() -- volam bez parametru = cerna
 
 -- vice vypisu, temer se v nove vzniknutych kodech nepouziva, ale v sitove vrstve je pouzito
@@ -136,7 +136,7 @@
 	--   prevodu vodomeru, ktere je od vyrobce derovane a ke snimani se pouziva digitalni senzor z mysi
 	--  teoreticky ski zachovat 3 fazove mereni, ale kdyz uz to prepisuji tak proc to nezjednodusit
 	-- [[
-	Measure_Power = GP[5] -- zapojeni digitalniho snimace pro mereni prutoku, analog pro spotrebu je definovan tim ze je na ADC
+	Measure_Power = GP[4] -- zapojeni digitalniho snimace pro mereni prutoku, analog pro spotrebu je definovan tim ze je na ADC
     Energy_Faze = 0 -- akumulace spotreby vody 
     Power_Faze = -1 -- ukladani posledniho prutoku na zaklade posledni delky pulzu
 	Digitize_Minimum = 1024 -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
@@ -145,8 +145,9 @@
 	Digitize_Deviate = 0
 	Digitize_Status = 5 -- hodnota 5 se nepouziva
 	Digitize_CaptureTime = 0 -- pro reporty, generuje kod vodomeru
-	AnalyticReport = 2 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
 	
+	AnalyticReport = 2 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
+		
     tmr.alarm(1, 10, 0,  function() dofile("measure_vodadual.lc") end)
 	--]]
 		-- casovac 1 pro standardni zpracovani dat

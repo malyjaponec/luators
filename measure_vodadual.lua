@@ -7,15 +7,14 @@
 	tmr.stop(1)
 	tmr.stop(3)
 	--[[ 
-		vodomer ma 20ml na otacku, 2 magneticke pulzy, coz bylo 10ml / pulz
-		po zprevodovani na druhe kolecko prevodem 12 zubu prvni a 48 zubu druhe je to 4x vice, tedy 80ml / otacku
-		v kolecku je 10 otvoru cili 10 pulzu na 80ml takze vysledny prutok se pocita jako 8ml / pulz
+		GPIO4 - hall sonda nad magnetyckym koleckem - vodomer ma 20ml na otacku, 2 magneticke pulzy, coz je 10ml / pulz
+		GPIO5 - infra zavora v prnvim prevodovem kolecku - 12 zubu magneticke a 48 zubu prvni prevodove s dirkama, celkem 10 otvoru, coz je 8ml / pulz
 	]]
 	-- pokud je power nizsi nez zeropower, posila se 0
-	local ZeroPower = 1.25 -- pro mene nez 10mL za minutu
+	local ZeroPower = 1 -- pro mene nez 10mL za minutu
 	-- pokud je power nizsi nez minimal, tak se i kdyz od zapnuti neprisel pulz zacne posilat tato hodnotami
-	local MinimalPower = 6.25 -- pro mene nez 50ml za minutu
-	local MaximalPower = 1250 -- pro vice nez 10l (10x1000) za minutu
+	local MinimalPower = 10 -- pro mene nez 100ml za minutu
+	local MaximalPower = 1500 -- pro vice nez 15l (10x1500) za minutu
 	
 -- citace, casovace a akumulatory
 	local Time_Faze = -1 -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
@@ -42,10 +41,14 @@
 	local DIGITIZE_STICKY = 0.000001 -- priblizovani limitu k namerene hodnote, pokud hodnota nezvysi limit
 	local DIGITIZE_TIME = 2 -- casova filtrace na digitalni urovni, pocet po sobe jdoucich 1 aby to byla 1
 	local POCET_MERENI = 3 -- zde se nastavuje pocet vycteni ad prevodniku pro jeden scan, tedy prumerovani
-	local ANALOG_CAPTURE_PERIOD =70 -- v milisekundach perioda mereni analogoveho vstupu (jednoho cyklu vice vstupu)
+	local ANALOG_CAPTURE_PERIOD =100 -- v milisekundach perioda mereni analogoveho vstupu (jednoho cyklu vice vstupu)
+	local MEASURE_LED = 4 -- GPIO2 modra led na ESP12
 
 -- Generalizovana citaci funkce
 	local function CitacPulzu(_level)
+		if nil ~= MEASURE_LED then 
+			gpio.write(MEASURE_LED, gpio.LOW)	
+		end
 		if _level == gpio.LOW then
 			-- jako prvni si zaznamenam cas pulzu aby to neyblo ovlivneno nejakym dalsimi nedeterministickymi vypocty
 			local timenow = tmr.now()
@@ -72,8 +75,12 @@
 					power = nil
 				end
 			end
+			Digitize_WaterFlows = 1 -- kdyz tece voda, nemerime dalas
 			timedif = nil
 			timenow = nil
+		end
+		if nil ~= MEASURE_LED then 
+			gpio.write(MEASURE_LED, gpio.HIGH)	
 		end
 	end
 
@@ -329,7 +336,13 @@
 	Digitize_Minimum = rtcmem.read32(7,1) -- nactu si pamet 7 
 	Digitize_Maximum = rtcmem.read32(10,1) -- a 10 
 	-- je to zvlast protoze zachovavam to ze reset do 7,8,9 da minima a 10,11,12 da maxima aby to bylo shodne s plynomerem
-
+	
+-- Indikacni LED
+	if nil ~= MEASURE_LED then 
+		gpio.mode(MEASURE_LED, gpio.OUTPUT)
+		gpio.write(MEASURE_LED, gpio.LOW)	
+	end
+	
 -- Nacasovani zpracovani a mereni
 	tmr.alarm(3, 10, 0,  function() StartAnalog(1) end) -- odstartuje mereni spotreby
     tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- prepocitava prutok 
