@@ -131,6 +131,15 @@ local function KontrolaOdeslani()
         package.loaded["distance"] = nil
     end
                
+    if triple ~= nil then
+        t =  triple.status()/1000000
+        Rdat[ReportFieldPrefix.."t_t"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(triple.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        triple = nil
+        package.loaded["triple"] = nil
+    end
+
     if analog ~= nil then
         t =  analog.status()/1000000
         Rdat[ReportFieldPrefix.."t_a"] = t
@@ -186,7 +195,7 @@ local function KontrolaOdeslani()
     
     -- prevedu na URL
     local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
-                "&json=" .. cjson.encode(Rdat) .. 
+                "&json=" .. sjson.encode(Rdat) .. 
                 "&apikey=" .. ReportApiKey
     Rdat = nil -- data smazu explicitne
     http.get(url, nil, function(code,data) Konec(code,data) end )

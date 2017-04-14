@@ -58,6 +58,9 @@ file.remove(name..".lc")
 name = "reset"
 file.remove(name..".lc")
 
+name = "triple"
+file.remove(name..".lc")
+
 -- "sleep" - se nepreklada, pred deepsleepem me uz na nejake pametove narocnosti nesejde
 -- "init" - se preklada ale pak se prejmenuje na lua, to delam rucne
 

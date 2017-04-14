@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "6"	
+	SW_VERSION = "9"	
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -70,12 +70,14 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        --dalas = require("dalas")
-        --dalas.setup(5,gpionum[0])
+        dalas = require("dalas")
+        dalas.setup(5,gpionum[4])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
-        dist = require("distance")
-        dist.setup(3,5) 
+        --dist = require("distance")
+        --dist.setup(3,5) 
+		triple = require("triple")
+		triple.setup(3,gpionum[12],gpionum[14]) -- sbernice i2c na pinech 12 a 14
         --analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
@@ -91,7 +93,7 @@
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" 
+    ReportNode = "30" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -99,7 +101,8 @@
 	4 elektromery
 	5 rychle merici systemy z AC (udirna) a kontrolni systemy (to co ma vystupni agenty)
 	6 node red - vypoctena data ktera tlaci na emon node red systemy
-	7 testovani 
+	7 vodomery
+	30 testing
 	]]
 -- **********************************
 -- konstanty pro cteni dat ze serveru
