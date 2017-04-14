@@ -91,6 +91,26 @@ if file.open(name..".lua", "r") ~= nil then
     file.close()
 end
 
+name = "measure_voda"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "measure_vodadual"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
 name = "network"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
@@ -102,6 +122,16 @@ if file.open(name..".lua", "r") ~= nil then
 end
 
 name = "send"
+file.remove(name..".lc")
+if file.open(name..".lua", "r") ~= nil then
+    print( name )
+    file.close()
+    node.compile(name..".lua")
+    if file.open(name..".lc", "r") == nil then print(name..".lua failed") end
+    file.close()
+end
+
+name = "sendmono"
 file.remove(name..".lc")
 if file.open(name..".lua", "r") ~= nil then
     print( name )

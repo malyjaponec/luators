@@ -28,10 +28,19 @@ file.remove(name..".lc")
 name = "measure_plyn"
 file.remove(name..".lc")
 
+name = "measure_voda"
+file.remove(name..".lc")
+
+name = "measure_vodadual"
+file.remove(name..".lc")
+
 name = "network"
 file.remove(name..".lc")
 
 name = "send"
+file.remove(name..".lc")
+
+name = "sendmono"
 file.remove(name..".lc")
 
 name = "setup"
