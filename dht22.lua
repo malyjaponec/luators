@@ -64,13 +64,13 @@ local function measureDHT()
         if Debug == 1 then 
             print (">22 T: "..Tavr)
             print (">22 H: "..Havr)
-            print (">22 Cnt/Cou: "..Cnt.."/"..(75-Counter))
+            print (">22 Cnt: "..Cnt)
         end
         
         Data["t22"] = Tavr
         Data["h22"] = Havr
         Data["c22"] = Cnt
-        Data["r22"] = 75 - Counter -- pri zmene maximalniho poctu pokusu nezapomenou zmenit i zde
+        Data["r22"] = Counter
         Data["dht_ok"] = 1
     else
         if Debug == 1 then 
@@ -99,10 +99,15 @@ local function setup(_casovac,_dhtpin,_dhtpowerpin,_averaging)
     PinDHT = _dhtpin
     PinDHTpower = _dhtpowerpin
     Averaging = _averaging or 1
+	if Averaging < 0 then -- zaporne cislo prumerovani znamena limit pokusu i kdyz se nepovedou
+		Counter = -Averaging -- limit pokusu se pouzije z parametru
+		Averaging = 3 -- prumerovani je pak natvrdo 3
+	else
+        Counter = 75 -- maximalni pocet pokusu o zmereni DHT, dela to 30s, pri zmene zmenit i vypocet v odesilani dat!!!
+	end
     Data = {}
     Finished = 0
     if (nil ~= PinDHT) then
-        Counter = 75 -- maximalni pocet pokusu o zmereni DHT, dela to 30s, pri zmene zmenit i vypocet v odesilani dat!!!
         Tavr,Havr,Cnt = 0,0,0
         -- a zacina mereni, jen se nacasuje, pro pripad ze by byl pouzit napajeci pin je dobre pockat 
         if PinDHTpower ~= nil then

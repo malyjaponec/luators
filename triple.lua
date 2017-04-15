@@ -52,11 +52,12 @@ local function finishTRIPLE()
 			print ("TR>H="..h)
 		end
 		
-		Data["tlak"] = p
-		Data["tlak_0"] = ps
-		Data["teplota"] = t
-		Data["vlhkost"] = t
-		Data["rosa"] = d
+		Data["3tlak"] = p
+		Data["3tlak0"] = ps
+		Data["3teplo"] = t
+		Data["3vlhko"] = h
+		Data["3rosa"] = d
+		Data["3ok"] = 1 -- indikace ze senzor je ok
 	end
 
     p,t,h,ps,d = nil,nil,nil,nil,nil
@@ -77,6 +78,13 @@ local function setup(_casovac,_baroA,_baroB)
 		if result == 2 then -- je to spravny senzor a je pripojen 
 			tmr.alarm(Casovac, 170, 0,  function() finishTRIPLE() end) -- volam to pres casovac tak aby se vycteni hodnoty zpozdilo od initu
 		else
+			if Debug == 1 then 
+				print ("TR>fail")
+				if result ~= nil then
+					print("TR>r="..result)
+				end
+			end
+			Data["3ok"] = 0 -- indikace ze senzor nefunguje
 			Finished = 1 -- cas jedna ale dokonceno, pri chybe to tahle nastavim
 		end
 		result = nil

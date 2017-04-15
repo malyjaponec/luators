@@ -47,7 +47,7 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, gpionum[15]) -- s ledkovym vystupem
+        network.setup(1, gpionum[2]) -- s ledkovym vystupem
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
@@ -56,7 +56,8 @@
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        --dht22 = require("dht22")
+        dht22 = require("dht22")
+        dht22.setup(3,gpionum[5],nil,-2) -- luatori s trvale napajenym DHT - omezeno na 5 pokusu, pro lokality kde se predpoklada upadek dht
         --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
@@ -71,13 +72,13 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(5,gpionum[4])
+        dalas.setup(4,gpionum[4]) -- jeste je zapojeny v kompostu pin13 pro dalas ale nepouziju ho at je report co nejkratsi
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
         --dist.setup(3,5) 
 		triple = require("triple")
-		triple.setup(3,gpionum[12],gpionum[14]) -- sbernice i2c na pinech 12 a 14
+		triple.setup(5,gpionum[14],gpionum[12]) -- sbernice i2c na pinech 12 a 14
         --analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
@@ -89,11 +90,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 2*60
+    ReportInterval = 10*60
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "30" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
