@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "9"	
+	SW_VERSION = "10"	
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -56,8 +56,8 @@
         --battery.setup(2,gpionum[14]) -- s merenim svetla - pouziva pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        dht22 = require("dht22")
-        dht22.setup(3,gpionum[5],nil,-2) -- luatori s trvale napajenym DHT - omezeno na 5 pokusu, pro lokality kde se predpoklada upadek dht
+        --dht22 = require("dht22")
+        --dht22.setup(3,gpionum[5],nil,-2) -- luatori s trvale napajenym DHT - omezeno na 5 pokusu, pro lokality kde se predpoklada upadek dht
         --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
@@ -71,14 +71,14 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        dalas = require("dalas")
-        dalas.setup(4,gpionum[4]) -- jeste je zapojeny v kompostu pin13 pro dalas ale nepouziju ho at je report co nejkratsi
+        --dalas = require("dalas")
+        --dalas.setup(4,gpionum[4]) -- jeste je zapojeny v kompostu pin13 pro dalas ale nepouziju ho at je report co nejkratsi
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
         --dist.setup(3,5) 
 		triple = require("triple")
-		triple.setup(5,gpionum[14],gpionum[12]) -- sbernice i2c na pinech 12 a 14
+		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech X a Y
         --analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
