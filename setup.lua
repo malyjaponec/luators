@@ -47,7 +47,7 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, gpionum[2]) -- s ledkovym vystupem
+        network.setup(1, -gpionum[13]) -- s ledkovym vystupem
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
