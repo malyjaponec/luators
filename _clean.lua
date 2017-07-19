@@ -25,6 +25,9 @@ file.remove(name..".lc")
 name = "ds18b20"
 file.remove(name..".lc")
 
+name = "luxmeter"
+file.remove(name..".lc")
+
 name = "measure"
 file.remove(name..".lc")
 

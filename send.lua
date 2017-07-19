@@ -60,7 +60,8 @@ local function KontrolaOdeslani()
         (dalas ~= nil and dalas.status() == 0) or
         (baro ~= nil and baro.status() == 0) or
         (dist ~= nil and dist.status() == 0) or
-		(analog ~= nil and analog.status() == 0)
+		(analog ~= nil and analog.status() == 0) or
+		(lux ~= nil and lux.status() == 0)
         then -- stale cekame na odeslani
 
         if network.status() == -1 then
@@ -106,7 +107,7 @@ local function KontrolaOdeslani()
     
     if dalas ~= nil then
         t =  dalas.status()/1000000
-        Rdat[ReportFieldPrefix.."t_d"] = t
+        Rdat[ReportFieldPrefix.."t_dal"] = t
         if t > tm then tm = t end
         for k,v in pairs(dalas.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         dalas = nil
@@ -115,7 +116,7 @@ local function KontrolaOdeslani()
 
     if baro ~= nil then
         t =  baro.status()/1000000
-        Rdat[ReportFieldPrefix.."t_b"] = t
+        Rdat[ReportFieldPrefix.."t_bar"] = t
         if t > tm then tm = t end
         for k,v in pairs(baro.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         baro = nil
@@ -124,7 +125,7 @@ local function KontrolaOdeslani()
     
     if dist ~= nil then
         t =  dist.status()/1000000
-        Rdat[ReportFieldPrefix.."t_l"] = t
+        Rdat[ReportFieldPrefix.."t_dis"] = t
         if t > tm then tm = t end
         for k,v in pairs(dist.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         dist = nil
@@ -133,16 +134,26 @@ local function KontrolaOdeslani()
                
     if triple ~= nil then
         t =  triple.status()/1000000
-        Rdat[ReportFieldPrefix.."t_t"] = t
+        Rdat[ReportFieldPrefix.."t_3"] = t
         if t > tm then tm = t end
         for k,v in pairs(triple.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         triple = nil
         package.loaded["triple"] = nil
     end
 
+    if lux ~= nil then
+        t =  lux.status()/1000000
+        Rdat[ReportFieldPrefix.."t_lux"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(lux.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        lux = nil
+        package.loaded["luxmeter"] = nil
+    end
+
+
     if analog ~= nil then
         t =  analog.status()/1000000
-        Rdat[ReportFieldPrefix.."t_a"] = t
+        Rdat[ReportFieldPrefix.."t_an"] = t
         if t > tm then tm = t end
         for k,v in pairs(analog.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         analog = nil

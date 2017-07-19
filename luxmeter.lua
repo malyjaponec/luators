@@ -15,7 +15,11 @@ _G[modname] = M
 --------------------------------------------------------------------------------
 -- Local used variables
 --------------------------------------------------------------------------------
-local Adresa = 1001 0100 -- alternativne 1001 0110 pokud je na A0 bit pripojeno VCC
+local Adresa = 0x4A
+-- adresa je 1001 0100 alternativne 1001 0110 pokud je na A0 bit pripojeno VCC
+-- posledni nejnizsi bit je 0/1 podle operace cteni/zapis
+-- jenze do knihovny se posila 7 bitove cislo a ona si za to da posledni bit
+-- cili adresy jsou 01001010 resp. 01001011 tedy 4A nebo 4B
 local Casovac
 local Data
 local Finished = 0
@@ -41,29 +45,40 @@ local function measureLUX()
 	i2c.start(id)
     i2c.address(id, Adresa, i2c.TRANSMITTER)
     i2c.write(id, 0x03) -- adresa prvniho bajtu co me zajima je 3 a druhy je za nim
-	i2c.stop(id)
-	
-    i2c.start(id)
-    i2c.address(id, dev_addr, i2c.RECEIVER)
-    local B3,B4
-	B3,B4 = i2c.read(id, 2)
+	i2c.start(id)
+    i2c.address(id, Adresa, i2c.RECEIVER)
+	local reg3 = i2c.read(id, 1)
+	i2c.start(id)
+    i2c.address(id, Adresa, i2c.TRANSMITTER)
+    i2c.write(id, 0x04) -- adresa 
+	i2c.start(id)
+    i2c.address(id, Adresa, i2c.RECEIVER)
+	local reg4 = i2c.read(id, 1)
     i2c.stop(id)
 	id = nil
+
+	if reg3:byte(1) == 255 and reg4:byte(1) == 255 then
+		-- nezapojeny senzor, hodnota maximalni kterou to asi nikdy nedosahne
+		if Debug == 1 then 
+			print ("LX>failed")
+		end
+		reg3,reg4 = nil, nil
+		Data["l_ok"] = 0
+	else
+		-- vypocet dat
+		local exponent = bit.rshift(reg3:byte(1),4)  -- pouze horni 4 bity jsou exponent
+		local mantisa = bit.bor( bit.lshift(reg3:byte(1),4) , bit.band(reg4:byte(1),0xF) ) -- slozeni ze dvou bajtu
+		reg3, reg4 = nil, nil
+		local vysledek = bit.lshift(2,exponent) * mantisa * 0.045
+		exponent, mantisa = nil, nil
 	
-	-- vypocet dat
-	
-	exponent = B3/16 -- pouze horni 4 bity jsou exponent
-	mantisa = 
-	
-	if Debug == 1 then 
-		print ("LX>="..vysledek)
+		if Debug == 1 then 
+			print ("LX>="..vysledek)
+		end
+		Data["lux"] = vysledek
+		Data["l_ok"] = 1
+		vysledek = nil
 	end
-		
-	Data["lux"] = vysledek
-	
-	hodnota_h,hodnota_l,vysledek = nil, nil, nil
-	Adresa = 
-	
 	local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
     if time <= 0 then time = 1 end
     Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
@@ -74,24 +89,26 @@ local function preapreLUX(_busA,_busB,_podminka)
 	-- Testuji zda je zbernice volna, toto mi vrati funkce podminka 
 	if _podminka() ~= 0 then 
 		-- pokud to vrati kladne nenulove cislo
+		if Debug == 1 then 
+			print ("LX>start")
+		end
 		i2c.setup(0, _busA, _busB, i2c.SLOW) -- nastavim zbernici a funkci co neco vycte
 		measureLUX()
 	else
 		-- pokud to vraci nulu tak znova casuji test
-		tmr.alarm(Casovac, 200, 0,  function() measureLUX(_busA,_busB,_podminka) end) 
+		tmr.alarm(Casovac, 100, 0,  function() preapreLUX(_busA,_busB,_podminka) end) 
 	end
 end
 
 local function setup(_casovac,_busA,_busB,_podminka) 
     Casovac = _casovac or 6
-	if _podminka == nil then _podminka() = function() return 1 end end
+	if _podminka == nil then _podminka = function() return 1 end end
     Data = {}
     Finished = 0
     -- startuji mereni
     if _busA ~= nil and _busB ~= nil then
-			
-		tmr.alarm(Casovac, 20, 0,  function() measureLUX(_busA,_busB,_podminka) end) 
-
+		tmr.alarm(Casovac, 20, 0,  function() preapreLUX(_busA,_busB,_podminka) end) 
+		
 	else			
 		Finished = 1 -- cas jedna ale dokonceno, pri chybe to tahle nastavim
     end

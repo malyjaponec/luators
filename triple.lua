@@ -74,8 +74,16 @@ local function setup(_casovac,_baroA,_baroB)
     Finished = 0
     -- startuji mereni
     if _baroA ~= nil and _baroB ~= nil then
-        local result = bme280.init(_baroA,_baroB) -- inicializace senzoru, standardni parametry
-		if result == 2 then -- je to spravny senzor a je pripojen 
+		if Debug == 1 then 
+			print ("TR>start")
+		end
+		-- stara verze initu, funguje a krici warovani
+			--local result = bme280.init(_baroA,_baroB) -- inicializace senzoru, standardni parametry
+		-- nova verze initue
+			i2c.setup(0, _baroA,_baroB, i2c.SLOW)
+			local result = bme280.setup() -- inicializace senzoru, standardni parametry
+		-- init konec
+		if result ~= nil and result == 2 then -- je to spravny senzor a je pripojen 
 			tmr.alarm(Casovac, 170, 0,  function() finishTRIPLE() end) -- volam to pres casovac tak aby se vycteni hodnoty zpozdilo od initu
 		else
 			if Debug == 1 then 
