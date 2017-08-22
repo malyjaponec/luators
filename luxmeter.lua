@@ -66,8 +66,8 @@ local function measureLUX()
 		Data["l_ok"] = 0
 	else
 		-- vypocet dat
-		local exponent = bit.rshift(reg3:byte(1),4)  -- pouze horni 4 bity jsou exponent
-		local mantisa = bit.bor( bit.lshift(reg3:byte(1),4) , bit.band(reg4:byte(1),0xF) ) -- slozeni ze dvou bajtu
+		local exponent = bit.band( bit.rshift(reg3:byte(1),4) , 0x0F) -- pouze horni 4 bity jsou exponent
+		local mantisa = bit.bor( bit.lshift( bit.band(reg3:byte(1),0x0F),4) , bit.band(reg4:byte(1),0xF) ) -- slozeni ze dvou bajtu
 		reg3, reg4 = nil, nil
 		local vysledek = bit.lshift(2,exponent) * mantisa * 0.045
 		exponent, mantisa = nil, nil
