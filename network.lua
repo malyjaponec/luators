@@ -109,7 +109,13 @@ local function ap_select(t)
                     if Debug == 1 then print ("ip> Known ssid "..ssid..", password "..cfg_pass) end
                     ApWasFound = 1
                     file.close()
-                    wifi.sta.config(cfg_ssid,cfg_pass)
+					station_cfg={}
+					station_cfg.ssid=cfg_ssid
+					station_cfg.pwd=cfg_pass
+					station_cfg.auto=true
+					station_cfg.save=true
+					wifi.sta.config(station_cfg)
+                    station_cfg = nil
                     wifi.sta.connect()
                     wifi.sta.autoconnect(1)
                     return
