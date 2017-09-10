@@ -5,6 +5,10 @@
 -- - nastavi casovac, ktery bude knihovna pouziva a spusti inicializaci site
 -- - funkce kterou to spusti po dokonceni pripojeni k wifi
 -- - funkce kterou to spusti pokud neni pokryti
+--
+-- !!! POZOR je pro firmware nekdy od cervence srpna 2017 - pouziva jiny zpusob nastaveni
+-- apn takze se starym firmware nebude umet nastavit wifi a opacne na novy firmware se nemuze
+-- nechat starou knihovnu network
 -- 
 --------------------------------------------------------------------------------
 
