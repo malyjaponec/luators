@@ -59,7 +59,7 @@ local function KontrolaOdeslani()
         (dht22 ~= nil and dht22.status() == 0) or
         (dalas ~= nil and dalas.status() == 0) or
         (baro ~= nil and baro.status() == 0) or
-        (dist ~= nil and dist.status() == 0) or
+        (dist ~= nil and (dist == 1 or dist.status() == 0)) or
 		(analog ~= nil and analog.status() == 0) or
 		(lux ~= nil and lux.status() == 0)
         then -- stale cekame na odeslani
@@ -149,7 +149,6 @@ local function KontrolaOdeslani()
         lux = nil
         package.loaded["luxmeter"] = nil
     end
-
 
     if analog ~= nil then
         t =  analog.status()/1000000

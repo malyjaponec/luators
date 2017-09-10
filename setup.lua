@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "12"
+	SW_VERSION = "13"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -39,6 +39,16 @@
 --        end
         -- *************************
     end
+	
+	function MeasureDistanceLater()
+		if triple.status() ~= 0 and dalas.status() ~= 0 then
+			dist = nil
+			dist = require("distance")
+			dist.setup(3,5)
+		else 
+			tmr.alarm(3, 500, 0,  function() MeasureDistanceLater() end) 
+		end
+	end
     
     -- inicializuje veskere merici mechanizmy, je to v globalni funkci protoze pri 
     -- periodickem reportovani se to vola znova a znova
@@ -72,16 +82,21 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(4,gpionum[4])
+        dalas.setup(4,gpionum[0])
+		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
-        --dist = require("distance")
-        --dist.setup(3,5) 
-		triple = require("triple")
-		triple.setup(5,gpionum[14],gpionum[12]) -- sbernice i2c na pinech 12 a 14
 		
-		lux = require("luxmeter")
-	    lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
+		triple = require("triple")
+		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
+		
+		--dist = require("distance")
+		--dist.setup(3,5)
+		dist = 1
+		tmr.alarm(3, 3000, 0,  function() MeasureDistanceLater() end) 
+		
+		--lux = require("luxmeter")
+	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
 		--analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
@@ -93,11 +108,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 10*60
+    ReportInterval = 20
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-    --PeriodicReport = 0 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+    --PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" 
+    ReportNode = "5" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
