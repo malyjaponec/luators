@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "11"
+	SW_VERSION = "12"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -71,15 +71,18 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        --dalas = require("dalas")
-        --dalas.setup(4,gpionum[4]) -- jeste je zapojeny v kompostu pin13 pro dalas ale nepouziju ho at je report co nejkratsi
+        dalas = require("dalas")
+        dalas.setup(4,gpionum[4])
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
         --dist = require("distance")
         --dist.setup(3,5) 
 		triple = require("triple")
-		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech X a Y
-        --analog = require("analog")
+		triple.setup(5,gpionum[14],gpionum[12]) -- sbernice i2c na pinech 12 a 14
+		
+		lux = require("luxmeter")
+	    lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
+		--analog = require("analog")
         --analog.setup(2,25)
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
