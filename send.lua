@@ -61,7 +61,8 @@ local function KontrolaOdeslani()
         (baro ~= nil and baro.status() == 0) or
         (dist ~= nil and (dist == 1 or dist.status() == 0)) or
 		(analog ~= nil and analog.status() == 0) or
-		(lux ~= nil and lux.status() == 0)
+		(lux ~= nil and lux.status() == 0) or
+		(weight ~= nil and weight.status() == 0)
         then -- stale cekame na odeslani
 
         if network.status() == -1 then
@@ -148,6 +149,15 @@ local function KontrolaOdeslani()
         for k,v in pairs(lux.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         lux = nil
         package.loaded["luxmeter"] = nil
+    end
+
+    if weight ~= nil then
+        t =  weight.status()/1000000
+        Rdat[ReportFieldPrefix.."t_weight"] = t
+        if t > tm then tm = t end
+        for k,v in pairs(weight.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        weight = nil
+        package.loaded["weight"] = nil
     end
 
     if analog ~= nil then

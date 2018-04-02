@@ -81,26 +81,31 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        dalas = require("dalas")
-        dalas.setup(4,gpionum[0])
+        --dalas = require("dalas")
+        --dalas.setup(4,gpionum[0])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
 		
-		triple = require("triple")
-		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
+		--triple = require("triple")
+		--triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
 		
 		--dist = require("distance")
 		--dist.setup(3,5)
-		dist = 1
-		tmr.alarm(3, 3000, 0,  function() MeasureDistanceLater() end) 
+		--dist = 1
+		--tmr.alarm(3, 3000, 0,  function() MeasureDistanceLater() end) 
 		
 		--lux = require("luxmeter")
 	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
+		
 		--analog = require("analog")
         --analog.setup(2,25)
+		
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
+		
+		weight = require("weight")
+		weight.setup(5,gpionum[5],gpionum[4],nil)
 		
         -- *************************
     end
@@ -108,11 +113,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 20
+    ReportInterval = 60
     --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
     --PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "5" 
+    ReportNode = "30" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
