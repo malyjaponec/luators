@@ -37,9 +37,11 @@ local p,t,h,ps
 --------------------------------------------------------------------------------
 local function finishTRIPLE()
     t,p,h,ps = bme280.read(SeaLevel)
-	d = bme280.dewpoint(h, t)
-	-- uprava na jednotky C,hPa,%,hPa
-	if nil ~= t then -- kontroluji pokud by to nahodou nevratilo teplotu tak mereni neprobehlo
+
+	if (nil ~= t) and (nil ~= h) then -- kontroluji pokud by to nahodou nevratilo teplotu tak mereni neprobehlo
+		d = bme280.dewpoint(h, t)
+
+		-- uprava na jednotky C,hPa,%,hPa
 		t = t / 100 or -100
 		p = p / 1000 
 		h = h / 1000 
@@ -51,7 +53,7 @@ local function finishTRIPLE()
 			print ("TR>T="..t)
 			print ("TR>H="..h)
 		end
-		
+
 		Data["3tlak"] = p
 		Data["3tlak0"] = ps
 		Data["3teplo"] = t
