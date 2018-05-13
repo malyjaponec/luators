@@ -33,45 +33,50 @@ local Finished = 0
 -- Implementation
 --------------------------------------------------------------------------------
 
-local function startWEIGHT(_busA,_busB,_podminka)
+local function startWEIGHT(_busClock,_busData,_podminka)
 	-- Testuji zda je sbernice volna, toto mi vrati funkce podminka 
 	if _podminka() ~= 0 then 
 		-- pokud to vrati kladne nenulove cislo
 		if Debug == 1 then 
 			print ("WT>start")
 		end
-		hx711.init(_busA, _busB) -- nastavim zbernici 
-		local vysledek = hx711.read(0) -- prectu data
-		if vysledek ~= nil then
+		local ok_inputs = 0
+		local key,data
+		for key,data in pairs(_busData) do 
 			if Debug == 1 then 
-				print ("WT>="..vysledek)
+				print ("WT>in:"..key)
 			end
-			Data["weight"] = vysledek
-			Data["w_ok"] = 1
-		else
-			Data["w_ok"] = 0
+			hx711.init(_busClock, data) -- nastavim zbernici 
+			local vysledek = hx711.read(0) -- prectu data
+			if vysledek ~= nil then
+				if Debug == 1 then 
+					print ("WT>w="..vysledek)
+				end
+				Data["w_"..key] = vysledek
+				ok_inputs = ok_inputs + 1
+			end
 		end
-		vysledek = nil
+		data,key = nil,nil
+		Data["w_ok"] = ok_inputs
+		vysledek,ok_inputs = nil,nil
 		local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
 		if time <= 0 then time = 1 end
 		Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
 		time = nil
 	else
 		-- pokud to vraci nulu tak znova casuji test jestli uz mohu zbernici pouzit
-		tmr.alarm(Casovac, 100, 0,  function() startWEIGHT(_busA,_busB,_podminka) end) 
+		tmr.alarm(Casovac, 100, 0,  function() startWEIGHT(_busClock,_busData,_podminka) end) 
 	end
 end
 
-local function setup(_casovac,_busA,_busB,_podminka) 
+local function setup(_casovac,_busCL,_busDA,_podminka) 
     Casovac = _casovac or 6
 	if _podminka == nil then _podminka = function() return 1 end end
     Data = {}
     Finished = 0
-    
 	-- startuji casovani mereni
-    if _busA ~= nil and _busB ~= nil then
-		tmr.alarm(Casovac, 20, 0,  function() startWEIGHT(_busA,_busB,_podminka) end) 
-		
+    if _busCL ~= nil and _busDA ~= nil then
+		tmr.alarm(Casovac, 20, 0,  function() startWEIGHT(_busCL,_busDA,_podminka) end) 
 	else			
 		Finished = 1 -- cas nenulovy, znaci ze jest dokonceno, pri chybe to tahle nastavim
     end
