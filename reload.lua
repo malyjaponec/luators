@@ -19,10 +19,16 @@
     if time > (ReportInterval * 1000) then time = (ReportInterval * 1000) end -- pokud se pretoci hodiny pockam periodu
     print("Waiting for "..(time/1000).." s") -- tiskne se vzdy i kdyz je vypnuty debug
     
--- spusteni mereni
-    tmr.alarm(0, time, 0, function() 
-        TimeStartLast = tmr.now() / 1000
-        
-        MeasureInit()
-        dofile("send.lc")
-     end) 
+-- usnuti nebo jen konec    
+    if file.open("init.lua", "r") == nil then -- soubor neexistuje, rucni start, nespime, ladime kod
+        print("REND ("..(time/1000000).."s)")
+    else
+	-- spusteni mereni
+		tmr.alarm(0, time, 0, function() 
+			TimeStartLast = tmr.now() / 1000
+			
+			MeasureInit()
+			dofile("send.lc")
+		end) 
+	end
+	

@@ -55,6 +55,11 @@
     function MeasureInit()
         -- *************************
 
+		-- Zde se muze zmenit rychlost reportovani
+		if file.exists("setup_speed.lc") then
+			dofile("setup_speed.lc")
+		end
+
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
         --network.setup(1, -gpionum[13]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
@@ -108,6 +113,8 @@
 		
 		weight = require("weight")
 		weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
+		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14] },nil)
+		weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
 		
         -- *************************
     end
@@ -115,8 +122,9 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-    ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-    --PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "8" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
@@ -164,3 +172,8 @@
         gpionum = nil -- definici pinu uz nebudu potrebovat
         MeasureInit = nil -- funkci spoustejici mereni uz nikdy nezavolam
     end
+
+	
+	
+	
+	

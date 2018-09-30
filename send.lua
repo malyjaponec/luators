@@ -14,20 +14,20 @@ end
 local function ZhasniLED()
     if LedSend ~= nil then 
         if LedSend > 0 then
-			gpio.mode(LedSend, gpio.OUTPUT)
-			gpio.write(LedSend, gpio.LOW)
-		else
-			gpio.mode(-LedSend, gpio.OUTPUT)
-			gpio.write(-LedSend, gpio.HIGH)
-		end
-		
+            gpio.mode(LedSend, gpio.OUTPUT)
+            gpio.write(LedSend, gpio.LOW)
+        else
+            gpio.mode(-LedSend, gpio.OUTPUT)
+            gpio.write(-LedSend, gpio.HIGH)
+        end
+        
      end
 end
 
 --------------------------------------------------------------------------------
 local function Konec(code, data)
      -- indikacni led zhasnu
-	ZhasniLED()
+    ZhasniLED()
 
     if (code == nil) then
         code = -100
@@ -40,15 +40,15 @@ local function Konec(code, data)
     end
     code = nil
     data = nil
-	
-	if GetFeeds ~= nil then
-		dofile("receive.lc")
-	else
-		if PeriodicReport ~= nil then -- je pozadovano reportovat pravodelne
-			dofile("reload.lc")
-		else
-			dofile("sleep.lua")
-		end
+    
+    if GetFeeds ~= nil then
+        dofile("receive.lc")
+    else
+        if PeriodicReport ~= nil then -- je pozadovano reportovat pravodelne
+            dofile("reload.lc")
+        else
+            dofile("sleep.lua")
+        end
     end
 end
 
@@ -59,10 +59,8 @@ local function KontrolaOdeslani()
         (dht22 ~= nil and dht22.status() == 0) or
         (dalas ~= nil and dalas.status() == 0) or
         (baro ~= nil and baro.status() == 0) or
-        (dist ~= nil and (dist == 1 or dist.status() == 0)) or
-		(analog ~= nil and analog.status() == 0) or
-		(lux ~= nil and lux.status() == 0) or
-		(weight ~= nil and weight.status() == 0)
+        (dist ~= nil and dist.status() == 0) or
+        (analog ~= nil and analog.status() == 0)
         then -- stale cekame na odeslani
 
         if network.status() == -1 then
@@ -83,13 +81,13 @@ local function KontrolaOdeslani()
     
     -- rozsvitim indikacni led 
     if LedSend ~= nil then
-		if LedSend > 0 then
-			gpio.mode(LedSend, gpio.OUTPUT)
-			gpio.write(LedSend, gpio.HIGH)
-		else
-			gpio.mode(-LedSend, gpio.OUTPUT)
-			gpio.write(-LedSend, gpio.LOW)
-		end
+        if LedSend > 0 then
+            gpio.mode(LedSend, gpio.OUTPUT)
+            gpio.write(LedSend, gpio.HIGH)
+        else
+            gpio.mode(-LedSend, gpio.OUTPUT)
+            gpio.write(-LedSend, gpio.LOW)
+        end
     end
     
     -- prekopiruju senzorova data
@@ -108,7 +106,7 @@ local function KontrolaOdeslani()
     
     if dalas ~= nil then
         t =  dalas.status()/1000000
-        Rdat[ReportFieldPrefix.."t_dal"] = t
+        Rdat[ReportFieldPrefix.."t_d"] = t
         if t > tm then tm = t end
         for k,v in pairs(dalas.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         dalas = nil
@@ -117,7 +115,7 @@ local function KontrolaOdeslani()
 
     if baro ~= nil then
         t =  baro.status()/1000000
-        Rdat[ReportFieldPrefix.."t_bar"] = t
+        Rdat[ReportFieldPrefix.."t_b"] = t
         if t > tm then tm = t end
         for k,v in pairs(baro.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         baro = nil
@@ -126,7 +124,7 @@ local function KontrolaOdeslani()
     
     if dist ~= nil then
         t =  dist.status()/1000000
-        Rdat[ReportFieldPrefix.."t_dis"] = t
+        Rdat[ReportFieldPrefix.."t_l"] = t
         if t > tm then tm = t end
         for k,v in pairs(dist.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         dist = nil
@@ -135,45 +133,27 @@ local function KontrolaOdeslani()
                
     if triple ~= nil then
         t =  triple.status()/1000000
-        Rdat[ReportFieldPrefix.."t_3"] = t
+        Rdat[ReportFieldPrefix.."t_t"] = t
         if t > tm then tm = t end
         for k,v in pairs(triple.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         triple = nil
         package.loaded["triple"] = nil
     end
 
-    if lux ~= nil then
-        t =  lux.status()/1000000
-        Rdat[ReportFieldPrefix.."t_lux"] = t
-        if t > tm then tm = t end
-        for k,v in pairs(lux.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
-        lux = nil
-        package.loaded["luxmeter"] = nil
-    end
-
-    if weight ~= nil then
-        t =  weight.status()/1000000
-        Rdat[ReportFieldPrefix.."t_weight"] = t
-        if t > tm then tm = t end
-        for k,v in pairs(weight.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
-        weight = nil
-        package.loaded["weight"] = nil
-    end
-
     if analog ~= nil then
         t =  analog.status()/1000000
-        Rdat[ReportFieldPrefix.."t_an"] = t
+        Rdat[ReportFieldPrefix.."t_a"] = t
         if t > tm then tm = t end
         for k,v in pairs(analog.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
         analog = nil
         package.loaded["analog"] = nil
     end
-	
-	if digital ~= nil then
-		for k,v in pairs(digital.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
-		digital = nil
-		package.loaded["digital"] = nil
-	end
+    
+    if digital ~= nil then
+        for k,v in pairs(digital.getvalues()) do Rdat[ReportFieldPrefix..k] = v end
+        digital = nil
+        package.loaded["digital"] = nil
+    end
 
     Rdat[ReportFieldPrefix.."tm"] = tm
     t,tm,k,v = nil,nil,nil,nil
@@ -214,25 +194,26 @@ local function KontrolaOdeslani()
     Rdat[ReportFieldPrefix.."hp2"] = node.heap() 
     
     -- prevedu na URL
-    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. ReportNode .. 
+    local url = "http://emon.jiffaco.cz/input/post.json?node=" .. ReportNode .. 
                 "&json=" .. sjson.encode(Rdat) .. 
                 "&apikey=" .. ReportApiKey
     Rdat = nil -- data smazu explicitne
     http.get(url, nil, function(code,data) Konec(code,data) end )
     url = nil -- url uz taky mazu
     
-	-- nacasuji kontrolu pokud nezavola callback a zasekne se to, tak se to bud uspi nebo restartuje   
-	if GetFeeds ~= nil then
-		tmr.alarm(0, 15000, 0, function() dofile("receive.lc") end)
-	else
-		if PeriodicReport ~= nil then
-			tmr.alarm(0, 15000, 0, function() dofile("restart.lua") end) 
-		else
-			tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) 
-		end
-	end
+    -- nacasuji kontrolu pokud nezavola callback a zasekne se to, tak se to bud uspi nebo restartuje   
+    if GetFeeds ~= nil then
+        tmr.alarm(0, 15000, 0, function() dofile("receive.lc") end)
+    else
+        if PeriodicReport ~= nil then
+            tmr.alarm(0, 15000, 0, function() dofile("restart.lua") end) 
+        else
+            tmr.alarm(0, 15000, 0, function() dofile("sleep.lua") end) 
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
 tmr.alarm(0, 500, 0,  function() KontrolaOdeslani() end)  -- Na zacatku klidne muzu cekat dele
 ZhasniLED()
+

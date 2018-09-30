@@ -29,32 +29,11 @@ local function ZpracujOdpoved(code, data)
 			if values[count] ~= nil then
 				local value = tonumber(values[count])
 				if value ~= nil then
-					if v <= 16 then -- pouze GPIO do 16, vyssi cisla maji specialni vlastnosti
-						gpio.mode(v, gpio.OUTPUT)
-						if value > 0 then -- kladna hodnota je logicka 1
-							gpio.write(v, gpio.HIGH)
-						else -- nula a zaporne cislo je logicka 0
-							gpio.write(v, gpio.LOW)
-						end
-					else -- specialni vlastnosti
-						if v == 17 then -- nastaveni rychlosti reportu do souboru config_speed.lua
-							-- jako prvni porovna existujici nastaveni s tim co si to nacetlo
-							-- timto se omezi neustale prepisovani souboru, kdyz nedoslo ke zmene
-							-- na strane feedu
-							if value ~= ReportInterval then -- je tam rozdil
-								-- otevru souboru
-								if file.open("setup_speed.lua","w") then -- soubor se podarilo otevrit
-									file.writeline("ReportInterval = "..ReportInterval)
-									-- pro intervaly kratsi nez 60s se nastavi jeste fast reporing
-									if ReportInterval < 60 then
-										file.writeline("PeriodicReport = 1") // Pokud tahle promenna existuje prestane to usinat
-									end
-									file.close()
-									-- Nazaver ten soubor vykonam abych zmenil parametry
-									dofile("setup_speed.lua")
-								end
-							end
-						end
+					gpio.mode(v, gpio.OUTPUT)
+					if value > 0 then -- kladna hodnota je logicka 1
+						gpio.write(v, gpio.HIGH)
+					else -- nula a zaporne cislo je logicka 0
+						gpio.write(v, gpio.LOW)
 					end
 				end
 			end
