@@ -73,10 +73,11 @@
 			-- pouzival pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
         -- Spustim proces merici senzoru
-        --dht22 = require("dht22")
+        dht22 = require("dht22")
         --dht22.setup(3,gpionum[5],nil,-2) -- luatori s trvale napajenym DHT - omezeno na 5 pokusu, pro lokality kde se predpoklada upadek dht
         --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
+        dht22.setup(3,gpionum[5],gpionum[13],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
              jedno mereni pred vysilanim a to mu stacilo, nova implementace potrebuje opakovani
@@ -89,7 +90,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(4,gpionum[4])
+        dalas.setup(5,gpionum[12])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -111,10 +112,10 @@
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
 		
-		weight = require("weight")
-		weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
+		--weight = require("weight")
+		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
 		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14] },nil)
-		weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
+		--weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
 		
         -- *************************
     end
@@ -126,7 +127,7 @@
 	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "8" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
