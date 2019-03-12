@@ -22,7 +22,7 @@ local function ZpracujOdpoved(code, data)
 			print("p>data prijata/" .. code)
 			print(data)
 		end
-		local values = cjson.decode(data)
+		local values = sjson.decode(data)
 		local k,v
 		local count = 1 -- timto si pocitam index pro pristup k poli hodnot, ktere vratil server
 		for k,v in pairs( GetFeeds ) do -- prochazim pole feedu a gpio tak jak z nej byl udelanej seznam pro URL
@@ -47,7 +47,7 @@ local function ZpracujOdpoved(code, data)
 									file.writeline("ReportInterval = "..ReportInterval)
 									-- pro intervaly kratsi nez 60s se nastavi jeste fast reporing
 									if ReportInterval < 60 then
-										file.writeline("PeriodicReport = 1") // Pokud tahle promenna existuje prestane to usinat
+										file.writeline("PeriodicReport = 1") -- Pokud tahle promenna existuje prestane to usinat
 									end
 									file.close()
 									-- Nazaver ten soubor vykonam abych zmenil parametry
@@ -90,7 +90,7 @@ local function ZiskejData()
 	separator,k,v = nil,nil,nil
 
     -- prevedu na URL
-    local url = "http://emon.jiffaco.cz/emoncms/feed/fetch.json?" .. 
+    local url = "http://emon.jiffaco.cz/feed/fetch.json?" .. 
                 "&ids=" .. feedlist .. 
                 "&apikey=" .. ReportApiKey
     http.get(url, nil, function(code,data) ZpracujOdpoved(code,data) end )

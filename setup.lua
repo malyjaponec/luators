@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "14"
+	SW_VERSION = "15"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -62,8 +62,8 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        --network.setup(1, -gpionum[13]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
-        network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
+        network.setup(1, gpionum[13]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
+        --network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
@@ -123,11 +123,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 5*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 10    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "9" 
+    ReportNode = "5" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -143,7 +143,11 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	--GetFeeds = {[639]=gpionum[4]}
+	GetFeeds = {[898]=gpionum[4]}
+		-- A nastavim hodnotu na off hned po zapnuti, pro pripad kdyby se to nedokomunikovalo
+		gpio.mode(gpionum[4], gpio.OUTPUT)   
+		gpio.write(gpionum[4], gpio.LOW)
+	
 	
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -156,9 +160,13 @@
         file.close()
 		
 -- Prenastaveni pinu, ktere nechci pouzivat, nekdy se rozsveci RGB ledka a podobne takze zde je prostor to rucne napsat
-	--gpio.mode(gpionum[15], gpio.OUTPUT) 
-	--gpio.write(gpionum[15], gpio.LOW)
-
+	gpio.mode(gpionum[14], gpio.OUTPUT)   
+	gpio.write(gpionum[14], gpio.HIGH)
+	gpio.mode(gpionum[15], gpio.OUTPUT)   
+	gpio.write(gpionum[15], gpio.LOW)
+    gpio.mode(gpionum[5], gpio.OUTPUT)   
+	gpio.write(gpionum[5], gpio.HIGH)
+	
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
       
@@ -166,7 +174,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = nil -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
+        LedSend = gpionum[12] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
