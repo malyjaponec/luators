@@ -53,7 +53,7 @@
             print("Connected, sending data:")
             print("...?node=" .. Rnod .. "&json=" .. cjson.encode(Rdat) .. "&apikey=" .. Rapik)
         end
-        conn:send("GET /emoncms/input/post.json?node=" .. Rnod .. 
+        conn:send("GET /input/post.json?node=" .. Rnod .. 
                   "&json=" .. cjson.encode(Rdat) .. 
                   "&apikey=" .. Rapik.. 
                   " HTTP/1.1\r\nHost: emon.jiffaco.cz\r\n\r\n\r\n")
