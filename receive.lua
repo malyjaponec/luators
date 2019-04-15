@@ -30,12 +30,22 @@ local function ZpracujOdpoved(code, data)
 				local value = tonumber(values[count])
 				if value ~= nil then
 					if v <= 16 then -- pouze GPIO do 16, vyssi cisla maji specialni vlastnosti
-						gpio.mode(v, gpio.OUTPUT)
-						if value > 0 then -- kladna hodnota je logicka 1
-							gpio.write(v, gpio.HIGH)
-						else -- nula a zaporne cislo je logicka 0
-							gpio.write(v, gpio.LOW)
-						end
+                        if v >= 0 then -- pouze pro kladne hodnoty
+					    	gpio.mode(v, gpio.OUTPUT)
+						    if value > 0 then -- kladna hodnota je logicka 1
+   							    gpio.write(v, gpio.HIGH)
+	    					else -- nula a zaporne cislo je logicka 0
+		    					gpio.write(v, gpio.LOW)
+			    			end
+                        else -- zaporne hodnoty - otevreny kolektor, stale logicka hodnota odpovida napeti
+                            v = -v
+                            if value > 0 then -- kladna hodnota je odpojeny vstup
+                                gpio.mode(v, gpio.FLOAT)
+                            else -- nula je logicka nula
+                                gpio.mode(v, gpio.OUTPUT)
+                                gpio.write(v, gpio.LOW)
+                            end
+                        end                     
 					else -- specialni vlastnosti
 						if v == 17 then -- nastaveni rychlosti reportu do souboru config_speed.lua
 							-- jako prvni porovna existujici nastaveni s tim co si to nacetlo
