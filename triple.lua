@@ -21,6 +21,8 @@ local Casovac
 local Data
 local Finished = 0
 local p,t,h,ps
+local Pocet_chyb
+local i2cA,i2cB
 -------------------------------------------------------------------------------
 -- Local used modules
 --------------------------------------------------------------------------------
@@ -60,18 +62,55 @@ local function finishTRIPLE()
 		Data["3vlhko"] = h
 		Data["3rosa"] = d
 		Data["3ok"] = 1 -- indikace ze senzor je ok
-	end
 
-    p,t,h,ps,d = nil,nil,nil,nil,nil
-    
-	local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
-    if time <= 0 then time = 1 end
-    Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
-    time = nil
+        p,t,h,ps,d = nil,nil,nil,nil,nil
+
+        local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
+        if time <= 0 then time = 1 end
+        if Debug == 1 then 
+            print ("TR>end1")
+        end
+        Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+        time = nil
+    else
+        -- mereni nevratilo teplotu nebo vlhkost
+        if Pocet_chyb < 5 then
+            if Debug == 1 then 
+                print ("TR>opakuji vycteni #"..Pocet_chyb)
+            end
+            i2c.setup(0, i2cA, i2cB, i2c.SLOW)
+            local result = bme280.setup() -- inicializace senzoru, standardni parametry
+            if result == nil or result ~= 2 then -- je to spravny senzor a je pripojen 
+                if Debug == 1 then 
+                    print ("TR>init fail")
+                    if result ~= nil then
+                        print("TR>r="..result)
+                    end
+                end
+            end
+            result = nil
+            Pocet_chyb = Pocet_chyb + 1
+            tmr.alarm(Casovac, 170+10*Pocet_chyb, 0,  function() finishTRIPLE() end) -- znova volam vycteni
+        else
+            if Debug == 1 then 
+                print ("TR>chyba vycteni")
+            end
+            Data["3ok"] = 0 -- indikace ze senzor nefunguje
+            local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
+            if time <= 0 then time = 1 end
+            if Debug == 1 then 
+                print ("TR>end2")
+            end
+            Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
+            time = nil
+        end
+    end
 end
 
 local function setup(_casovac,_baroA,_baroB) 
     Casovac = _casovac or 5
+    i2cA = _baroA
+    i2cB = _baroB
     Data = {}
     Finished = 0
     -- startuji mereni
@@ -82,10 +121,11 @@ local function setup(_casovac,_baroA,_baroB)
 		-- stara verze initu, funguje a krici warovani
 			--local result = bme280.init(_baroA,_baroB) -- inicializace senzoru, standardni parametry
 		-- nova verze initue
-			i2c.setup(0, _baroA,_baroB, i2c.SLOW)
+  	        i2c.setup(0, i2cA, i2cB, i2c.SLOW)
 			local result = bme280.setup() -- inicializace senzoru, standardni parametry
 		-- init konec
 		if result ~= nil and result == 2 then -- je to spravny senzor a je pripojen 
+            Pocet_chyb = 0
 			tmr.alarm(Casovac, 170, 0,  function() finishTRIPLE() end) -- volam to pres casovac tak aby se vycteni hodnoty zpozdilo od initu
 		else
 			if Debug == 1 then 
@@ -95,6 +135,9 @@ local function setup(_casovac,_baroA,_baroB)
 				end
 			end
 			Data["3ok"] = 0 -- indikace ze senzor nefunguje
+            if Debug == 1 then 
+                print ("TR>end3")
+            end
 			Finished = 1 -- cas jedna ale dokonceno, pri chybe to tahle nastavim
 		end
 		result = nil
