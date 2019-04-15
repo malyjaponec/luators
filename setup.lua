@@ -89,8 +89,8 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        --dalas = require("dalas")
-        --dalas.setup(5,gpionum[12])
+        dalas = require("dalas")
+        dalas.setup(5,gpionum[5])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -123,7 +123,7 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 10    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	ReportInterval = 5    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
 	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
@@ -143,7 +143,7 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	GetFeeds = {[898]=gpionum[4]}
+	GetFeeds = {[901]=gpionum[4]}
 		-- A nastavim hodnotu na off hned po zapnuti, pro pripad kdyby se to nedokomunikovalo
 		gpio.mode(gpionum[4], gpio.OUTPUT)   
 		gpio.write(gpionum[4], gpio.LOW)
@@ -164,8 +164,6 @@
 	gpio.write(gpionum[14], gpio.HIGH)
 	gpio.mode(gpionum[15], gpio.OUTPUT)   
 	gpio.write(gpionum[15], gpio.LOW)
-    gpio.mode(gpionum[5], gpio.OUTPUT)   
-	gpio.write(gpionum[5], gpio.HIGH)
 	
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
