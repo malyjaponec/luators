@@ -103,7 +103,13 @@ local function reset_apn()
     counter = counter - 1
     wifi.sta.getap(ap_select)
     if ap_was_found == true then
-        wifi.sta.config(ap_selected_ssid,ap_selected_pass)
+			station_cfg={}
+			station_cfg.ssid=ap_selected_ssid
+			station_cfg.pwd=ap_selected_pass
+			station_cfg.auto=true
+			station_cfg.save=true
+			wifi.sta.config(station_cfg)
+			station_cfg = nil
         wifi.sta.connect()
         wifi.sta.autoconnect(1)
         counter = 10

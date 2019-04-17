@@ -1,6 +1,11 @@
 -- measure.lua
     tmr.stop(0)
-      
+
+-- zapnu napajeni na fantom sbernici
+    gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
+    gpio.mode(Sb3, gpio.OUTPUT) 
+    gpio.write(Sb3, gpio.HIGH)
+
 -- Knihovna na cteni z dalasu
     t = require("ds18b20")
     local q,v
@@ -139,10 +144,13 @@
     package.loaded["ds18b20"]=nil
     q,v = nil,nil
 
+-- Vypne napejni fantom zbernice
+    gpio.mode(Sb3, gpio.INPUT, gpioFLOAT) 
+    gpio.mode(Sb3, gpio.OUTPUT) 
+    gpio.write(Sb3, gpio.LOW)
 
--- Analogovy vstup, neni zapojen
+-- Analogovy vstup, napeti baerie systemu
     Rdat[Rpref.."an"] = adc.read(0)
-
 
 -- Pins
     local value = ""
