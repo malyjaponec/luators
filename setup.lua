@@ -67,8 +67,8 @@
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        --battery = require("battery")
-        --battery.setup(2, nil) -- bez mereni svetla
+        battery = require("battery")
+        battery.setup(2, nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla 
 			-- pouzival pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
@@ -90,7 +90,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(5,gpionum[5])
+        dalas.setup(5,gpionum[4],gpionum[5])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -106,8 +106,8 @@
 		--lux = require("luxmeter")
 	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
 		
-		analog = require("analog")
-        analog.setup(2,25)
+		--analog = require("analog")
+        --analog.setup(2,25)
 		
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
@@ -123,11 +123,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 5    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "5" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -143,10 +143,10 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	GetFeeds = {[901]=gpionum[4]}
+	--GetFeeds = {[901]=gpionum[4]}
 		-- A nastavim hodnotu na off hned po zapnuti, pro pripad kdyby se to nedokomunikovalo
-		gpio.mode(gpionum[4], gpio.OUTPUT)   
-		gpio.write(gpionum[4], gpio.LOW)
+	--	gpio.mode(gpionum[4], gpio.OUTPUT)   
+	--	gpio.write(gpionum[4], gpio.LOW)
 	
 	
 -- ***
@@ -160,10 +160,10 @@
         file.close()
 		
 -- Prenastaveni pinu, ktere nechci pouzivat, nekdy se rozsveci RGB ledka a podobne takze zde je prostor to rucne napsat
-	gpio.mode(gpionum[14], gpio.OUTPUT)   
-	gpio.write(gpionum[14], gpio.HIGH)
-	gpio.mode(gpionum[15], gpio.OUTPUT)   
-	gpio.write(gpionum[15], gpio.LOW)
+	--gpio.mode(gpionum[14], gpio.OUTPUT)   
+	--gpio.write(gpionum[14], gpio.HIGH)
+	--gpio.mode(gpionum[15], gpio.OUTPUT)   
+	--gpio.write(gpionum[15], gpio.LOW)
 	
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
