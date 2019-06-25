@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "15"
+	SW_VERSION = "13"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -62,7 +62,7 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, gpionum[13]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
+        network.setup(1, -gpionum[15]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
         --network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
@@ -77,7 +77,6 @@
         --dht22.setup(3,gpionum[5],nil,-2) -- luatori s trvale napajenym DHT - omezeno na 5 pokusu, pro lokality kde se predpoklada upadek dht
         --dht22.setup(3,gpionum[5],nil,3) -- luatori s trvale napajenym DHT
         --dht22.setup(3,gpionum[5],gpionum[14],3) -- DHT odpojovane - napajeni z pinu
-        --dht22.setup(3,gpionum[5],gpionum[13],3) -- DHT odpojovane - napajeni z pinu
         --[[ k tomu jen to ze s novym sw je problem napajeni z pinu, protoze dht pak nemeri
              behem vysilani wifi dokud nedostane luator IP, zrejme predchozi software stihl nejake
              jedno mereni pred vysilanim a to mu stacilo, nova implementace potrebuje opakovani
@@ -90,7 +89,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(5,gpionum[4],gpionum[5])
+        dalas.setup(4,gpionum[2],gpionum[0])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -112,10 +111,10 @@
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
 		
-		--weight = require("weight")
-		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
+		weight = require("weight")
+		weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
 		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14] },nil)
-		--weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
+		weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
 		
         -- *************************
     end
@@ -127,7 +126,7 @@
 	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "3" 
+    ReportNode = "8" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -136,18 +135,12 @@
 	5 rychle merici systemy z AC (udirna) a kontrolni systemy (to co ma vystupni agenty)
 	6 node red - vypoctena data ktera tlaci na emon node red systemy
 	7 vodomery
-	8 hmotnosti
-	9 merice napeti v autech
 	30 testing
 	]]
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	--GetFeeds = {[901]=gpionum[4]}
-		-- A nastavim hodnotu na off hned po zapnuti, pro pripad kdyby se to nedokomunikovalo
-	--	gpio.mode(gpionum[4], gpio.OUTPUT)   
-	--	gpio.write(gpionum[4], gpio.LOW)
-	
+	--GetFeeds = {[639]=gpionum[4]}
 	
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -160,11 +153,9 @@
         file.close()
 		
 -- Prenastaveni pinu, ktere nechci pouzivat, nekdy se rozsveci RGB ledka a podobne takze zde je prostor to rucne napsat
-	--gpio.mode(gpionum[14], gpio.OUTPUT)   
-	--gpio.write(gpionum[14], gpio.HIGH)
-	--gpio.mode(gpionum[15], gpio.OUTPUT)   
+	--gpio.mode(gpionum[15], gpio.OUTPUT) 
 	--gpio.write(gpionum[15], gpio.LOW)
-	
+
 -- Debug, pokud existuje soubor, knihovny vypisuji veci informace se zrovna deje
         if (file.open("debug.ini", "r") ~= nil) then Debug = 1 file.close() else Debug = 0 end
       
@@ -172,7 +163,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = gpionum[12] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
+        LedSend = nil -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
@@ -181,8 +172,3 @@
         gpionum = nil -- definici pinu uz nebudu potrebovat
         MeasureInit = nil -- funkci spoustejici mereni uz nikdy nezavolam
     end
-
-	
-	
-	
-	
