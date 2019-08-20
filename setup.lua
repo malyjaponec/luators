@@ -62,13 +62,13 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, -gpionum[15]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
+        network.setup(1, -gpionum[0]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
         --network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        battery = require("battery")
-        battery.setup(2, nil) -- bez mereni svetla
+        --battery = require("battery")
+        --battery.setup(2, nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla 
 			-- pouzival pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
@@ -89,7 +89,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(4,gpionum[2],gpionum[0])
+        dalas.setup(4,gpionum[4])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -111,10 +111,10 @@
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
 		
-		weight = require("weight")
-		weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
+		--weight = require("weight")
+		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14], ["center"]= gpionum[12], ["right"]= gpionum[13] },nil)
 		--weight.setup(5,gpionum[5],{ ["left"]= gpionum[14] },nil)
-		weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
+		--weight_delay = 2000 -- pokud neni nil, tak se odeslani hmotnosti opozdi o milisekundy zde uvedene
 		
         -- *************************
     end
@@ -122,8 +122,8 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 5    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
     ReportNode = "8" 
@@ -135,12 +135,14 @@
 	5 rychle merici systemy z AC (udirna) a kontrolni systemy (to co ma vystupni agenty)
 	6 node red - vypoctena data ktera tlaci na emon node red systemy
 	7 vodomery
+    8 vcely
+    9 auta
 	30 testing
 	]]
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	--GetFeeds = {[639]=gpionum[4]}
+	GetFeeds = {[912]=-gpionum[13],[913]=-gpionum[12],[914]=-gpionum[14],[915]=-gpionum[16]}
 	
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
@@ -163,7 +165,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = nil -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
+        LedSend = -gpionum[5] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
