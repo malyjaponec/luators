@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "13"
+	SW_VERSION = "14"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -88,8 +88,8 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        dalas = require("dalas")
-        dalas.setup(4,gpionum[4])
+        --dalas = require("dalas")
+        --dalas.setup(4,gpionum[4])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -105,8 +105,8 @@
 		--lux = require("luxmeter")
 	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
 		
-		--analog = require("analog")
-        --analog.setup(2,25)
+		analog = require("analog")
+        analog.setup(2,25)
 		
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
@@ -122,11 +122,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 5    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 5*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "8" 
+    ReportNode = "9" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -142,7 +142,7 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
-	GetFeeds = {[912]=-gpionum[13],[913]=-gpionum[12],[914]=-gpionum[14],[915]=-gpionum[16]}
+	--GetFeeds = {[912]=-gpionum[13],[913]=-gpionum[12],[914]=-gpionum[14],[915]=-gpionum[16]}
 	
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
