@@ -62,13 +62,13 @@
 
         -- Spustim procesy nastavujici sit, nastavi se casovac a indikacni led
         network = require("network")
-        network.setup(1, -gpionum[0]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
-        --network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
+        --network.setup(1, -gpionum[0]) -- s ledkovym vystupem do nejake rgb ledky, nevim presne ktere
+        network.setup(1, gpionum[2]) -- s ledkovym vystupem do modre led na modulu
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        --battery = require("battery")
-        --battery.setup(2, nil) -- bez mereni svetla
+        battery = require("battery")
+        battery.setup(2, nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla 
 			-- pouzival pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
@@ -94,8 +94,8 @@
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
 		
-		-- triple = require("triple")
-		-- triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
+		triple = require("triple")
+		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
 		
 		--dist = require("distance")
 		--dist.setup(3,5)
@@ -105,8 +105,8 @@
 		--lux = require("luxmeter")
 	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
 		
-		analog = require("analog")
-        analog.setup(2,25)
+		--analog = require("analog")
+        --analog.setup(2,25)
 		
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
@@ -122,11 +122,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 5*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
 	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "9" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -165,7 +165,7 @@
         MeasureInit()
 
 -- Spustim odesilac, bez casovace primo
-        LedSend = -gpionum[5] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
+        LedSend = gpionum[15] -- zaporna hodnota se pouzije pokud chceme ledku spinat otevrenym kolektorem, kladna hodnota kdyz je ledka zapojena proti zemi
         dofile("send.lc") -- pouziva casovac 0
     
 -- Uklid
