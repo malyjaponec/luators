@@ -14,11 +14,13 @@ end
 local function ZhasniLED()
     if LedSend ~= nil then 
         if LedSend > 0 then
-            gpio.mode(LedSend, gpio.OUTPUT)
+            --gpio.mode(LedSend, gpio.OUTPUT)
             gpio.write(LedSend, gpio.LOW)
+            gpio.mode(LedSend, gpio.INPUT, gpio.FLOAT)
         else
-            gpio.mode(-LedSend, gpio.OUTPUT)
+            --gpio.mode(-LedSend, gpio.OUTPUT)
             gpio.write(-LedSend, gpio.HIGH)
+            gpio.mode(-LedSend, gpio.INPUT, gpio.FLOAT)
         end
         
      end
