@@ -63,26 +63,25 @@ local function led(_stav)
     if LedIO == nil then return end
     -- Kladne hodnoty GPIO vystupu zapinaji ledku do H, zatimco zaporna hodnota predpoklada ledku proti VCC a rozsveci ledku do L
     gpio.mode(LedIO, gpio.OUTPUT, gpio.FLOAT) 
-    if 1 == _stav then
-		writeled(1)
-    else
-        if 2 == _stav then
-			-- zmena stavu se deje podle hodnoty ledky nezavisle na tom zda je negovana nebo ne
-            if gpio.LOW == gpio.read(LedIO) then
-                gpio.write(LedIO, gpio.HIGH)
-            else
-                gpio.write(LedIO, gpio.LOW)
-            end 
+    if -1 == _stav then
+        writeled(0)
+        gpio.mode(LedIO, gpio.INPUT, gpio.FLOAT) 
+    else 
+        if 1 == _stav then
+    		writeled(1)
         else
-			writeled(0)
-			--gpio.mode(LedIO, gpio.INPUT, gpio.FLOAT) 
-				-- experimentalne krome nastavehi vystupu do neaktivni pozice z toho udelam vstup
-				-- nema to vliv ledky v deep sleepu stale prosvecuji a nelze je pouzivat, tedy
-				-- to plati pro modrou a zelenou rgb, zvlastni je ze cervena co ma nejnizsi napeti
-				-- nesviti nikdy
+            if 2 == _stav then
+		    	-- zmena stavu se deje podle hodnoty ledky nezavisle na tom zda je negovana nebo ne
+                if gpio.LOW == gpio.read(LedIO) then
+                    gpio.write(LedIO, gpio.HIGH)
+                else
+                    gpio.write(LedIO, gpio.LOW)
+                end 
+            else
+			    writeled(0)
+            end
         end
-    end
-	
+	end
 end
 
 local function ap_select(t)
@@ -147,7 +146,8 @@ local function check_new_ip()
         end
     else 
         if Debug == 1 then print("Reconfig done, IP is "..wifi.sta.getip()) end
-        led(0)
+        tmr.stop(Casovac)
+        led(-1)
         local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
         Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
@@ -178,16 +178,17 @@ local function reset_apn_result()
     if (Counter > 0) then
         if Debug == 1 then print("ip> Scan unsucessful, trying again...") end
         Counter = Counter - 1
-        ApWasDound = -1 -- nastavim si ze nevim jestli neco nebo nic
+        ApWasFound = -1 -- nastavim si ze nevim jestli neco nebo nic
         if Debug == 1 then print("ip> Rescanning APs...") end
         wifi.sta.getap(ap_select) -- spoustim hledani
         tmr.alarm(Casovac, 3000, 0, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
     else
         print("ip> PANIC, not wifi coverage, end")
         wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
-        led(0)
+        tmr.stop(Casovac)
+        led(-1)
         Finished = -1
-        tmr.alarm(Casovac, 100, 1, function() led(2) end)
+        --tmr.alarm(Casovac, 100, 1, function() led(2) end)
     end
 end
 
@@ -206,7 +207,8 @@ local function check_ip()
     led(2)
     if nil ~= wifi.sta.getip() then 
         if Debug == 1 then print("ip> IP is "..wifi.sta.getip()) end
-        led(0)
+        tmr.stop(Casovac)
+        led(-1)
         local time = (tmr.now() - ((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
         Finished = time -- ukonci mereni a da echo odesilaci a tim konci tento proces
