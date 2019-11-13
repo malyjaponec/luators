@@ -88,14 +88,14 @@
 			 software pak 30s zkousi se s nima domluvit a nic nezmeni a vybiji baterky, takze je to
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
-        --dalas = require("dalas")
-        --dalas.setup(4,gpionum[4])
+        dalas = require("dalas")
+        dalas.setup(4,gpionum[4])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
 		
-		triple = require("triple")
-		triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
+		--triple = require("triple")
+		--triple.setup(5,gpionum[5],gpionum[4]) -- sbernice i2c na pinech 12 a 14
 		
 		--dist = require("distance")
 		--dist.setup(3,5)
