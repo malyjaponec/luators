@@ -7,7 +7,7 @@
     gpionum = {[0]=3,[2]=4,[4]=1,[5]=2,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 	-- verze software
-	SW_VERSION = "16"
+	SW_VERSION = "17"
 
     -- prevede ID luatoru do 36-kove soustavy, tak aby to bylo reprezentovano co nejmene znaky
     local function IDIn36(IN)
@@ -67,8 +67,8 @@
 		--network.setup(1, nil) -- bez ovladani ledky, muze byt vhodne pro exoticke systemy pouzivajici SPI a I2C co nemaji dost volnych pinu jeste na prdle blikani
 
         -- Spustim proces merici baterii, ktery bezi dokud nedojde k okamizku odeslani
-        --battery = require("battery")
-        --battery.setup(2, nil) -- bez mereni svetla
+        battery = require("battery")
+        battery.setup(2, nil) -- bez mereni svetla
         --battery.setup(2,gpionum[14]) -- s merenim svetla 
 			-- pouzival pouze foliovnik, mereni svetla neni presne a navic tam je proudovy unik
 
@@ -89,7 +89,7 @@
 			 hodne individualni jak to zapojit, zda se ze to zavisi od kusu dht
              ]]--
         dalas = require("dalas")
-        dalas.setup(4,gpionum[5])
+        dalas.setup(4,gpionum[13])
 		
         --baro = require("baro")
         --baro.setup(4,gpionum[14],gpionum[12]) 
@@ -105,8 +105,8 @@
 		--lux = require("luxmeter")
 	    --lux.setup(6,gpionum[14],gpionum[12],triple.status) -- sbernice i2c na pinech X a Y
 		
-		analog = require("analog")
-        analog.setup(2,25)
+		--analog = require("analog")
+        --analog.setup(2,25)
 		
 		--digital = require("digital")
 		--digital.capture(gpionum[4]+64+128,gpionum[5]+64+128,gpionum[16]+64+128,gpionum[14]+64+128)
@@ -122,11 +122,11 @@
 -- *************************
 -- konstanty pro reportovani
 -- *************************
-	ReportInterval = 10    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
-	PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
+	ReportInterval = 10*60    --ReportIntervalFast = 1*60 -- rychlost rychlych reportu, pokud je null tak se to nepouziva
+	--PeriodicReport = 1 -- pokud je null pak se reportuje 1x a usne se, jakakoliv hodnota zpusobi neusnuti a restart po zadane dobe
 
     ReportFast = 0 -- defaultne vypnute
-    ReportNode = "5" 
+    ReportNode = "3" 
 	--[[ moje rozdeleni nodu emonu jak je pouzivam ja
 	1 plynomer, kotel a vytapeni
 	2 solarni ohrev vody
@@ -142,10 +142,12 @@
 -- **********************************
 -- konstanty pro cteni dat ze serveru
 -- **********************************
+    --[[
 	GetFeeds = {[926]=gpionum[4]}
 		-- A nastavim hodnotu na off hned po zapnuti, pro pripad kdyby se to nedokomunikovalo
 		gpio.mode(gpionum[4], gpio.OUTPUT)   
 		gpio.write(gpionum[4], gpio.HIGH)	
+		]]
 -- ***
     ReportFieldPrefix = IDIn36(node.chipid()).."_" -- co nejkratsi jednoznacna ID luatoru z jeho SN
     IDIn36 = nil -- rusim funkci uz ji nebudu nikdy potrebovat
