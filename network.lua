@@ -5,6 +5,7 @@
 
 local counter
 local ap_was_found
+local tmr0
 
 local function ap_select(t)
     if nil == t then 
@@ -34,7 +35,17 @@ local function ap_select(t)
                     if Debug == 1 then print ("IP> Known ssid "..ssid..", password "..cfg_pass) end
                     ap_was_found = 1
                     file.close()
-                    wifi.sta.config(cfg_ssid,cfg_pass)
+					-- old object model
+                    --wifi.sta.config(cfg_ssid,cfg_pass)
+					-- new object model
+					station_cfg={}
+					station_cfg.ssid=cfg_ssid
+					station_cfg.pwd=cfg_pass
+					station_cfg.auto=true
+					station_cfg.save=true
+					wifi.sta.config(station_cfg)
+                    station_cfg = nil
+					
                     wifi.sta.connect()
                     wifi.sta.autoconnect(1)
                     return
@@ -52,7 +63,8 @@ local function check_new_ip()
         if Debug == 1 and counter % 10 == 0 then print("IP> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) then
-            tmr.alarm(0, 100, 0, function() check_new_ip() end)
+			--tmr0 =  tmr.create()
+            tmr0:alarm(100, tmr.ALARM_SINGLE, function() check_new_ip() end)
         else
             print(wifi.sta.status())
             print("IP> PANIC, not IP assigned, end")
@@ -69,7 +81,8 @@ end
 local function reset_apn_result()
     if ap_was_found == 1 then -- nalezeno, konfiguruji
         counter = 200 -- opet cekam 20s na IP
-        tmr.alarm(0, 2000, 0, function() check_new_ip() end) -- zacnu cekat na IP
+		--tmr0 = tmr.create()
+        tmr0:alarm(2000, tmr.ALARM_SINGLE, function() check_new_ip() end) -- zacnu cekat na IP
         return
     end
     if ap_was_found == 3 then -- neni soubor, jiz nastavena ch
@@ -87,7 +100,8 @@ local function reset_apn_result()
         ap_was_found = -1 -- nastavim si ze nevim jestli neco nebo nic
         if Debug == 1 then print("IP> Scanning APs...") end
         wifi.sta.getap(ap_select) -- spoustim hledani
-        tmr.alarm(0, 3000, 0, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
+		--tmr0 = tmr.create()
+        tmr0:alarm(3000, tmr.ALARM_SINGLE, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
     else
         print("IP> PANIC, not wifi coverage, end")
         wifi.setmode(wifi.STATION) -- pro jistotu pred vypnutim rekonfiguruji, nechci to delat jindy, aby to neblokovalo nacitani AP a nebo pripojeni
@@ -104,7 +118,8 @@ local function change_apn()
     ap_was_found = -1 -- nastavim si ze nevim jestli neco nebo nic
     if Debug == 1 then print("IP> Scanning APs...") end
     wifi.sta.getap(ap_select) -- spoustim hledani
-    tmr.alarm(0, 3000, 0, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
+	--tmr0 = tmr.create()
+    tmr0:alarm(3000, tmr.ALARM_SINGLE, function() reset_apn_result() end) -- za 3 sekundu spust kontrolu vysledku
 end
 
 local function check_ip()
@@ -117,7 +132,8 @@ local function check_ip()
         if Debug == 1 and counter % 10 == 0 then print("IP> Connecting AP...") end
         counter = counter - 1
         if (counter > 0) and (1 == wifi.sta.status()) then
-            tmr.alarm(0, 100, 0, function() check_ip() end)
+			--tmr0 = tmr.create()
+            tmr0:alarm(100, tmr.ALARM_SINGLE, function() check_ip() end)
         else
             if Debug == 1 then print("IP> connect failed, status:"..wifi.sta.status()) end
             change_apn()
@@ -129,4 +145,5 @@ end
 
 Network_Ready = 0 -- toto se sice nastavuje vnejsem pri volani ze setupu ale kdyz to budu volat z sendu tak at si to nastavi samo
 counter = 200 -- prilizne 20 sekund cekam na pripojeni pak neco zacnu resit
-tmr.alarm(0, 1000, 0, function() check_ip() end)
+tmr0 = tmr.create()
+tmr0:alarm(1000, tmr.ALARM_SINGLE, function() check_ip() end)

@@ -6,7 +6,7 @@
     k pretoceni casovace coz je asi 40 minut pak kdo vi co se zacne dit, ne vzdy vyjde zaporne cislo, ktere se 
     samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
 --]]
-    tmr.stop(1)
+    --tmr.stop(1)
     --local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
     --local MaximalPower = 16000 
 		-- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
@@ -187,4 +187,5 @@
     end
     
 -- Nacasu prvni odeslani
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
+	tmr1 = tmr.create()
+    tmr1:alarm(1000, tmr.ALARM_AUTO,  function() ZpracujPauzu() end) 

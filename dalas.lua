@@ -17,7 +17,7 @@ _G[modname] = M
 --------------------------------------------------------------------------------
 -- Local used variables
 --------------------------------------------------------------------------------
-local Casovac
+local tmrC
 local Data
 local PinDALAS,PinDALAS2
 local Name
@@ -66,13 +66,14 @@ local function cleanupDALAS()
         PinDALAS,PinDALAS2 = PinDALAS2,nil
 		CommandDelay,ReadoutDelay = ReadoutDelay,CommandDelay -- vymenenim promennych zpusobim ze mezi prikazy se ceka dlouho a vycte se to pak bez cekani
         taddr = nil
-        tmr.alarm(Casovac, 25, 0,  function() startDALAS2() end)       
+		tmrC = tmr.create()
+        tmrC:alarm(25, tmr.ALARM_SINGLE,  function() startDALAS2() end)       
     else
         taddr,t = nil,nil
         ds18b20 = nil
         package.loaded["ds18b20"] = nil
         Data["t_cnt"] = sensors
-        Casovac,Prefix,PinDALAS,sensors = nil,nil,nil,nil
+        tmrC,Prefix,PinDALAS,sensors = nil,nil,nil,nil
         local time = (tmr.now() -((TimeStartLast or 0) * 1000))
         if time <= 0 then time = 1 end
         if Debug == 1 then 
@@ -86,7 +87,8 @@ end
 
 local function readoutDALAS()
     if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni, cekam dlouhou dobu
-        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+		tmrC = tmr.create()
+        tmrC:alarm(25, tmr.ALARM_SINGLE,  function() cleanupDALAS() end)
 	else
 		local addr = taddr[tcount] -- vezmu adresu z pole
 		local value = t.readNumber(addr) -- vyctu si zmerenou teplotu
@@ -101,32 +103,36 @@ local function readoutDALAS()
 		end
 		textaddr,value = nil,nil
 		tcount = tcount + 1
-		tmr.alarm(Casovac, 25, 0,  function() readoutDALAS() end)
+		tmrC = tmr.create()
+		tmrC:alarm(25, tmr.ALARM_SINGLE,  function() readoutDALAS() end)
 	end
 end
 
 local function measureDALAS()
     if tcount > tsnimacu then -- presazen pocet snimacu, konec mereni
 		tcount = 1 -- vycitam zase poporade od prvniho
-        tmr.alarm(Casovac, ReadoutDelay, 0,  function() readoutDALAS() end)
+		tmrC = tmr.create()
+        tmrC:alarm(ReadoutDelay, tmr.ALARM_SINGLE,  function() readoutDALAS() end)
     else
         local addr = taddr[tcount] -- vezmu adresu z pole
         if addr ~= nil then -- bezpecnostni ochrana kdyby to vratilo nil
             t.startMeasure(addr) -- pozadam dalas o mereni
             addr = nil
 			tcount = tcount + 1
-            tmr.alarm(Casovac, CommandDelay, 0,  function() measureDALAS() end) -- cekam kratkou dobu a pustim dalsi mereni
+			tmrC = tmr.create()
+            tmrC:alarm(CommandDelay, tmr.ALARM_SINGLE,  function() measureDALAS() end) -- cekam kratkou dobu a pustim dalsi mereni
         else
             -- pokud to vrati nulouvou adresu, zkusim dalsi index, bez dlouheho cekani
             tcount = tcount + 1
-            tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
+			tmrC = tmr.create()
+            tmrC:alarm(25, tmr.ALARM_SINGLE,  function() measureDALAS() end)
         end
     end
 end
 
 local function startDALAS()
     if PinDALAS == nil then
-        tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end) -- pin1 nedefinovany, cleanup muze jeste pustint pin2
+        tmrC:alarm(25, tmr.ALARM_SINGLE,  function() cleanupDALAS() end) -- pin1 nedefinovany, cleanup muze jeste pustint pin2
     else    
         t.setup(PinDALAS)
         taddr = t.addrs() -- nacte adresy vsechn dalasu na sbernici
@@ -140,9 +146,11 @@ local function startDALAS()
         end 
         if tsnimacu > 0 then -- jsou nalezeny snimace
             tcount = 1
-            tmr.alarm(Casovac, 25, 0,  function() measureDALAS() end)
+			tmrC = tmr.create()
+            tmrC:alarm(25, tmr.ALARM_SINGLE,  function() measureDALAS() end)
         else
-            tmr.alarm(Casovac, 25, 0,  function() cleanupDALAS() end)
+            tnrC = tmr.create()
+			tmrC:alarm(25, tmr.ALARM_SINGLE,  function() cleanupDALAS() end)
         end
     end
 end
@@ -152,11 +160,12 @@ function startDALAS2() -- kvuli volani z horni casti kodu kde lokalni funkce jes
 end
 
 local function setup(_casovac,_dalaspin,_dalaspin2) 
-    Casovac = _casovac or 4 
+	-- casovac uz neni potreba
     PinDALAS, PinDALAS2 = _dalaspin,_dalaspin2
     Data = {}
     Finished,sensors,tsnimacu = 0,0,0
-    tmr.alarm(Casovac, 25, 0,  function() 
+	tmrC = tmr.create()
+    tmrC:alarm(25, tmr.ALARM_SINGLE,  function() 
         if Debug == 1 then 
             print("DS> start")
         end 

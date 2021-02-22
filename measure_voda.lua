@@ -9,7 +9,7 @@
 	s tim ze pokud se kolecko bude otacet o vic jak 90 stupnu nelze zarucit eliminaci problemu, pri pouziti zpetneho ventilu by k tomu 
 	dochazet nemelo a pohyb by mel byt pouze lehce dopredny, ale to nemam takze uvidime.
 --]]
-    tmr.stop(1)
+    --tmr.stop(1)
     local MinimalPower = 1
 	local MaximalPower = 200000
 	--[[ pro vodomer 20ml na otacku resp 10ml na jeden magneticky puls je to je
@@ -186,5 +186,6 @@
     end
 
 -- Nacasu prvni odeslani
-    tmr.alarm(1, 1000, 1, function() ZpracujPauzu() end) 
+	tmr1 = tmr.create()
+    tmr1:alarm(1000, tmr.ALARM_AUTO, function() ZpracujPauzu() end) 
 	
