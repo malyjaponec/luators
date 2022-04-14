@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "210216"
+	SW_VERSION = "210223"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -34,7 +34,7 @@
 
 -- konstanty pro reportovani
     Rcnt = 0	 -- citac poctu reportu od zapnuti
-    Rnod = "7"
+    Rnod = "4"
 	-- "1" plynomery maji vyhrazeny node 1
     -- "4" elektromery jsou node 4
 	-- "7" vodomery pouzivaji node 7
@@ -72,6 +72,7 @@
     Network_Ready = 0 -- sit neni inicialozvana
 	tmr0 = tmr.create()
     tmr0:alarm(250, tmr.ALARM_SINGLE, function() dofile("network.lc") end)
+	tmr0 = nil
 	-- casovac nula
 	
 	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet
@@ -84,18 +85,20 @@
 	dalas_start()
 	-- ]]
 	
-    --[[
+    -- [[
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
 	--
     --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
 	--Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
-	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
+	--Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
+	Measure_Faze = { GP[4], GP[5], nil } -- elektromer 1 fazovy pro meric1, firman 
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
 	tmr1 = tmr.create()
 	tmr1:alarm(10, tmr.ALARM_SINGLE,  function() dofile("measure_elektro.lc") end)
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro velmi rychle cteni digitalnich vstupu pro vypocet "pulzu"
+	tmr1 = nil
 	--]]
 	
 	--[[
@@ -113,7 +116,7 @@
 	--]]
 	
 	-- hodnoty pro plynomer / nebo pro vodomer co ma pouze odrazny spinac
-	-- [[
+	--[[
 	Measure_Faze = {GP[4],nil,nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
