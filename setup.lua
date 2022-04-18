@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "8"
+	SW_VERSION = "220416"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -22,7 +22,7 @@
 
 -- nastavi knihovnu pro RGB
     rgb = require("rgb")
-    rgb.setup() -- volam s defaultnim zapojeni RGB
+    rgb.setup( GP[16], GP[15], GP[0] ) -- volam, vzdy musi byt parametry
     rgb.set() -- volam bez parametru = cerna
 
 -- vice vypisu, temer se v nove vzniknutych kodech nepouziva, ale v sitove vrstve je pouzito
@@ -33,8 +33,8 @@
     end
 
 -- konstanty pro reportovani
-    Rcnt = 0 -- citac poctu reportu od zapnuti
-    Rnod = "7"
+    Rcnt = 0	 -- citac poctu reportu od zapnuti
+    Rnod = "4"
 	-- "1" plynomery maji vyhrazeny node 1
     -- "4" elektromery jsou node 4
 	-- "7" vodomery pouzivaji node 7
@@ -60,21 +60,24 @@
 	
 	Kontrolni soucet se pocita pouze z prvnich 3 hodnot (nepredana data na server)
 	]]
-    local sum,value1,value2,value3
-    sum,value1,value2,value3 = rtcmem.read32(0,4)
-    if sum ~= (value1+value2+value3) then -- nesouhlasi kontrolni soucet
-        rtcmem.write32(0,  0, 0,0,0, 0,0,0, 1024,1024,1024,0,0,0) -- rozsireny reset i pro plynomery
+    local sum,value1,value2,value3,value4,value5,value6
+    sum,value1,value2,value3,value4,value5,value6 = rtcmem.read32(0,7)
+    if sum ~= (value1+value2+value3+value4+value5+value6) then -- nesouhlasi kontrolni soucet
+        rtcmem.write32(0,  0, 0,0,0,0,0,0, 0,0,0,0,0,0) -- uz to neni kompatabilni s plynomerem, ten ma jen 3 kanaly, toto 6
+		--rtcmem.write32(0,  0, 0,0,0, 0,0,0, 1024,1024,1024,0,0,0) -- rozsireny reset i pro plynomery
 		print("RTC memory eset")
     end
 
 
 -- Spustim procesy nastavujici sit a merici data
     Network_Ready = 0 -- sit neni inicialozvana
-    tmr.alarm(0, 250, 0, function() dofile("network.lc") end)
+	tmr0 = tmr.create()
+    tmr0:alarm(250, tmr.ALARM_SINGLE, function() dofile("network.lc") end)
+	tmr0 = nil
 	-- casovac nula
 	
 	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet
-	-- [[
+	--[[
 	dalas = require("dalas")
 	function dalas_start()
 		TimeStartLast = tmr.now()/1000 -- zapisu si cas posledniho spuseni, ziskam tak presne cas za jak dlouho doslo ke zmereni cidel, ne cas od zapnuti procesoru
@@ -83,17 +86,20 @@
 	dalas_start()
 	-- ]]
 	
-    --[[
+    -- [[
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
 	--
     --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
 	--Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
-	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
-    Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
-    Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-	tmr.alarm(1, 10, 0,  function() dofile("measure_elektro.lc") end)
+	--Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
+	Measure_Faze = { GP[4], GP[5], GP[14], GP[12], GP[13], GP[2] } -- elektromer 6 fazovy pro rozvadec
+    Energy_Faze = {0,0,0,0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
+    Power_Faze = {-1,-1,-1,-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
+	tmr1 = tmr.create()
+	tmr1:alarm(10, tmr.ALARM_SINGLE,  function() dofile("measure_elektro.lc") end)
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro velmi rychle cteni digitalnich vstupu pro vypocet "pulzu"
+	tmr1 = nil
 	--]]
 	
 	--[[
@@ -105,13 +111,14 @@
     Measure_FazeB = { GP[5], nil, nil }
 	Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
-	tmr.alarm(1, 10, 0,  function() dofile("measure_voda.lc") end)
+	tmr1 = tmr.create()
+	tmr1:alarm(10, tmr.ALARM_SINGLE, function() dofile("measure_voda.lc") end)
 		-- casovac 1
 	--]]
 	
-	-- hodnoty pro plynomer
+	-- hodnoty pro plynomer / nebo pro vodomer co ma pouze odrazny spinac
 	--[[
-	Measure_Faze = {GP[4],GP[5],nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
+	Measure_Faze = {GP[4],nil,nil} -- v plynomeru to urcuje ledky ktere se rozsveci pred merenim analogu
     Energy_Faze = {0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
 	Digitize_Minimum = {1024,1024,1024} -- tyto hodnoty definuji meze kde se pohybuje signal a odesilac je posila na server, proto jsou globalni, hodnota neni podstatna nacitaji se z pameti RTC
@@ -121,7 +128,9 @@
 	Digitize_Status = {5,5,5} -- hodnota 5 se nepouziva
 	Digitize_CaptureTime = 0
 	AnalyticReport = 1 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
-    tmr.alarm(1, 10, 0,  function() dofile("measure_plyn.lc") end)
+	tmr1 = tmr.create()
+    tmr1:alarm(10, tmr.ALARM_SINGLE,  function() dofile("measure_plyn.lc") end)
+	tmr1 = nil
 	--]]
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro analogove mereni
@@ -135,7 +144,7 @@
 	--  mereni vykonu (prutoku) probina digitalnim snimacem, ktery generuje pulzy. Mechanicky se zde vyuziva prvni kolecko
 	--   prevodu vodomeru, ktere je od vyrobce derovane a ke snimani se pouziva digitalni senzor z mysi
 	--  teoreticky ski zachovat 3 fazove mereni, ale kdyz uz to prepisuji tak proc to nezjednodusit
-	-- [[
+	--[[
 	Measure_Power = GP[4] -- zapojeni digitalniho snimace pro mereni prutoku, analog pro spotrebu je definovan tim ze je na ADC
     Energy_Faze = 0 -- akumulace spotreby vody 
     Power_Faze = -1 -- ukladani posledniho prutoku na zaklade posledni delky pulzu
@@ -148,17 +157,21 @@
 	
 	AnalyticReport = 2 -- posila i analyticka data jako prumer, maximum minimum standardni odchylky a tak
 		
-    tmr.alarm(1, 10, 0,  function() dofile("measure_vodadual.lc") end)
+	tmr1 = tmr.create()
+    tmr1:alarm(10, tmr.ALARM_SINGLE,  function() dofile("measure_vodadual.lc") end)
 	--]]
 		-- casovac 1 pro standardni zpracovani dat
 		--         3 pro analogove mereni
 		
+
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
-	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
-	
-    -- tmr.alarm(2, 500, 0,  function() dofile("send.lc") end)
-    tmr.alarm(2, 500, 0,  function() dofile("sendmono.lc") end)  -- verze pro odesilani pouze jednokanalovych dat
+	--Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
+	-- NonEsentialReport = 0 -- pokud je definovane odesila cas,ap MAC,heap.pocet chyb...
+	tmr2 = tmr.create()
+    tmr2:alarm(500, tmr.ALARM_SINGLE,  function() dofile("send.lc") end)
+    --tmr2:alarm(500, tmr.ALARM_SINGLE,  function() dofile("sendmono.lc") end)  -- verze pro odesilani pouze jednokanalovych dat
 		-- casovac 2
+	tmr2 = nil
 
 -- uklid toho co uz nepotrebujem 
     print("run")

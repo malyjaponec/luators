@@ -3,8 +3,8 @@
 	Vychazi z elektromeru ale bohuzel nejsem to schopen vecpat parametricky do jednoho skriptu
 	Takze pri opravach v elektromeru se musi rucne prepisovat opravy i sem 
 --]]
-	tmr.stop(1)
-	tmr.stop(3)
+	local tmr4
+	local tmr1
 	local MinimalPower = 1 -- pro 1 pulz = 10 litru - to je 10 litru / hodinu
 	local MaximalPower = 1000 -- pro 1 pulz = 10 litr - je to 10m3 / hodinu, vic nez dostatecne,
 	
@@ -149,7 +149,10 @@
 						end
 					end
 				end
-				if Debug == 1 then print(string.format("M> [%d] power in/out=%.3f / %.3f",i,power,Power_Faze[i])) end 
+				if Debug == 1 then 
+					print(string.format("M> [%d] power in/out=%.3f / %.3f",i,power,Power_Faze[i])) 
+					print(string.format("M> mem: %d",node.heap())) 
+				end 
 			end
 		end
 		Time_Rotation = timenow -- zaznamenam si novy cas
@@ -261,7 +264,7 @@
 		Average_Data[Average_Counter] = adc.read(0)
 		Average_Counter = Average_Counter + 1
 		if Average_Counter <= POCET_MERENI[_channel] then 
-			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog(_channel) end)
+			tmr4:alarm(math.random(5,15), tmr.ALARM_SINGLE,  function() CaptureAnalog(_channel) end)
 		else -- nacteno dost dat provedu ocisteni
 			gpio.write(Measure_Faze[_channel],gpio.HIGH)  -- zhasnu led, uz nepotrebuju svitit na snimac, delam to jako prvni 
 			-- aby pokud mozno v dalsim kroku sekvence nedochazelo k dosvicovani predchoziho kanalu
@@ -299,7 +302,7 @@
 				if td <= 0 then -- kdybych nahodou nestihal
 					td = 1 -- tak nastavin casovac na jednu milisekundu, cili spoustit to co nejdrive jde
 				end
-				tmr.alarm(4, 5, 0,  function() StartAnalogG(1) end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
+				tmr4:alarm(5, tmr.ALARM_SINGLE,  function() StartAnalogG(1) end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
 			end
 		end
 	end
@@ -317,7 +320,7 @@
 		Average_Counter = 1
 		Average_Data = {}
 		-- spustim mereni pres casovac aby se stihli rozsvitit IR led, tento cas zohlednuje to ze se IR led v detektoru rozsviti
-		tmr.alarm(4, 10, 0,  function() CaptureAnalog(_kanal) end)
+		tmr4:alarm(10, tmr.ALARM_SINGLE,  function() CaptureAnalog(_kanal) end)
 	end
 	function StartAnalogG(_kanal)
 		StartAnalog(_kanal)
@@ -327,7 +330,9 @@
 -- Nacasu prvni odeslani
 	Digitize_Minimum[1], Digitize_Minimum[2], Digitize_Minimum[3], Digitize_Maximum[1], Digitize_Maximum[2], Digitize_Maximum[3] = rtcmem.read32(7,6) -- nactu si pamet 7 a 8
 
-	--tmr.alarm(3, ANALOG_CAPTURE_PERIOD, 1,  function() StartAnalog(1) end) -- pousti se opakovane
-	tmr.alarm(3, 10, 0,  function() StartAnalog(1) end) -- odstartuji prvni mereni
+	tmr4 = tmr.create()
+	tmr4:alarm(10, tmr.ALARM_SINGLE,  function() StartAnalog(1) end) -- odstartuji prvni mereni
+	--tmr3:alarm(ANALOG_CAPTURE_PERIOD, tmr.ALARM_AUTO,  function() StartAnalog(1) end) -- pousti se opakovane
 
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- pousti se opakovane
+	tmr1 = tmr.create()
+    tmr1:alarm(1000, tmr.ALARM_AUTO,  function() ZpracujPauzu() end) -- pousti se opakovane

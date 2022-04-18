@@ -6,18 +6,27 @@
     k pretoceni casovace coz je asi 40 minut pak kdo vi co se zacne dit, ne vzdy vyjde zaporne cislo, ktere se 
     samozrejme zahazuje. Zatim jsem nevidel takovou situaci, ale nejspis ji jednou uvidim a pak ji zacnu resit.
 --]]
-    tmr.stop(1)
+    --tmr.stop(1)
     local MinimalPower = 1 -- pro 0,5Wh pulzy to je vlastne mene nez 0.5W, 
-    local MaximalPower = 16000 -- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
-    --local MaximalPower = 80000 -- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    local MaximalPower = 16000
+		-- pro 0,5Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    --local MaximalPower = 80000 
+		-- pro 0,1Wh pulze je to 8kW, rychlejsi sled pulzu to jiz ignoruje
+    
+	--local MinimalPower = 6
+	--local MaximalPower = 200000
+		--[[ pro vodomer 20ml na otacku resp 10ml na jeden magneticky puls je to je
+			10 ml/hod vs. 2 m3/hod, tedy 33 l/min
+		]]
+
 	
 -- citace, casovace a akumulatory
-    local Time_Faze = {-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
-    local Time_Long = {0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
+    local Time_Faze = {-1,-1,-1,-1,-1,-1} -- cas predchoziho pulzu pro jednotlive vstupy (v uS - citac tmr.now)
+    local Time_Long = {0,0,0,0,0,0} -- extra cas pro mereni zalezitosti pres 40 minut dlouhych
     local Time_Rotation = 0 -- pro detekci pretoceni
 	
 -- Debug
-	local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
+	--local DebugPower = 0 -- pokud se nadefinuje tak to vypisuje moc vypisu
 
 -- Generalizovana citaci funkce
     local function CitacInterni(_kanal)
@@ -40,7 +49,7 @@
                 local power = 3600000000/timedif -- hodnota ve watech, pokud je pulz 1Wh (jinak se to musi prepocitat na serveru
                 if power < MaximalPower then -- nepripustim ze bych meril neco velkeho, to uz zavani zakmity
                     Power_Faze[_kanal] = power
-                    rtcmem.write32(3+_kanal, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
+                    rtcmem.write32(6+_kanal, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
                 end
                 power = nil
             end
@@ -71,6 +80,21 @@
 			CitacInterni(3)
 		end
 	end
+	local function CitacPulzu4(_level)
+        if _level == gpio.LOW then
+			CitacInterni(4)
+		end
+	end
+	local function CitacPulzu5(_level)
+        if _level == gpio.LOW then
+			CitacInterni(5)
+		end
+	end
+	local function CitacPulzu6(_level)
+        if _level == gpio.LOW then
+			CitacInterni(6)
+		end
+	end
 
 -- Uprava vykonu pokud se nic nedeje
     local function ZpracujPauzu()
@@ -78,7 +102,7 @@
         -- snizeni vykonu kdyz se nic nedeje
         local i,power,powermem,timedif
         local timenow = tmr.now()
-        for i=1,3 do 
+        for i=1,6 do 
 			if Measure_Faze[i] ~= nil then -- pro elektromery s mene fazema, nemam piny na to abych z nich cetl
 				-- standardnim zpusobem spocitam diferenci pro urceni vykonu
 				timedif = timenow - Time_Faze[i] + Time_Long[i]
@@ -124,11 +148,11 @@
 						-- pulzy a je rozumne pouzit cas ktery je ted protoze je nejspib blize realite nez predchozi perioda
 						-- takze opravim vykon na aktualni delku bezpulzi
 							Power_Faze[i] = power
-							rtcmem.write32(3+i, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
+							rtcmem.write32(6+i, power*1000) -- zapisu si hodnotu tez do RTC memory pro pripad restartu
 						end
 					end
 					if (Power_Faze[i] == -1) then -- pokud jeste nemam zadnou hodnotu vykonu, tohle se provede fakt jen na zacatku jednou
-						local powermem = rtcmem.read32(3+i)/1000 -- prectu si hodnotu z pameti, pokud doslo k jejimu resetu bude tam 0
+						local powermem = rtcmem.read32(6+i)/1000 -- prectu si hodnotu z pameti, pokud doslo k jejimu resetu bude tam 0
 						if powermem ~= 0 then -- pokud v pameti neco je, pak to pouziju, nulu budu ignorovat
 							if Debug == 1 then print("M> restored power="..powermem) end 
 							Power_Faze[i] = powermem -- opravim si aktualni hodnotu na to co je v pameti
@@ -151,6 +175,8 @@
 					end
 				end
 				if Debug == 1 then print(string.format("M> [%d] power in/out=%.3f / %.3f",i,power,Power_Faze[i])) end 
+			else
+				if Debug == 1 then print(string.format("M> [%d] off",i)) end 
 			end
         end
         Time_Rotation = timenow -- zaznamenam si novy cas
@@ -176,6 +202,23 @@
         gpio.mode(Measure_Faze[3], gpio.INT, gpio.PULLUP) 
         gpio.trig(Measure_Faze[3], "down", CitacPulzu3)
     end
+    if Measure_Faze[4] ~= nil then
+        gpio.mode(Measure_Faze[4], gpio.INPUT, gpio.FLOAT)
+        gpio.mode(Measure_Faze[4], gpio.INT, gpio.PULLUP) 
+        gpio.trig(Measure_Faze[4], "down", CitacPulzu4)
+    end
+    if Measure_Faze[5] ~= nil then
+        gpio.mode(Measure_Faze[5], gpio.INPUT, gpio.FLOAT)
+        gpio.mode(Measure_Faze[5], gpio.INT, gpio.PULLUP) 
+        gpio.trig(Measure_Faze[5], "down", CitacPulzu5)
+    end
+    if Measure_Faze[6] ~= nil then
+        gpio.mode(Measure_Faze[6], gpio.INPUT, gpio.FLOAT)
+        gpio.mode(Measure_Faze[6], gpio.INT, gpio.PULLUP) 
+        gpio.trig(Measure_Faze[6], "down", CitacPulzu6)
+    end
     
 -- Nacasu prvni odeslani
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) 
+	tmr1 = tmr.create()
+    tmr1:alarm(1000, tmr.ALARM_AUTO,  function() ZpracujPauzu() end) 
+

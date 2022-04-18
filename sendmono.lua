@@ -28,8 +28,8 @@ local function KonecAbnormal()
 	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
 	
 	
-	
-    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+	tmr2 = tmr.create()
+    tmr2:alarm(2500, tmr.ALARM_SINGLE, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
 --------------------------------------------------------------------------------
@@ -51,8 +51,8 @@ local function Konec(code, data)
 	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
 	
 	
-	
-    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+	tmr2 = tmr.create()
+    tmr2:alarm(2500, tmr.ALARM_SINGLE, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
 --------------------------------------------------------------------------------
@@ -132,16 +132,16 @@ local function Start()
 	Rdat[Rpref.."ver"] = SW_VERSION
 	
     -- prevedu na URL
-    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 
-                "&json=" .. cjson.encode(Rdat) .. 
+    local url = "http://emon.jiffaco.cz/input/post.json?node=" .. Rnod .. 
+                "&json=" .. sjson.encode(Rdat) .. 
                 "&apikey=" .. Rapik
     Rdat = nil -- data smazu explicitne
-
     http.get(url, nil, function(code,data) Konec(code,data) end )
+    url = nil -- url uz taky mazu	
 
-    url = nil
     KonecCounter = 0 -- citac pro timeout 
-    tmr.alarm(2, 15000, 0, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback
+    tmr2:alarm(15000, tmr.ALARM_SINGLE, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback
+	tmr2 = tmr.create()
 end
 
 --------------------------------------------------------------------------------
@@ -151,9 +151,11 @@ local function ReinicializujSit()
     wifi.sta.disconnect()    
     wifi.sta.connect()
     wifi.sta.autoconnect(1)
-    tmr.alarm(0, 500, 0, function() dofile("network.lc") end) 
+	tmr0 = tmr.create()
+    tmr0:alarm(500, tmr.ALARM_SINGLE, function() dofile("network.lc") end) 
     -- reinicalizace site, casovac je zde aby svitila dost dlouho dioda cian
-    tmr.alarm(2, 2500, 0,  function() KontrolaOdeslani2() end)
+	tmr2 = tmr.create()
+    tmr2:alarm(2500, tmr.ALARM_SINGLE,  function() KontrolaOdeslani2() end)
     -- a dalsi kontrolu odeslani nacasuju za 2,5 sekundy protoze prihlaseni k siti nebude
     -- extra rychle a nesmim to nacasovat kratsi nez se provede predchozi casovac jinak
     -- by se ten predchozi furt precasovaval
@@ -180,7 +182,8 @@ local function KontrolaOdeslani()
             if (timedif > 5000000) or (timedif < -5000000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
                 SendTime = tmr.now() -- Zapisu si cas ted tak aby perioda byla neovlivnena tim jak dlouho se to prenasi
                 if Debug == 1 then print("S> odesilam,cas:"..timedif/1000000) end
-                tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
+				tmr2 = tmr.create()
+                tmr2:alarm(100, tmr.ALARM_SINGLE,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
             end
         end
@@ -194,7 +197,8 @@ local function KontrolaOdeslani()
         -- -9 not password file
 		Fail_Wifi = Fail_Wifi + 1
 		if Fail_Wifi > 100 then -- fakt uz to trva dlouho - zde je otazka zda v novem systemu odesilani neni lepsi udelat rovnou reset nez se pokouset o reinicalizaci
-			tmr.alarm(2, 100, 0,  function() dofile("reset.lc") end) -- volam restart, ztratim vsechno zmerene
+			tmr2 = tmr.create()
+			tmr2:alarm(100, tmr.ALARM_SINGLE,  function() dofile("reset.lc") end) -- volam restart, ztratim vsechno zmerene
 			return
 		else
 			ReinicializujSit()
@@ -209,7 +213,8 @@ local function KontrolaOdeslani()
     end        
 
     -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
-    tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
+	tmr2 = tmr.create()
+    tmr2:alarm(250, tmr.ALARM_SINGLE,  function() KontrolaOdeslani() end)
 end
 
 --------------------------------------------------------------------------------
@@ -218,5 +223,6 @@ function KontrolaOdeslani2() -- toto je finta jak mit globalni funkci co nejmens
 end
 
 --------------------------------------------------------------------------------
-tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end) 
+tmr2 = tmr.create()
+tmr2:alarm(250, tmr.ALARM_SINGLE,  function() KontrolaOdeslani() end) 
 

@@ -8,6 +8,7 @@
 rgb.set("white")
 
 print("restart")
---tmr.alarm(0, 250, 0, function() node.restart() end)
+--tmrX = tmr.create()
+--tmrX:alarm(250, tmr.ALARM_SINGLE, function() node.restart() end)
 node.restart()
 

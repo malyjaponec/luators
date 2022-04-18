@@ -4,8 +4,8 @@
 	se zpracovava jen mereni energie (spotreba vody).
 	Pokud se neco zasadniho najde v plynomeru (chyba) je nutne to prevest rucne i sem.
 --]]
-	tmr.stop(1)
-	tmr.stop(3)
+	--tmr0.stop(1)
+	--tmr.stop(3)
 	--[[ 
 		GPIO4 - hall sonda nad magnetyckym koleckem - vodomer ma 20ml na otacku, 2 magneticke pulzy, coz je 10ml / pulz
 		GPIO5 - infra zavora v prnvim prevodovem kolecku - 12 zubu magneticke a 48 zubu prvni prevodove s dirkama, celkem 10 otvoru, coz je 8ml / pulz
@@ -272,7 +272,8 @@
 		Average_Data[Average_Counter] = adc.read(0)
 		Average_Counter = Average_Counter + 1
 		if Average_Counter <= POCET_MERENI then 
-			tmr.alarm(4, math.random(5,15), 0,  function() CaptureAnalog() end)
+			tmr4 = tmr.create()
+			tmr4:alarm(math.random(5,15), tmr.ALARM_SINGLE,  function() CaptureAnalog() end)
 		else -- nacteno dost dat provedu ocisteni
 			-- tady to mam v poli a muzu si s tim delat cokoliv alezatim s tim udelam jen prumer
 			local Sum = 0
@@ -309,7 +310,8 @@
                     if Debug == 1 then print("M> time overload "..td) end      
                 end
             end         
- 			tmr.alarm(4, 5, 0,  function() StartAnalogG() end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
+			tmr4 = tmr.create()
+ 			tmr4:alarm(5, tmr.ALARM_SINGLE,  function() StartAnalogG() end) -- s urcitim zpozdenim odstartuji dalsi sekvenci mereni
 		end
 	end
 	
@@ -321,7 +323,8 @@
 		Average_Counter = 1
 		Average_Data = {}
 		-- spustim mereni pres casovac i kdyz je to zbytecne
-		tmr.alarm(4, 10, 0,  function() CaptureAnalog() end)
+		tmr4 = tmr.create()
+		tmr4:alarm(10, tmr.ALARM_SINGLE,  function() CaptureAnalog() end)
 	end
 	function StartAnalogG(_nic_nic)
 		StartAnalog()
@@ -344,5 +347,7 @@
 	end
 	
 -- Nacasovani zpracovani a mereni
-	tmr.alarm(3, 10, 0,  function() StartAnalog(1) end) -- odstartuje mereni spotreby
-    tmr.alarm(1, 1000, 1,  function() ZpracujPauzu() end) -- prepocitava prutok 
+	tmr3 = tmr.create()
+	tmr3:alarm(10, tmr.ALARM_SINGLE,  function() StartAnalog(1) end) -- odstartuje mereni spotreby
+	tmr1 = tmr.create()
+    tmr1:alarm(1000, tmr.ALARM_AUTO,  function() ZpracujPauzu() end) -- prepocitava prutok 

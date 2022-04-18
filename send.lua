@@ -3,7 +3,10 @@ local KonecCounter = 0
 local Fail_Send = 0
 local Fail_Wifi = 0
 local SendTime = 0
-local SentEnergy_Faze = {0,0,0}
+local SentEnergy_Faze = {0,0,0,0,0,0}
+local tmr0
+local tmr2
+local tmrA
 
 local function Get_AP_MAC()
     local ssid,pass,bset,bssid
@@ -27,14 +30,15 @@ local function KonecAbnormal()
     result = 0 -- stejne tak nastavuji vysledek na nepreneseno a o zbytek se postaraji standardni mechanizmy
 	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
 	
-	
-	
-    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+	--tmr2 = tmr.create()
+    tmr2:alarm(2500, tmr.ALARM_SINGLE, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
 --------------------------------------------------------------------------------
 local function Konec(code, data)
-    if (code == nil) then
+	tmrA:unregister(); -- odregistruje nouzovy casovac
+	
+	if (code == nil) then
         code = -100
     end
     if (code > 0) then
@@ -42,7 +46,7 @@ local function Konec(code, data)
         if Debug == 1 then print("S> odeslano/" .. code) end
         Fail_Send = 0 -- nuluji cinac chyb pri penosu, povedlo se prenest
         Fail_Wifi = 0 -- kdyz se to preneslo tak bude wifi asi v poradku, nuluju, jinde se to nedela
-        rtcmem.write32(0, 0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
+        rtcmem.write32(0, 0, 0,0,0,0,0,0) -- nuluji zalozni hodnoty v RTC memory vcetne kontrolniho souctu
     else
         rgb.set("blue")
         if Debug == 1 then print("S> chyba /".. code) end
@@ -50,9 +54,8 @@ local function Konec(code, data)
     end
 	-- pokud doslo k dokonceni mereni DS18B20, spustim dalsi mereni
 	
-	
-	
-    tmr.alarm(2, 2500, 0, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
+	--tmr2 = tmr.create()
+    tmr2:alarm(2500, tmr.ALARM_SINGLE, function() KontrolaOdeslani2() end) -- vim ze urcite Xs nechci nic posilat, prvni kontrolu (kvuli siti udelam za 2,5s)
 end
 
 --------------------------------------------------------------------------------
@@ -70,7 +73,7 @@ local function Start()
     -- vytvorim zakladni data, ktera chci prenest na cloud
     local i,energy
     local suma = 0
-    for i=1,3 do -- predzpracovani enedgetickych dat s vyctenim a ulozenim do RTC memory
+    for i=1,6 do -- predzpracovani enedgetickych dat s vyctenim a ulozenim do RTC memory
     
         -- pocatek kriticke sekce
             -- prepise si hodnoty energie k odeslani a v merici smaze na 0
@@ -85,7 +88,7 @@ local function Start()
     end
     rtcmem.write32(0, suma)-- zapisu si hodnotu kontrolniho souctu do RTC pameti, co nejdrive po zapisu novych hodnot
 	
-    for i=1,3 do 
+    for i=1,6 do 
 		if (Measure_Faze[i] ~= nil) then
 		
 			-- zpracovani energie odesilaneho tvaru
@@ -96,15 +99,16 @@ local function Start()
 				Rdat[Rpref.."p"..i] = Power_Faze[i] -- hodnotu pridam do odesilanych dat
 				if Debug == 1 then print("S> power["..i.."]="..Power_Faze[i]) end
 			end
-		end
 		
-		-- dalsi analyticka data pro analyzu zpracovani analogovych signalu, ridi se globalni promennou
-		if AnalyticReport ~= nil then
-			Rdat[Rpref.."an"..i]= Digitize_Average[i]
-			Rdat[Rpref.."mi"..i] = Digitize_Minimum[i]
-			Rdat[Rpref.."ma"..i] = Digitize_Maximum[i]
-			Rdat[Rpref.."st"..i] = Digitize_Status[i]
-			Rdat[Rpref.."de"..i] = Digitize_Deviate[i]
+			-- dalsi analyticka data pro analyzu zpracovani analogovych signalu, ridi se globalni promennou
+			if AnalyticReport ~= nil then
+				Rdat[Rpref.."an"..i]= Digitize_Average[i]
+				Rdat[Rpref.."mi"..i] = Digitize_Minimum[i]
+				Rdat[Rpref.."ma"..i] = Digitize_Maximum[i]
+				Rdat[Rpref.."st"..i] = Digitize_Status[i]
+				Rdat[Rpref.."de"..i] = Digitize_Deviate[i]
+			end
+			
 		end
 		
 		-- debug vypisy 
@@ -129,27 +133,28 @@ local function Start()
 			dalas_start()
 		end
     end
-
+	
     -- pridam si nektera technologicka data, ktera predavam na cloud, nejdou vypnout
     Rcnt = Rcnt + 1
     Rdat[Rpref.."cnt"] = Rcnt
-    Rdat[Rpref.."x"..Get_AP_MAC()] = 1
-    Rdat[Rpref.."fc"] = Fail_Send   
-    Rdat[Rpref.."et"] = tmr.now()/1000000
-    Rdat[Rpref.."hp"] = node.heap() 
 	Rdat[Rpref.."ver"] = SW_VERSION
+	if NonEsentialReport ~= nil then 
+		Rdat[Rpref.."x"..Get_AP_MAC()] = 1
+		Rdat[Rpref.."fc"] = Fail_Send   
+		Rdat[Rpref.."et"] = tmr.now()/1000000
+		Rdat[Rpref.."hp"] = node.heap() 
+	end
 	
     -- prevedu na URL
-    local url = "http://emon.jiffaco.cz/emoncms/input/post.json?node=" .. Rnod .. 
-                "&json=" .. cjson.encode(Rdat) .. 
+    local url = "http://emon.jiffaco.cz/input/post.json?node=" .. Rnod .. 
+                 "&json=" .. sjson.encode(Rdat) .. 
                 "&apikey=" .. Rapik
     Rdat = nil -- data smazu explicitne
-
     http.get(url, nil, function(code,data) Konec(code,data) end )
+    url = nil -- url uz taky mazu	
 
-    url = nil
     KonecCounter = 0 -- citac pro timeout 
-    tmr.alarm(2, 15000, 0, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback
+	tmrA:alarm(15000, tmr.ALARM_SINGLE, function() KonecAbnormal() end) -- nacasuji kontrolu pokud nezavola callback
 end
 
 --------------------------------------------------------------------------------
@@ -159,9 +164,12 @@ local function ReinicializujSit()
     wifi.sta.disconnect()    
     wifi.sta.connect()
     wifi.sta.autoconnect(1)
-    tmr.alarm(0, 500, 0, function() dofile("network.lc") end) 
+    tmr0 = tmr.create()
+	tmr0:alarm(500, tmr.ALARM_SINGLE, function() dofile("network.lc") end) 
     -- reinicalizace site, casovac je zde aby svitila dost dlouho dioda cian
-    tmr.alarm(2, 2500, 0,  function() KontrolaOdeslani2() end)
+	trm0 = nil
+    --tmr2 = tmr.create()
+	tmr2:alarm(2500, tmr.ALARM_SINGLE, function() KontrolaOdeslani2() end)
     -- a dalsi kontrolu odeslani nacasuju za 2,5 sekundy protoze prihlaseni k siti nebude
     -- extra rychle a nesmim to nacasovat kratsi nez se provede predchozi casovac jinak
     -- by se ten predchozi furt precasovaval
@@ -188,7 +196,8 @@ local function KontrolaOdeslani()
             if (timedif > 5000000) or (timedif < -5000000) then -- zdanllivy nesmysl, ktery pokryje pretoceni casovace do nekonecneho zaporu
                 SendTime = tmr.now() -- Zapisu si cas ted tak aby perioda byla neovlivnena tim jak dlouho se to prenasi
                 if Debug == 1 then print("S> odesilam,cas:"..timedif/1000000) end
-                tmr.alarm(2, 100, 0,  function() Start() end) -- Spoustim predani dat na cloud
+                --tmr2 = tmr.create()
+				tmr2:alarm(100, tmr.ALARM_SINGLE,  function() Start() end) -- Spoustim predani dat na cloud
                 return -- a vyskakuji z teto funkce aby se nedelo nic dalsiho
             end
         end
@@ -202,7 +211,8 @@ local function KontrolaOdeslani()
         -- -9 not password file
 		Fail_Wifi = Fail_Wifi + 1
 		if Fail_Wifi > 100 then -- fakt uz to trva dlouho - zde je otazka zda v novem systemu odesilani neni lepsi udelat rovnou reset nez se pokouset o reinicalizaci
-			tmr.alarm(2, 100, 0,  function() dofile("reset.lc") end) -- volam restart, ztratim vsechno zmerene
+			--tmr2 = tmr.create()
+			tmr2:alarm(100, tmr.ALARM_SINGLE,  function() dofile("reset.lc") end) -- volam restart, ztratim vsechno zmerene
 			return
 		else
 			ReinicializujSit()
@@ -217,7 +227,8 @@ local function KontrolaOdeslani()
     end        
 
     -- Nacasovat dalsi kontrolu pokud jsem nenacasoval neco jineho
-    tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end)
+    --tmr2 = tmr.create()
+	tmr2:alarm(250, tmr.ALARM_SINGLE,  function() KontrolaOdeslani() end)
 end
 
 --------------------------------------------------------------------------------
@@ -226,5 +237,7 @@ function KontrolaOdeslani2() -- toto je finta jak mit globalni funkci co nejmens
 end
 
 --------------------------------------------------------------------------------
-tmr.alarm(2, 250, 0,  function() KontrolaOdeslani() end) 
+tmr2 = tmr.create()
+tmrA = tmr.create()
+tmr2:alarm(250, tmr.ALARM_SINGLE,  function() KontrolaOdeslani() end) 
 

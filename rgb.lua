@@ -18,7 +18,7 @@ local RedIO
 local GreenIO 
 local BlueIO 
 -- inicializace ok
---local Configured = 0
+local Configured = 0
 
 -------------------------------------------------------------------------------
 -- Local used modules
@@ -36,11 +36,14 @@ setfenv(1,M)
 -- Konfigurace GPIO pinu s defaultem pro kit
 function setup(_red,_green,_blue)
     --Configured = 0
-    RedIO = _red or 8 -- GPIO 15
-    GreenIO = _green or 6 -- GPIO 12 
-    BlueIO = _blue or 7 -- GPIO 13
-    --Configured = 1
+	-- nepripousti se ze by se to zavolalo bez parametru
+	-- nedela se _red or X protoze nektere GPIO maji id 0 a pak by nesli nastavit (je to gpio16)
+    RedIO = _red
+    GreenIO = _green
+    BlueIO = _blue
 
+    Configured = 1
+	
     gpio.mode(RedIO, gpio.OUTPUT)     
     gpio.write(RedIO, gpio.LOW)
     gpio.mode(GreenIO, gpio.OUTPUT)     
@@ -87,6 +90,9 @@ function set(_color)
     gpio.write(RedIO, R)
     gpio.write(GreenIO, G)
     gpio.write(BlueIO, B)
+    gpio.mode(RedIO, gpio.OUTPUT)     
+    gpio.mode(GreenIO, gpio.OUTPUT)     
+    gpio.mode(BlueIO, gpio.OUTPUT)     
     return 1
 end  
 
