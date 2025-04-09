@@ -3,7 +3,7 @@
     local GP = {[0]=3,[1]=10,[2]=4,[3]=9,[4]=1,[5]=2,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}
 	
 -- verze software
-	SW_VERSION = "220416"
+	SW_VERSION = "240409"
 
 -- uklid pinu co by mohli svitit ledkama 
   -- zrusil jsem at svitej!
@@ -22,7 +22,7 @@
 
 -- nastavi knihovnu pro RGB
     rgb = require("rgb")
-    rgb.setup( GP[16], GP[15], GP[0] ) -- volam, vzdy musi byt parametry
+    rgb.setup( GP[15], GP[12], GP[13] ) -- volam, vzdy musi byt parametry
     rgb.set() -- volam bez parametru = cerna
 
 -- vice vypisu, temer se v nove vzniknutych kodech nepouziva, ale v sitove vrstve je pouzito
@@ -77,22 +77,22 @@
 	-- casovac nula
 	
 	-- Spustim pridruzene mereni teploty DS18B20... libovolny pocet
-	--[[
+    --[[
 	dalas = require("dalas")
 	function dalas_start()
 		TimeStartLast = tmr.now()/1000 -- zapisu si cas posledniho spuseni, ziskam tak presne cas za jak dlouho doslo ke zmereni cidel, ne cas od zapnuti procesoru
-		dalas.setup(5,GP[0],nil) -- na 0 je 3 dratovy rezim, nil na 2 dratovy rezim, ktery nepouzivame ted
+		dalas.setup(5,GP[14],nil) -- na GP14 je 3 dratovy rezim, nil na 2 dratovy rezim, ktery nepouzivame ted
 	end
 	dalas_start()
-	-- ]]
+	--]]
 	
     -- [[
     -- sjednocene elektromery, GP[2] se nesmi pouzit jako vstup do elektromeru, zpusobuje to zaseknuti po restartu a nejspis i GPIO0
 	--
-    --Measure_Faze = { GP[4], GP[5], nil } -- elektromer 2 fazovy v garazi pro zasuvky a svetla
+    --Measure_Faze = { GP[4], GP[5], GP[0]} -- elektromer v suterenu TC sklep a dalsi
 	--Measure_Faze = { GP[4], GP[5], GP[14] } -- elektromer 3 fazovy v garazi pro 380
-	--Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
-	Measure_Faze = { GP[4], GP[5], GP[14], GP[12], GP[13], GP[2] } -- elektromer 6 fazovy pro rozvadec
+	Measure_Faze = { GP[4], nil, nil } -- elektromer 1 fazovy pro meric1, firman 
+	--Measure_Faze = { GP[4], GP[5], GP[14], GP[12], GP[13], GP[2] } -- elektromer 6 fazovy pro rozvadec
     Energy_Faze = {0,0,0,0,0,0} -- akumulace energie pro jednotlive vstupy (ve Wh)
     Power_Faze = {-1,-1,-1,-1,-1,-1} -- ukladani posledniho vykonu pro jednotlive vstupy (ve W) na zaklade posledni delky pulzu
 	tmr1 = tmr.create()
@@ -165,13 +165,13 @@
 		
 
     -- odesilace nepotrebuje zadne klobalni promenne, taha data z tech vyse definovanych pro ostatni procesy
-	--Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
+	Analog = 0 -- pokud je definovane odesila analogovou hodnotu prectenou v okamziku odesilani, bez filtrace
 	-- NonEsentialReport = 0 -- pokud je definovane odesila cas,ap MAC,heap.pocet chyb...
 	tmr2 = tmr.create()
     tmr2:alarm(500, tmr.ALARM_SINGLE,  function() dofile("send.lc") end)
     --tmr2:alarm(500, tmr.ALARM_SINGLE,  function() dofile("sendmono.lc") end)  -- verze pro odesilani pouze jednokanalovych dat
-		-- casovac 2
-	tmr2 = nil
+	-- casovac 2
+	--tmr2 = nil
 
 -- uklid toho co uz nepotrebujem 
     print("run")
